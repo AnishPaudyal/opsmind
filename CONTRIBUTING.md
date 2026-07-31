@@ -95,13 +95,12 @@ uv run mypy --no-incremental .
 uv run pytest -p no:cacheprovider
 ```
 
-The pytest command may report that no tests were collected until permanent
-tests are introduced. After first-party source and tests exist, routine
-coverage validation will use:
+The repository contains first-party source and tests, so pytest and coverage are
+required. Routine coverage validation uses:
 
 ```bash
 uv run pytest -p no:cacheprovider \
-  --cov \
+  --cov=opsmind \
   --cov-branch \
   --cov-report=term-missing \
   --cov-report=xml
@@ -118,6 +117,31 @@ uv run ruff check --fix .
 task runner, shell wrapper, Python wrapper, or pre-commit hook is introduced
 yet.
 
+### Backend development
+
+The packaged FastAPI application uses the `src/opsmind` layout. Start it locally
+through the locked project environment:
+
+```bash
+uv run uvicorn opsmind.main:app --reload
+```
+
+The application reads typed settings from environment variables prefixed with
+`OPSMIND_`; do not commit local credentials or `.env` files. The unversioned
+`GET /health` route is process health only. Add versioned routes under the
+configured `/api/v1` prefix only when an approved issue introduces a real
+business capability.
+
+Validate distribution packaging with a fresh temporary output directory:
+
+```bash
+uv build --out-dir /tmp/opsmind-build
+```
+
+Build output is generated evidence and must not be committed. Material changes
+to the framework, packaging, configuration boundary, or route architecture
+require ADR review.
+
 ### Continuous integration
 
 The [Python-quality workflow](.github/workflows/python-quality.yml) reproduces
@@ -133,11 +157,10 @@ uv run ruff format --check .
 uv run ruff check --no-cache .
 ```
 
-mypy becomes mandatory automatically when the first tracked Python file exists.
-pytest becomes mandatory automatically when the first tracked `test_*.py` or
-`*_test.py` file exists. The temporary empty-code handling reports an explicit
-notice; it does not suppress mypy or pytest failures after source or tests
-appear.
+mypy and pytest are mandatory because tracked first-party source and standard
+pytest tests now exist. The workflow's empty-code detection selects those real
+paths, so it no longer uses its temporary no-code notices for this repository
+state.
 
 The governance workflow validates repository policy and document hygiene, while
 the Python-quality workflow validates the locked Python environment and quality
