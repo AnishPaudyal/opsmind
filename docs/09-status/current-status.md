@@ -66,15 +66,17 @@
 ## Phase 2 FastAPI Backend Foundation
 
 - Phase 2 began with issue #14 as the first application-code milestone.
-- ADR-0003 proposes FastAPI, Pydantic Settings, Uvicorn, the `uv_build` package
-  boundary, typed `OPSMIND_` configuration, and a root router.
-- `src/opsmind/application.py` provides an application factory, and
-  `src/opsmind/main.py` exposes the ASGI application.
-- The only business-facing route is the unversioned `GET /health` process-health
-  endpoint; `/api/v1` remains reserved and has no endpoint.
+- ADR-0003 was reviewed and accepted by the repository owner during PR #15
+  review. The packaged `src/opsmind/` FastAPI modular-monolith structure is
+  approved.
+- The approved structure includes the application factory, typed settings,
+  modular routing, separate tests, the unversioned `GET /health` process-health
+  endpoint, and a reserved but unrouted `/api/v1` prefix.
 - Synchronous unit tests cover application construction, configuration,
   dependency injection, the exact health response, and OpenAPI metadata.
 - HTTPX is development-only; no broad dependency extras were added.
+- GitHub-hosted repository-governance and Python-quality checks passed for PR
+  #15.
 - No database, migration, Docker, frontend, AWS, authentication, business API,
-  or ML implementation is included.
-- Issue #14 remains in progress until its pull request is reviewed and merged.
+  deployment, or ML capability exists yet.
+- Issue #14 remains in progress and incomplete until PR #15 is merged.

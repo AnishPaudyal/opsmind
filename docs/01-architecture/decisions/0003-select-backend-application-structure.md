@@ -1,6 +1,6 @@
 # ADR-0003: Select Backend Application Structure
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-07-31
 - Decision owners: Anish Paudyal
 - Related issues: #14
@@ -134,7 +134,7 @@ and operational requirements.
 
 ### Neutral
 
-- ADR-0003 remains Proposed until the repository owner accepts it.
+- ADR-0003 was accepted by the repository owner during PR #15 review.
 - `/api/v1` is configured but intentionally has no endpoint.
 - No database, queue, cloud service, UI, ML model, or business API is selected.
 - No readiness or liveness split is introduced yet.

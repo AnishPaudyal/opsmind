@@ -108,4 +108,4 @@ when an ADR is required.
 | [ADR-0000](0000-use-architecture-decision-records.md) | Use Architecture Decision Records | Accepted | 2026-07-31 | #6 |
 | [ADR-0001](0001-select-python-toolchain.md) | Select Python Toolchain | Accepted | 2026-07-31 | #5 |
 | [ADR-0002](0002-select-python-quality-and-testing-toolchain.md) | Select Python Quality and Testing Toolchain | Accepted | 2026-07-31 | #9, #10 |
-| [ADR-0003](0003-select-backend-application-structure.md) | Select Backend Application Structure | Proposed | 2026-07-31 | #14 |
+| [ADR-0003](0003-select-backend-application-structure.md) | Select Backend Application Structure | Accepted | 2026-07-31 | #14 |
