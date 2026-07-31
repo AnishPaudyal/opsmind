@@ -30,7 +30,9 @@
 - Phase 1 remains in progress.
 - Issue #9 selected the Python quality baseline, and issue #10 implements the
   local toolchain.
-- ADR-0002 remains Proposed until repository-owner approval.
+- ADR-0002 was accepted by the repository owner during PR #11 review, and the
+  Python quality and testing toolchain decision is approved.
+- Issue #10 remains in progress until PR #11 is merged.
 - Ruff, mypy, pytest, and pytest-cov are the direct development dependencies,
   all in one `dev` dependency group.
 - Runtime dependencies remain empty.

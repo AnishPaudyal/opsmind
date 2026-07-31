@@ -1,6 +1,6 @@
 # ADR-0002: Select Python Quality and Testing Toolchain
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-07-31
 - Decision owners: Anish Paudyal
 - Related issues: #9, #10
