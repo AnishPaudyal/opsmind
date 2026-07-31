@@ -57,6 +57,18 @@ dependencies require:
 - Cost, security, operations, and learning impact
 - A durable decision record when the choice has long-term consequences
 
+## Architecture Decision Records
+
+Before making a material architectural decision, contributors and AI agents
+must:
+
+- Check the [ADR index](docs/01-architecture/decisions/README.md) for an
+  existing governing decision.
+- Create or update an ADR when a material decision is not already governed.
+- Follow the documented numbering, naming, status, and lifecycle conventions.
+- Avoid silently inventing architectural conventions or assumptions.
+- Preserve repository-owner approval for accepting or superseding an ADR.
+
 ## Completion Standard
 
 A task is complete only when:

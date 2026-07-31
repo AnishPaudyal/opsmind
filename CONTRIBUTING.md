@@ -62,6 +62,15 @@ Durable knowledge belongs in the repository, not only in chat history. Update
 the relevant document when a decision changes product behavior, architecture,
 operations, security, cost, or the learning narrative.
 
+## Architecture Decision Records
+
+Material technical or architectural decisions require an Architecture Decision
+Record under [docs/01-architecture/decisions](docs/01-architecture/decisions/README.md).
+Create and review ADRs through the normal branch and pull-request workflow,
+keep them Proposed until the repository owner accepts them, and update the ADR
+index whenever a record or its status changes. Accepted ADRs govern subsequent
+work unless they are superseded through the documented ADR process.
+
 ## Security
 
 Report suspected credential exposure or sensitive-data leakage privately to the
