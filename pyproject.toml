@@ -1,0 +1,10 @@
+[project]
+name = "opsmind"
+version = "0.1.0"
+description = "Cloud-native supply-chain decision intelligence platform"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = []
+
+[tool.uv]
+package = false

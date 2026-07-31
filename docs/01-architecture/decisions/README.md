@@ -106,3 +106,4 @@ when an ADR is required.
 | Number | Title | Status | Date | Related issue |
 | --- | --- | --- | --- | --- |
 | [ADR-0000](0000-use-architecture-decision-records.md) | Use Architecture Decision Records | Accepted | 2026-07-31 | #6 |
+| [ADR-0001](0001-select-python-toolchain.md) | Select Python Toolchain | Accepted | 2026-07-31 | #5 |
