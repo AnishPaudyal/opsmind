@@ -21,6 +21,21 @@
 - Validation uses Homebrew-managed `uv 0.11.28` and `uv`-managed CPython
   3.13.14 as a native `arm64` runtime.
 - The root project is non-packaged.
-- Runtime and development dependency lists remain empty.
-- Application layout, backend framework, testing, linting, formatting, and
-  production dependencies remain future work.
+- Runtime dependencies remain empty.
+- Application layout, backend framework, permanent test layout, and production
+  dependencies remain future work.
+
+## Python Quality and Testing Toolchain
+
+- Phase 1 remains in progress.
+- Issue #9 selected the Python quality baseline, and issue #10 implements the
+  local toolchain.
+- ADR-0002 remains Proposed until repository-owner approval.
+- Ruff, mypy, pytest, and pytest-cov are the direct development dependencies,
+  all in one `dev` dependency group.
+- Runtime dependencies remain empty.
+- No application layout or permanent test layout exists, and no application
+  code or permanent tests were added.
+- Python-quality CI is a separate future task, and pre-commit remains deferred.
+- Coverage collection is configured without a percentage gate.
+- Validation uses temporary files outside the repository.
