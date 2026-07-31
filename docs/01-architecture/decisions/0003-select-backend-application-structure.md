@@ -1,4 +1,4 @@
-# ADR-0003: Establish FastAPI Backend Foundation
+# ADR-0003: Select Backend Application Structure
 
 - Status: Proposed
 - Date: 2026-07-31
