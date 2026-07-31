@@ -61,6 +61,39 @@ addition must be justified by a concrete product or learning requirement.
   cost, security, and responsible-AI baseline.
 - [docs/12-phase-reviews](docs/12-phase-reviews) records phase reviews.
 
+## Local Python setup
+
+Install `uv` using an [officially supported installation
+method](https://docs.astral.sh/uv/getting-started/installation/), then verify the
+installation:
+
+```bash
+uv --version
+```
+
+Install or confirm the supported Python 3.13 interpreter:
+
+```bash
+uv python install 3.13
+```
+
+Synchronize the repository environment from the committed lockfile:
+
+```bash
+uv sync --locked
+```
+
+Run repository Python commands through the project environment:
+
+```bash
+uv run python --version
+```
+
+OpsMind supports Python 3.13. The local environment is `.venv`, which must
+never be committed. Do not install OpsMind dependencies into Miniconda base,
+Homebrew Python, or `/usr/bin/python3`. Bare `python` and `python3` may resolve
+to unrelated interpreters, so prefer `uv run` for repository commands.
+
 ## Contribution Rule
 
 All meaningful work starts with a scoped issue, is implemented on a task branch,

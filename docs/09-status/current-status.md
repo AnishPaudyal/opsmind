@@ -11,12 +11,16 @@
 
 - Phase 1 is in progress.
 - Issues #2 through #4 established the local Python toolchain.
-- Issue #5 attempted to begin Python project initialization and stopped
-  correctly because no ADR system or numbering convention existed.
-- Issue #5 remains blocked until the pull request for issue #6 is merged.
-- Issue #6 establishes the repository's ADR system under
-  `docs/01-architecture/decisions/`.
-- ADR `0001` is the next technical decision number and is intended for the
-  Python toolchain decision.
-- Issue #6 is not complete, and issue #5 is not unblocked, until the ADR-system
-  pull request is approved and merged.
+- Issue #5 resumed after the ADR prerequisite from issue #6 was merged.
+- ADR-0001 records the accepted Python toolchain decision.
+
+## Python Project Foundation
+
+- The foundation contains `pyproject.toml`, `.python-version`, `uv.lock`, and an
+  ignored local `.venv`.
+- Validation uses Homebrew-managed `uv 0.11.28` and `uv`-managed CPython
+  3.13.14 as a native `arm64` runtime.
+- The root project is non-packaged.
+- Runtime and development dependency lists remain empty.
+- Application layout, backend framework, testing, linting, formatting, and
+  production dependencies remain future work.
