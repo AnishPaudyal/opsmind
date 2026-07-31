@@ -1,0 +1,40 @@
+name: Task
+description: Track bounded engineering, documentation, or repository work.
+title: "[Task]: "
+labels:
+  - task
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: State the concrete result this task must produce.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: State what is included and excluded.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Criterion one
+        - [ ] Criterion two
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and risks
+      description: Identify blockers, sequencing constraints, and material risks.
+  - type: input
+    id: phase
+    attributes:
+      label: Roadmap phase
+    validations:
+      required: true

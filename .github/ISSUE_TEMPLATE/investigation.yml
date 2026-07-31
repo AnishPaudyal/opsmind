@@ -1,0 +1,41 @@
+name: Investigation
+description: Time-box research, diagnosis, or a technical decision.
+title: "[Investigation]: "
+labels:
+  - investigation
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What decision or uncertainty must this investigation resolve?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Explain why the answer matters now.
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options to evaluate
+      description: List the alternatives and evaluation criteria.
+    validations:
+      required: true
+  - type: input
+    id: timebox
+    attributes:
+      label: Time box
+      description: Set a maximum effort or completion date.
+    validations:
+      required: true
+  - type: textarea
+    id: deliverable
+    attributes:
+      label: Required deliverable
+      description: Name the decision record, experiment result, or follow-up issue expected.
+    validations:
+      required: true

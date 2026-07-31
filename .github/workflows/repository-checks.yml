@@ -1,0 +1,69 @@
+name: Repository checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate required files
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_files=(
+            README.md
+            AGENTS.md
+            CONTRIBUTING.md
+            ROADMAP.md
+            CHANGELOG.md
+            .gitignore
+            .gitattributes
+            .editorconfig
+            .env.example
+          )
+
+          for file in "${required_files[@]}"; do
+            if [[ ! -s "$file" ]]; then
+              echo "Missing or empty required file: $file"
+              exit 1
+            fi
+          done
+
+      - name: Reject empty Markdown files
+        shell: bash
+        run: |
+          set -euo pipefail
+          empty_files="$(find . -path ./.git -prune -o -name '*.md' -type f -size 0 -print)"
+
+          if [[ -n "$empty_files" ]]; then
+            echo "Empty Markdown files:"
+            echo "$empty_files"
+            exit 1
+          fi
+
+      - name: Block common committed private keys
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git grep -nE -e '-----BEGIN (RSA |OPENSSH |DSA |EC |PGP )?PRIVATE KEY-----' \
+            -- . ':!.github/workflows/repository-checks.yml'; then
+            echo "A private-key marker was found in tracked content."
+            exit 1
+          fi
+
+          if git grep -nE -e 'AKIA[0-9A-Z]{16}' \
+            -- . ':!.github/workflows/repository-checks.yml'; then
+            echo "A value matching an AWS access-key pattern was found."
+            exit 1
+          fi
