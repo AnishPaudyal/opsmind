@@ -114,10 +114,36 @@ uv run ruff format .
 uv run ruff check --fix .
 ```
 
-`ruff check --unsafe-fixes` is not part of the standard workflow. CI will later
-reproduce the non-mutating commands and become the authoritative merge gate. No
-Makefile, task runner, shell wrapper, Python wrapper, or pre-commit hook is
-introduced yet.
+`ruff check --unsafe-fixes` is not part of the standard workflow. No Makefile,
+task runner, shell wrapper, Python wrapper, or pre-commit hook is introduced
+yet.
+
+### Continuous integration
+
+The [Python-quality workflow](.github/workflows/python-quality.yml) reproduces
+the approved non-mutating local Python checks for pull requests targeting
+`main` and pushes to `main`. It is an authoritative pull-request gate.
+
+Run the currently applicable checks locally before pushing:
+
+```bash
+uv sync --locked --group dev
+uv lock --check
+uv run ruff format --check .
+uv run ruff check --no-cache .
+```
+
+mypy becomes mandatory automatically when the first tracked Python file exists.
+pytest becomes mandatory automatically when the first tracked `test_*.py` or
+`*_test.py` file exists. The temporary empty-code handling reports an explicit
+notice; it does not suppress mypy or pytest failures after source or tests
+appear.
+
+The governance workflow validates repository policy and document hygiene, while
+the Python-quality workflow validates the locked Python environment and quality
+contract. Pre-commit remains deferred. Future application and integration tests
+may require separate jobs or workflows when databases, services, secrets,
+matrices, or longer runtimes are introduced.
 
 ## Security
 

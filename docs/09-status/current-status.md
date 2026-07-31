@@ -32,12 +32,32 @@
   local toolchain.
 - ADR-0002 was accepted by the repository owner during PR #11 review, and the
   Python quality and testing toolchain decision is approved.
-- Issue #10 remains in progress until PR #11 is merged.
+- Issue #10 was completed when PR #11 merged.
 - Ruff, mypy, pytest, and pytest-cov are the direct development dependencies,
   all in one `dev` dependency group.
 - Runtime dependencies remain empty.
 - No application layout or permanent test layout exists, and no application
   code or permanent tests were added.
-- Python-quality CI is a separate future task, and pre-commit remains deferred.
+- Pre-commit remains deferred.
 - Coverage collection is configured without a percentage gate.
 - Validation uses temporary files outside the repository.
+
+## Python Quality Continuous Integration
+
+- Phase 1 remains in progress.
+- Issue #12 adds `.github/workflows/python-quality.yml`; the issue is not
+  complete until its pull request is merged.
+- The workflow reproduces the accepted local Ruff, mypy, and pytest contract.
+- Workflow permissions are read-only, and both external actions are pinned to
+  full commit SHAs.
+- CI pins `uv` to version `0.11.28` and selects Python through
+  `.python-version`.
+- The `uv` download cache is enabled; `.venv` and managed Python installations
+  are not cached.
+- Runtime and development dependencies remain unchanged.
+- The existing governance workflow remains separate and unchanged.
+- mypy and pytest use explicit empty-code handling until tracked Python source
+  and standard pytest test files exist.
+- Pre-commit remains deferred, and application and integration CI remain future
+  work.
+- GitHub-hosted validation has not been claimed before the pull request runs.

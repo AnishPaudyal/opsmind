@@ -1,0 +1,75 @@
+name: Python quality
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Python quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.11.28"
+          enable-cache: true
+          cache-dependency-glob: |
+            .python-version
+            pyproject.toml
+            uv.lock
+          cache-python: false
+
+      - name: Install project Python
+        run: uv python install
+
+      - name: Synchronize locked development environment
+        run: uv sync --locked --group dev
+
+      - name: Verify lockfile
+        run: uv lock --check
+
+      - name: Verify formatting
+        run: uv run ruff format --check .
+
+      - name: Lint
+        run: uv run ruff check --no-cache .
+
+      - name: Type check
+        shell: bash
+        run: |
+          tracked_python_files="$(git ls-files | awk '/\.py$/')"
+
+          if [[ -n "$tracked_python_files" ]]; then
+            uv run mypy --no-incremental .
+          else
+            echo "::notice::No tracked Python files exist yet; mypy will run automatically after the first Python file is committed."
+          fi
+
+      - name: Test
+        shell: bash
+        run: |
+          tracked_test_files="$(
+            git ls-files |
+              awk '/(^|\/)test_.*\.py$/ || /(^|\/).*_test\.py$/'
+          )"
+
+          if [[ -n "$tracked_test_files" ]]; then
+            uv run pytest -p no:cacheprovider
+          else
+            echo "::notice::No tracked pytest test files exist yet; pytest will run automatically after the first matching test file is committed."
+          fi
