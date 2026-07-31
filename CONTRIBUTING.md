@@ -71,6 +71,54 @@ keep them Proposed until the repository owner accepts them, and update the ADR
 index whenever a record or its status changes. Accepted ADRs govern subsequent
 work unless they are superseded through the documented ADR process.
 
+## Python Quality
+
+Synchronize the locked development environment before running Python quality
+checks:
+
+```bash
+uv sync --locked --group dev
+```
+
+Verify that the lockfile remains current:
+
+```bash
+uv lock --check
+```
+
+Run the non-mutating validation commands locally:
+
+```bash
+uv run ruff format --check .
+uv run ruff check --no-cache .
+uv run mypy --no-incremental .
+uv run pytest -p no:cacheprovider
+```
+
+The pytest command may report that no tests were collected until permanent
+tests are introduced. After first-party source and tests exist, routine
+coverage validation will use:
+
+```bash
+uv run pytest -p no:cacheprovider \
+  --cov \
+  --cov-branch \
+  --cov-report=term-missing \
+  --cov-report=xml
+```
+
+Source-mutating Ruff commands are explicit developer actions:
+
+```bash
+uv run ruff format .
+uv run ruff check --fix .
+```
+
+`ruff check --unsafe-fixes` is not part of the standard workflow. CI will later
+reproduce the non-mutating commands and become the authoritative merge gate. No
+Makefile, task runner, shell wrapper, Python wrapper, or pre-commit hook is
+introduced yet.
+
 ## Security
 
 Report suspected credential exposure or sensitive-data leakage privately to the
