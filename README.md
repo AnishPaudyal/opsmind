@@ -8,12 +8,16 @@ coherent product.
 
 ## Current Status
 
-Phase 0, project definition and governance, is complete. The repository is now
-in Phase 1, repository and development foundation.
+Phase 0, project definition and governance, is complete. The Phase 1 repository,
+Python, quality, and CI foundations are established. Phase 2 has begun with the
+reviewed FastAPI backend foundation from issue #14.
 
-This repository does not yet contain:
+The backend foundation is deliberately narrow. This repository does not yet
+contain:
 
-- Application code
+- Supply-chain business endpoints
+- Persistence or migrations
+- Authentication or authorization
 - Cloud infrastructure
 - Deployed AWS resources
 - Trained machine-learning models
@@ -93,6 +97,38 @@ OpsMind supports Python 3.13. The local environment is `.venv`, which must
 never be committed. Do not install OpsMind dependencies into Miniconda base,
 Homebrew Python, or `/usr/bin/python3`. Bare `python` and `python3` may resolve
 to unrelated interpreters, so prefer `uv run` for repository commands.
+
+## FastAPI backend foundation
+
+The packaged backend lives under `src/opsmind`. Start the local ASGI application
+with:
+
+```bash
+uv run uvicorn opsmind.main:app --reload
+```
+
+The initial API exposes one deterministic process-health endpoint:
+
+```text
+GET /health
+```
+
+Application settings use the `OPSMIND_` environment-variable prefix. Supported
+overrides are:
+
+- `OPSMIND_APPLICATION_NAME`
+- `OPSMIND_SERVICE_NAME`
+- `OPSMIND_ENVIRONMENT` (`local`, `test`, `staging`, or `production`)
+- `OPSMIND_DEBUG`
+- `OPSMIND_API_V1_PREFIX`
+
+The default service is `opsmind-api`, the default environment is `local`, debug
+mode is disabled, and `/api/v1` is reserved for a future real business API. The
+application does not load a repository `.env` file implicitly.
+
+`GET /health` reports only that the API process can serve a request. It does not
+claim readiness for a database, AWS resource, external service, or product
+workflow. No such dependency is configured by this foundation.
 
 ## Contribution Rule
 
