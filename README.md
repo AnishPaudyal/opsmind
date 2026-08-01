@@ -11,17 +11,17 @@ coherent product.
 Phase 0, project definition and governance, is complete. The Phase 1 repository,
 Python, quality, and CI foundations are established. Phase 2 has begun with the
 reviewed FastAPI backend foundation from issue #14 and the first bounded
-supply-chain business APIs from issues #16, #18, #20, and #22.
+supply-chain business APIs from issues #16, #18, #20, #22, and #24.
 
 The current backend can create and retrieve products, record one in-memory
 inventory position for each product, and ingest and retrieve daily demand
-history. It can also calculate a transparent arithmetic-mean demand forecast
-and deterministic stockout exposure on request. This repository does not yet
-contain:
+history. It can also calculate a transparent arithmetic-mean demand forecast,
+deterministic stockout exposure, and a whole-unit reorder recommendation on
+request. This repository does not yet contain:
 
 - Persistence or migrations
 - Authentication or authorization
-- Model training, stockout probability, or reorder recommendations
+- Model training, stockout probability, or recommendation approval workflows
 - Cloud infrastructure
 - Deployed AWS resources
 - Trained machine-learning models
@@ -111,9 +111,9 @@ with:
 uv run uvicorn opsmind.main:app --reload
 ```
 
-The API exposes an unversioned deterministic process-health endpoint and nine
-product, inventory, demand, forecast, and exposure operations under the
-configured business prefix:
+The API exposes an unversioned deterministic process-health endpoint and ten
+product, inventory, demand, forecast, exposure, and recommendation operations
+under the configured business prefix:
 
 | Method | Path | Result |
 | --- | --- | --- |
@@ -127,6 +127,7 @@ configured business prefix:
 | `GET` | `/api/v1/products/{product_id}/demand` | Retrieve daily demand. |
 | `GET` | `/api/v1/products/{product_id}/forecast` | Calculate a baseline demand forecast. |
 | `GET` | `/api/v1/products/{product_id}/stockout-exposure` | Calculate deterministic lead-time exposure. |
+| `GET` | `/api/v1/products/{product_id}/reorder-recommendation` | Calculate a whole-unit reorder recommendation. |
 
 Application settings use the `OPSMIND_` environment-variable prefix. Supported
 overrides are:
@@ -331,8 +332,8 @@ This baseline uses source demand from the process-local in-memory repository,
 so restarting the application loses the input history. The simple mean does not
 model trend, seasonality, intermittent demand, or uncertainty; it supplies no
 confidence interval and has no measured accuracy. It is not production-grade
-machine learning. The deterministic exposure calculation below uses this
-baseline; reorder recommendations remain separate future work.
+machine learning. The deterministic exposure and recommendation calculations
+below use this baseline.
 
 ### Deterministic stockout exposure
 
@@ -423,9 +424,89 @@ product without eligible demand returns HTTP 422. Swagger UI at
 The operation is read-only: it stores no exposure or forecast and changes no
 product, inventory, or demand state. Its inputs remain process-local and are
 lost on restart. It provides no stockout probability, uncertainty interval,
-safety-stock optimization, measured forecast accuracy, or reorder quantity. A
-future reviewed milestone may use this deterministic result as one input to a
-reorder recommendation.
+safety-stock optimization, or measured forecast accuracy. The deterministic
+recommendation below uses its public shortage as the recommendation boundary.
+
+### Deterministic reorder recommendation
+
+A reorder recommendation converts the public projected shortage from the
+stockout-exposure calculation into a whole-unit proposal. Exposure is the
+evidence, the recommendation is an unapproved calculation, and a future
+approval workflow would be a separate capability:
+
+```text
+recommended reorder quantity = ceiling(public projected shortage quantity)
+```
+
+Calculate the recommendation on demand with:
+
+```text
+GET /api/v1/products/{product_id}/reorder-recommendation
+```
+
+| Query parameter | Default | Bounds | Meaning |
+| --- | --- | --- | --- |
+| `lookback_observations` | `7` | 1–365 | Most recent eligible demand records to select. |
+| `as_of_date` | latest demand date | Optional date | Inclusive cutoff for eligible history. |
+
+The sole policy is `projected_shortage_ceiling`. It applies standard-library
+`Decimal` `ROUND_CEILING` directly to the two-decimal public shortage; it never
+converts the value through binary floating point before rounding. A shortage of
+`0.00` recommends `0` units, `0.01` recommends `1`, `1.00` recommends `1`,
+`1.01` recommends `2`, `18.00` recommends `18`, and `18.75` recommends `19`.
+Nearest-integer rounding is not used because it could round a positive
+fractional shortage down and leave part of the shortage uncovered. The public
+shortage is intentionally authoritative, so the recommendation does not
+recalculate or round from a hidden exact balance.
+
+For the same five-day product and July 1–4 demand quantities, reducing on-hand
+inventory to 40 with 10 allocated produces a public shortage of `18.75`:
+
+```bash
+curl --fail-with-body \
+  'http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/reorder-recommendation?lookback_observations=4&as_of_date=2026-07-04'
+```
+
+The response preserves the complete exposure evidence and adds only the
+recommendation policy, whole-unit quantity, unit of measure, and status:
+
+```json
+{
+  "product_id": "00000000-0000-0000-0000-000000000001",
+  "forecast_method": "simple_mean",
+  "as_of_date": "2026-07-04",
+  "lookback_observations_requested": 4,
+  "observations_used": 4,
+  "training_start_date": "2026-07-01",
+  "training_end_date": "2026-07-04",
+  "average_daily_demand": 9.75,
+  "lead_time_days": 5,
+  "on_hand_quantity": 40,
+  "allocated_quantity": 10,
+  "available_inventory": 30,
+  "forecasted_lead_time_demand": 48.75,
+  "projected_inventory_balance": -18.75,
+  "projected_shortage_quantity": 18.75,
+  "recommendation_policy": "projected_shortage_ceiling",
+  "recommended_reorder_quantity": 19,
+  "unit_of_measure": "each",
+  "recommendation_status": "reorder_recommended"
+}
+```
+
+Zero recommended units use `no_reorder_needed`; a positive whole-unit result
+uses `reorder_recommended`. A missing product or inventory position returns
+HTTP 404, and an existing product without eligible demand returns HTTP 422.
+The route shares the exposure endpoint's cutoff, chronological selection,
+record-count lookback, recorded-zero, missing-date, negative-inventory,
+zero-lead-time, and custom-prefix behavior.
+
+The operation is read-only and nonpersistent. It stores no forecast, exposure,
+recommendation, order, or approval and does not mutate product, inventory, or
+demand state. It does not select suppliers, prices, pack sizes, minimum order
+quantities, safety stock, service levels, probabilities, or confidence. A
+future reviewed issue must define any approval, order creation, or audit
+workflow.
 
 ## Contribution Rule
 

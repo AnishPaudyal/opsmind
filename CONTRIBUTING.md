@@ -223,6 +223,32 @@ must keep the forecast response exact and continue to validate all existing
 routes, custom prefixes, OpenAPI, shared dependency injection, and application
 isolation without relying on test order.
 
+Run focused reorder-recommendation tests with:
+
+```bash
+uv run pytest -p no:cacheprovider \
+  tests/unit/test_forecast_domain.py \
+  tests/unit/test_stockout_domain.py \
+  tests/unit/test_reorder_domain.py \
+  tests/api/test_forecast.py \
+  tests/api/test_stockout.py \
+  tests/api/test_reorder.py
+```
+
+Reorder calculations must reuse the pure stockout-exposure result rather than
+duplicating forecast, record-selection, or inventory rules. Apply `Decimal`
+`ROUND_CEILING` directly to the public two-decimal shortage without a float
+conversion. Preserve the complete exposure evidence, derive recommendation
+status from the whole-unit result, and test exact-unit and fractional-unit
+boundaries, including zero, `0.01`, `1.00`, `1.01`, `18.00`, and `18.75`.
+
+Recommendation requests remain read-only and must not persist a forecast,
+exposure, recommendation, order, or approval or mutate existing state. Use
+fresh repositories or applications to verify isolation, and retain regression
+coverage for forecast, exposure, product, inventory, demand, health, custom
+prefixes, OpenAPI, and shared dependency injection without relying on test
+order.
+
 ### Continuous integration
 
 The [Python-quality workflow](.github/workflows/python-quality.yml) reproduces
