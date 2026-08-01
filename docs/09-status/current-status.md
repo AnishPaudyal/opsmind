@@ -102,9 +102,30 @@
 - Zero demand is valid; negative quantities are rejected.
 - Demand uses the same isolated in-memory repository as products and inventory.
   Storage is nonpersistent and all state is lost when the process restarts.
-- No database, migration, forecasting, risk scoring, reorder recommendation,
-  approval workflow, audit history, authentication, frontend, Docker, AWS, or
-  deployment capability exists yet.
-- Issue #18 remains in progress and incomplete until its pull request is merged.
-- GitHub-hosted validation for issue #18 is not claimed before its pull request
+- No database, migration, risk scoring, reorder recommendation, approval
+  workflow, audit history, authentication, frontend, Docker, AWS, or deployment
+  capability exists yet.
+- Issue #18 was completed when PR #19 merged the demand-history API.
+
+## Phase 2 Baseline Demand Forecast API
+
+- Issue #20 implements a deterministic arithmetic-mean baseline forecast under
+  the configured `/api/v1` business prefix.
+- Forecasts are calculated on demand from chronological repository demand and
+  are never persisted.
+- Clients can select an observation lookback, horizon, and optional inclusive
+  cutoff. Without a cutoff, the latest stored demand date is used.
+- Missing calendar dates remain missing; recorded zero-demand observations are
+  preserved.
+- Results include the method, effective cutoff, selected training dates,
+  requested and actual observation counts, average daily demand, horizon, and
+  projected quantity.
+- Exact decimal arithmetic drives the forecast before average and forecast are
+  independently rounded to two decimal places with `ROUND_HALF_UP`.
+- The simple mean does not model trend, seasonality, intermittent demand,
+  uncertainty, or measured accuracy.
+- No stockout risk, reorder recommendation, approval workflow, audit history,
+  PostgreSQL, frontend, Docker, AWS, or deployment capability exists yet.
+- Issue #20 remains in progress and incomplete until its pull request is merged.
+- GitHub-hosted validation for issue #20 is not claimed before its pull request
   runs.

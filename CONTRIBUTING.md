@@ -175,6 +175,28 @@ isolated, and never rely on test execution order. Demand remains part of the
 same process-local in-memory repository as products and inventory; persistence
 and database-backed fixtures remain future work.
 
+Run focused baseline-forecast tests with:
+
+```bash
+uv run pytest -p no:cacheprovider \
+  tests/unit/test_forecast_domain.py \
+  tests/api/test_forecast.py
+```
+
+Forecast calculations belong in the pure domain layer and must remain
+independent of FastAPI, Pydantic, repository implementations, external models,
+and the system clock. Tests must preserve exact decimal arithmetic until final
+two-decimal `ROUND_HALF_UP` quantization, prevent future observations from
+crossing the effective cutoff, count records rather than calendar days, and
+distinguish a recorded zero from a missing date. Forecast requests are
+read-only: product, inventory, and demand state must remain unchanged.
+
+Construct a fresh repository or application for each forecast test. Tests must
+remain deterministic, order-independent, and isolated, while regression checks
+continue to cover product, inventory, demand, health, custom-prefix, OpenAPI,
+and shared dependency-injection behavior. Forecast source history remains
+process-local and nonpersistent.
+
 ### Continuous integration
 
 The [Python-quality workflow](.github/workflows/python-quality.yml) reproduces
