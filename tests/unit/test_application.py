@@ -7,6 +7,7 @@ from typing import Protocol, cast
 import pytest
 from fastapi import FastAPI
 
+from opsmind.api.dependencies import get_product_inventory_repository
 from opsmind.application import create_app
 from opsmind.core.config import (
     Environment,
@@ -14,6 +15,7 @@ from opsmind.core.config import (
     get_settings,
     reset_settings_cache,
 )
+from opsmind.repositories.memory import InMemoryProductInventoryRepository
 
 
 class ApplicationModule(Protocol):
@@ -48,16 +50,34 @@ def test_create_app_provides_the_same_settings_instance() -> None:
     assert settings_provider() is settings
 
 
-def test_root_router_has_only_the_unversioned_health_business_route() -> None:
+def test_root_router_keeps_health_unversioned_without_an_empty_version_route() -> None:
     settings = Settings(environment=Environment.TEST, api_v1_prefix="/api/v1")
     application = create_app(settings)
     route_paths = set(cast(dict[str, object], application.openapi()["paths"]))
 
     assert "/health" in route_paths
     assert settings.api_v1_prefix not in route_paths
-    assert not any(
-        path.startswith(f"{settings.api_v1_prefix}/") for path in route_paths
-    )
+    assert f"{settings.api_v1_prefix}/products" in route_paths
+
+
+def test_create_app_provides_the_supplied_repository_instance() -> None:
+    settings = Settings(environment=Environment.TEST)
+    repository = InMemoryProductInventoryRepository()
+    application = create_app(settings, repository)
+
+    repository_provider = application.dependency_overrides[
+        get_product_inventory_repository
+    ]
+
+    assert repository_provider() is repository
+
+
+def test_unbound_repository_dependency_fails_fast() -> None:
+    with pytest.raises(
+        RuntimeError,
+        match=r"^Product inventory repository is not configured$",
+    ):
+        get_product_inventory_repository()
 
 
 def test_main_exposes_the_default_asgi_application(

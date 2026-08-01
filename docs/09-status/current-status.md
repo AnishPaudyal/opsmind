@@ -60,8 +60,6 @@
   standard pytest test files without a workflow redesign.
 - Pre-commit remains deferred, and application and integration CI remain future
   work.
-- GitHub-hosted validation for issue #14 is not claimed before its pull request
-  runs.
 
 ## Phase 2 FastAPI Backend Foundation
 
@@ -77,6 +75,22 @@
 - HTTPX is development-only; no broad dependency extras were added.
 - GitHub-hosted repository-governance and Python-quality checks passed for PR
   #15.
-- No database, migration, Docker, frontend, AWS, authentication, business API,
-  deployment, or ML capability exists yet.
-- Issue #14 remains in progress and incomplete until PR #15 is merged.
+- Issue #14 was completed when PR #15 merged the accepted backend foundation.
+
+## Phase 2 Product and Inventory API
+
+- Issue #16 implements OpsMind's first supply-chain business API.
+- Product creation, deterministic listing, and UUID retrieval are available
+  under the configured `/api/v1` business prefix.
+- Inventory can be set, replaced, and retrieved for existing products;
+  available quantity is calculated as on-hand quantity minus allocated quantity
+  and may be negative to represent shortage.
+- Product and inventory storage remains isolated in memory for each application
+  instance. Data is not persistent and is lost when the process restarts.
+- The unversioned `GET /health` process-health contract remains unchanged.
+- No database, migration, demand history, forecasting, risk scoring, reorder
+  recommendation, approval workflow, authentication, frontend, Docker, AWS, or
+  deployment capability exists yet.
+- Issue #16 remains in progress and incomplete until its pull request is merged.
+- GitHub-hosted validation for issue #16 is not claimed before its pull request
+  runs.

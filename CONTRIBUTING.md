@@ -142,6 +142,23 @@ Build output is generated evidence and must not be committed. Material changes
 to the framework, packaging, configuration boundary, or route architecture
 require ADR review.
 
+Product and inventory tests can be run directly while developing the first
+business API:
+
+```bash
+uv run pytest -p no:cacheprovider \
+  tests/unit/test_product_domain.py \
+  tests/unit/test_inventory_domain.py \
+  tests/unit/test_memory_repository.py \
+  tests/api/test_products.py
+```
+
+Tests must construct their own repository or application instance, must not
+depend on test execution order, and must not share mutable business state. The
+current repository boundary is deliberately in memory: it is isolated per
+application instance and loses all data on process restart. Database behavior
+and database-backed test fixtures remain outside this milestone.
+
 ### Continuous integration
 
 The [Python-quality workflow](.github/workflows/python-quality.yml) reproduces
