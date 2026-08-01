@@ -10,14 +10,15 @@ coherent product.
 
 Phase 0, project definition and governance, is complete. The Phase 1 repository,
 Python, quality, and CI foundations are established. Phase 2 has begun with the
-reviewed FastAPI backend foundation from issue #14.
+reviewed FastAPI backend foundation from issue #14 and the first bounded
+supply-chain business API from issue #16.
 
-The backend foundation is deliberately narrow. This repository does not yet
-contain:
+The current backend can create and retrieve products and record one in-memory
+inventory position for each product. This repository does not yet contain:
 
-- Supply-chain business endpoints
 - Persistence or migrations
 - Authentication or authorization
+- Demand history, forecasting, risk, or reorder recommendations
 - Cloud infrastructure
 - Deployed AWS resources
 - Trained machine-learning models
@@ -98,7 +99,7 @@ never be committed. Do not install OpsMind dependencies into Miniconda base,
 Homebrew Python, or `/usr/bin/python3`. Bare `python` and `python3` may resolve
 to unrelated interpreters, so prefer `uv run` for repository commands.
 
-## FastAPI backend foundation
+## FastAPI backend
 
 The packaged backend lives under `src/opsmind`. Start the local ASGI application
 with:
@@ -107,11 +108,17 @@ with:
 uv run uvicorn opsmind.main:app --reload
 ```
 
-The initial API exposes one deterministic process-health endpoint:
+The API exposes an unversioned deterministic process-health endpoint and five
+product and inventory operations under the configured business prefix:
 
-```text
-GET /health
-```
+| Method | Path | Result |
+| --- | --- | --- |
+| `GET` | `/health` | Report process health. |
+| `POST` | `/api/v1/products` | Create a normalized product. |
+| `GET` | `/api/v1/products` | List products in normalized-SKU order. |
+| `GET` | `/api/v1/products/{product_id}` | Retrieve one product. |
+| `PUT` | `/api/v1/products/{product_id}/inventory` | Set or replace inventory. |
+| `GET` | `/api/v1/products/{product_id}/inventory` | Retrieve inventory. |
 
 Application settings use the `OPSMIND_` environment-variable prefix. Supported
 overrides are:
@@ -123,12 +130,66 @@ overrides are:
 - `OPSMIND_API_V1_PREFIX`
 
 The default service is `opsmind-api`, the default environment is `local`, debug
-mode is disabled, and `/api/v1` is reserved for a future real business API. The
-application does not load a repository `.env` file implicitly.
+mode is disabled, and the default business prefix is `/api/v1`. The application
+does not load a repository `.env` file implicitly.
 
 `GET /health` reports only that the API process can serve a request. It does not
 claim readiness for a database, AWS resource, external service, or product
 workflow. No such dependency is configured by this foundation.
+
+### Product and inventory example
+
+With the local server running, interactive OpenAPI documentation is available
+at `http://127.0.0.1:8000/docs`. A product can also be created with a synthetic
+request:
+
+```bash
+curl --fail-with-body \
+  --request POST \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "sku": " sensor-001 ",
+    "name": "Temperature Sensor",
+    "unit_of_measure": "each",
+    "lead_time_days": 14,
+    "is_active": true
+  }' \
+  http://127.0.0.1:8000/api/v1/products
+```
+
+The API generates the UUID and returns the normalized SKU:
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000001",
+  "sku": "SENSOR-001",
+  "name": "Temperature Sensor",
+  "unit_of_measure": "each",
+  "lead_time_days": 14,
+  "is_active": true
+}
+```
+
+Use the returned UUID to set inventory:
+
+```bash
+curl --fail-with-body \
+  --request PUT \
+  --header 'Content-Type: application/json' \
+  --data '{"on_hand_quantity": 100, "allocated_quantity": 35}' \
+  http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/inventory
+```
+
+Inventory uses three quantities: on-hand is the physical quantity present,
+allocated is the quantity already committed to demand, and available is
+calculated as on-hand minus allocated. Available quantity may be negative; a
+negative value represents a shortage and is not clamped to zero.
+
+Products and inventory are stored only in an isolated in-memory repository for
+each application instance. Restarting the process loses all product and
+inventory data. There is no database, migration, authentication, demand-history,
+forecasting, risk, reorder, approval, frontend, Docker, AWS, or deployment
+capability in this milestone.
 
 ## Contribution Rule
 
