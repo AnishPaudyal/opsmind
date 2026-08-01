@@ -11,14 +11,15 @@ coherent product.
 Phase 0, project definition and governance, is complete. The Phase 1 repository,
 Python, quality, and CI foundations are established. Phase 2 has begun with the
 reviewed FastAPI backend foundation from issue #14 and the first bounded
-supply-chain business API from issue #16.
+supply-chain business APIs from issues #16 and #18.
 
-The current backend can create and retrieve products and record one in-memory
-inventory position for each product. This repository does not yet contain:
+The current backend can create and retrieve products, record one in-memory
+inventory position for each product, and ingest and retrieve daily demand
+history. This repository does not yet contain:
 
 - Persistence or migrations
 - Authentication or authorization
-- Demand history, forecasting, risk, or reorder recommendations
+- Forecasting, risk, or reorder recommendations
 - Cloud infrastructure
 - Deployed AWS resources
 - Trained machine-learning models
@@ -108,8 +109,8 @@ with:
 uv run uvicorn opsmind.main:app --reload
 ```
 
-The API exposes an unversioned deterministic process-health endpoint and five
-product and inventory operations under the configured business prefix:
+The API exposes an unversioned deterministic process-health endpoint and seven
+product, inventory, and demand operations under the configured business prefix:
 
 | Method | Path | Result |
 | --- | --- | --- |
@@ -119,6 +120,8 @@ product and inventory operations under the configured business prefix:
 | `GET` | `/api/v1/products/{product_id}` | Retrieve one product. |
 | `PUT` | `/api/v1/products/{product_id}/inventory` | Set or replace inventory. |
 | `GET` | `/api/v1/products/{product_id}/inventory` | Retrieve inventory. |
+| `POST` | `/api/v1/products/{product_id}/demand` | Atomically add daily demand. |
+| `GET` | `/api/v1/products/{product_id}/demand` | Retrieve daily demand. |
 
 Application settings use the `OPSMIND_` environment-variable prefix. Supported
 overrides are:
@@ -187,9 +190,70 @@ negative value represents a shortage and is not clamped to zero.
 
 Products and inventory are stored only in an isolated in-memory repository for
 each application instance. Restarting the process loses all product and
-inventory data. There is no database, migration, authentication, demand-history,
-forecasting, risk, reorder, approval, frontend, Docker, AWS, or deployment
-capability in this milestone.
+inventory data. There is no database, migration, authentication, forecasting,
+risk, reorder, approval, frontend, Docker, AWS, or deployment capability in
+this milestone.
+
+### Demand history
+
+Demand history records the non-negative quantity observed for one product on
+one calendar date. It uses daily granularity, accepts zero as valid demand, and
+allows only one observation per product/date combination. Demand is historical
+input for a future forecasting feature; this API does not produce forecasts.
+
+Submit one or more observations as an atomic batch using the UUID returned when
+the product was created:
+
+```bash
+curl --fail-with-body \
+  --request POST \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "observations": [
+      {"demand_date": "2026-07-03", "quantity": 9},
+      {"demand_date": "2026-07-01", "quantity": 12},
+      {"demand_date": "2026-07-02", "quantity": 18}
+    ]
+  }' \
+  http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/demand
+```
+
+The response is chronological even when the request is not:
+
+```json
+[
+  {
+    "product_id": "00000000-0000-0000-0000-000000000001",
+    "demand_date": "2026-07-01",
+    "quantity": 12
+  },
+  {
+    "product_id": "00000000-0000-0000-0000-000000000001",
+    "demand_date": "2026-07-02",
+    "quantity": 18
+  },
+  {
+    "product_id": "00000000-0000-0000-0000-000000000001",
+    "demand_date": "2026-07-03",
+    "quantity": 9
+  }
+]
+```
+
+If any submitted date is repeated within the batch or already exists for that
+product, the entire request returns HTTP 409 and stores nothing from the failed
+batch. Retrieve complete history or apply inclusive date bounds:
+
+```bash
+curl --fail-with-body \
+  'http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/demand?start_date=2026-07-01&end_date=2026-07-03'
+```
+
+Swagger UI at `http://127.0.0.1:8000/docs` documents both demand operations and
+their schemas. Demand uses the same isolated in-memory repository as products
+and inventory, so all observations are lost when the application process
+restarts. Database persistence, ingestion pipelines, forecasting, risk, and
+recommendations remain outside this milestone.
 
 ## Contribution Rule
 

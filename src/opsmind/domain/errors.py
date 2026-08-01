@@ -1,5 +1,6 @@
-"""Typed errors for product and inventory operations."""
+"""Typed errors for product, inventory, and demand operations."""
 
+from datetime import date
 from uuid import UUID
 
 
@@ -25,3 +26,12 @@ class InventoryNotFoundError(Exception):
     def __init__(self, product_id: UUID) -> None:
         self.product_id = product_id
         super().__init__(str(product_id))
+
+
+class DuplicateDemandDateError(Exception):
+    """Demand already exists for a product and calendar date."""
+
+    def __init__(self, product_id: UUID, demand_date: date) -> None:
+        self.product_id = product_id
+        self.demand_date = demand_date
+        super().__init__(f"{product_id}:{demand_date.isoformat()}")

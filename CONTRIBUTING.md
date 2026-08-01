@@ -159,6 +159,22 @@ current repository boundary is deliberately in memory: it is isolated per
 application instance and loses all data on process restart. Database behavior
 and database-backed test fixtures remain outside this milestone.
 
+Run focused demand-history tests with:
+
+```bash
+uv run pytest -p no:cacheprovider \
+  tests/unit/test_demand_domain.py \
+  tests/unit/test_demand_repository.py \
+  tests/api/test_demand.py
+```
+
+Demand tests must verify that a conflicting batch stores no partial data, that
+responses and repository results remain chronological, and that date filters
+are inclusive. Construct fresh repositories or applications so demand state is
+isolated, and never rely on test execution order. Demand remains part of the
+same process-local in-memory repository as products and inventory; persistence
+and database-backed fixtures remain future work.
+
 ### Continuous integration
 
 The [Python-quality workflow](.github/workflows/python-quality.yml) reproduces

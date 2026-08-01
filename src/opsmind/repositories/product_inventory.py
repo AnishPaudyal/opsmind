@@ -1,8 +1,10 @@
-"""Product and inventory repository interface."""
+"""Product, inventory, and demand repository interface."""
 
+from datetime import date
 from typing import Protocol
 from uuid import UUID
 
+from opsmind.domain.demand import DemandObservation
 from opsmind.domain.inventory import InventoryPosition
 from opsmind.domain.product import Product
 
@@ -28,4 +30,22 @@ class ProductInventoryRepository(Protocol):
 
     def get_inventory(self, product_id: UUID) -> InventoryPosition:
         """Return inventory while distinguishing missing product and position."""
+        ...
+
+    def add_demand_observations(
+        self,
+        product_id: UUID,
+        observations: tuple[DemandObservation, ...],
+    ) -> tuple[DemandObservation, ...]:
+        """Atomically store one chronological demand batch for a product."""
+        ...
+
+    def list_demand_observations(
+        self,
+        product_id: UUID,
+        *,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> tuple[DemandObservation, ...]:
+        """Return chronological demand within optional inclusive bounds."""
         ...
