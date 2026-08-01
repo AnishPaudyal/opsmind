@@ -197,6 +197,32 @@ continue to cover product, inventory, demand, health, custom-prefix, OpenAPI,
 and shared dependency-injection behavior. Forecast source history remains
 process-local and nonpersistent.
 
+Run focused stockout-exposure tests with:
+
+```bash
+uv run pytest -p no:cacheprovider \
+  tests/unit/test_forecast_domain.py \
+  tests/unit/test_stockout_domain.py \
+  tests/api/test_forecast.py \
+  tests/api/test_stockout.py
+```
+
+Stockout calculations must reuse the pure forecast domain's exact simple-mean
+statistics rather than duplicating selection rules or using the displayed
+rounded average. Preserve product lead time as the exposure horizon, current
+available inventory even when negative, inclusive cutoffs, recorded zeroes,
+and missing dates. Do not introduce probability or reorder semantics.
+
+Quantize public analytical values independently to two decimals with
+`ROUND_HALF_UP`, normalize negative zero, and derive shortage and status from
+the normalized public balance. Exposure requests remain read-only and must not
+persist results or mutate product, inventory, or demand state.
+
+Use fresh repositories or applications for exposure tests. Regression coverage
+must keep the forecast response exact and continue to validate all existing
+routes, custom prefixes, OpenAPI, shared dependency injection, and application
+isolation without relying on test order.
+
 ### Continuous integration
 
 The [Python-quality workflow](.github/workflows/python-quality.yml) reproduces
