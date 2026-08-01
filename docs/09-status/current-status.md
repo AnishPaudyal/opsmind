@@ -88,9 +88,23 @@
 - Product and inventory storage remains isolated in memory for each application
   instance. Data is not persistent and is lost when the process restarts.
 - The unversioned `GET /health` process-health contract remains unchanged.
-- No database, migration, demand history, forecasting, risk scoring, reorder
-  recommendation, approval workflow, authentication, frontend, Docker, AWS, or
+- Issue #16 was completed when PR #17 merged the product and inventory API.
+
+## Phase 2 Demand History API
+
+- Issue #18 implements daily demand-history ingestion and retrieval beneath the
+  configured `/api/v1` business prefix.
+- Nonempty demand batches are validated and stored atomically, so a duplicate
+  date conflict leaves all prior state unchanged and stores none of the failed
+  batch.
+- Demand results are chronological, and optional start and end date filters are
+  inclusive.
+- Zero demand is valid; negative quantities are rejected.
+- Demand uses the same isolated in-memory repository as products and inventory.
+  Storage is nonpersistent and all state is lost when the process restarts.
+- No database, migration, forecasting, risk scoring, reorder recommendation,
+  approval workflow, audit history, authentication, frontend, Docker, AWS, or
   deployment capability exists yet.
-- Issue #16 remains in progress and incomplete until its pull request is merged.
-- GitHub-hosted validation for issue #16 is not claimed before its pull request
+- Issue #18 remains in progress and incomplete until its pull request is merged.
+- GitHub-hosted validation for issue #18 is not claimed before its pull request
   runs.
