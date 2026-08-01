@@ -11,16 +11,17 @@ coherent product.
 Phase 0, project definition and governance, is complete. The Phase 1 repository,
 Python, quality, and CI foundations are established. Phase 2 has begun with the
 reviewed FastAPI backend foundation from issue #14 and the first bounded
-supply-chain business APIs from issues #16, #18, and #20.
+supply-chain business APIs from issues #16, #18, #20, and #22.
 
 The current backend can create and retrieve products, record one in-memory
 inventory position for each product, and ingest and retrieve daily demand
 history. It can also calculate a transparent arithmetic-mean demand forecast
-on request. This repository does not yet contain:
+and deterministic stockout exposure on request. This repository does not yet
+contain:
 
 - Persistence or migrations
 - Authentication or authorization
-- Model training, stockout risk, or reorder recommendations
+- Model training, stockout probability, or reorder recommendations
 - Cloud infrastructure
 - Deployed AWS resources
 - Trained machine-learning models
@@ -35,7 +36,7 @@ The first end-to-end workflow will be:
 
 1. Load product and demand-history data.
 2. Produce a demand forecast.
-3. Estimate stockout risk.
+3. Calculate deterministic stockout exposure.
 4. Generate a reorder recommendation with supporting evidence.
 5. Let a user approve or reject the recommendation.
 6. Record the decision and its audit history.
@@ -110,9 +111,9 @@ with:
 uv run uvicorn opsmind.main:app --reload
 ```
 
-The API exposes an unversioned deterministic process-health endpoint and eight
-product, inventory, demand, and forecast operations under the configured
-business prefix:
+The API exposes an unversioned deterministic process-health endpoint and nine
+product, inventory, demand, forecast, and exposure operations under the
+configured business prefix:
 
 | Method | Path | Result |
 | --- | --- | --- |
@@ -125,6 +126,7 @@ business prefix:
 | `POST` | `/api/v1/products/{product_id}/demand` | Atomically add daily demand. |
 | `GET` | `/api/v1/products/{product_id}/demand` | Retrieve daily demand. |
 | `GET` | `/api/v1/products/{product_id}/forecast` | Calculate a baseline demand forecast. |
+| `GET` | `/api/v1/products/{product_id}/stockout-exposure` | Calculate deterministic lead-time exposure. |
 
 Application settings use the `OPSMIND_` environment-variable prefix. Supported
 overrides are:
@@ -193,9 +195,9 @@ negative value represents a shortage and is not clamped to zero.
 
 Products and inventory are stored only in an isolated in-memory repository for
 each application instance. Restarting the process loses all product and
-inventory data. There is no database, migration, authentication, stockout risk,
-reorder, approval, frontend, Docker, AWS, or deployment capability in this
-milestone.
+inventory data. There is no database, migration, authentication, stockout
+probability, reorder, approval, frontend, Docker, AWS, or deployment capability
+in this milestone.
 
 ### Demand history
 
@@ -329,8 +331,101 @@ This baseline uses source demand from the process-local in-memory repository,
 so restarting the application loses the input history. The simple mean does not
 model trend, seasonality, intermittent demand, or uncertainty; it supplies no
 confidence interval and has no measured accuracy. It is not production-grade
-machine learning. A future milestone may use this baseline as one input to a
-separately reviewed stockout-risk calculation.
+machine learning. The deterministic exposure calculation below uses this
+baseline; reorder recommendations remain separate future work.
+
+### Deterministic stockout exposure
+
+Stockout exposure answers whether currently available inventory covers the
+baseline demand expected during a product's replenishment lead time. It is an
+explainable arithmetic comparison, not a probability, calibrated risk score,
+confidence rating, or reorder recommendation:
+
+```text
+available inventory = on-hand quantity - allocated quantity
+exact lead-time demand = exact average daily demand * product lead-time days
+projected balance = available inventory - exact lead-time demand
+projected shortage = max(-public projected balance, 0.00)
+```
+
+Calculate exposure on demand with:
+
+```text
+GET /api/v1/products/{product_id}/stockout-exposure
+```
+
+| Query parameter | Default | Bounds | Meaning |
+| --- | --- | --- | --- |
+| `lookback_observations` | `7` | 1–365 | Most recent eligible demand records to select. |
+| `as_of_date` | latest demand date | Optional date | Inclusive cutoff for eligible history. |
+
+Clients do not supply a forecast horizon. The product's authoritative
+`lead_time_days` defines it, including zero and values greater than 365. An
+exposure request retrieves the product, inventory, and demand through the same
+injected repository used by the existing business routes.
+
+The result has one of two deterministic statuses:
+
+- `sufficient` when the public projected balance is zero or positive.
+- `shortage_projected` when the public projected balance is negative.
+
+Exact equality is sufficient. Negative available inventory is preserved rather
+than clamped. For a zero-lead-time product, lead-time demand is `0.00`, so the
+projected balance is the current available inventory.
+
+For a product with a five-day lead time, 60 on hand, 10 allocated, and the
+July 1–4 demand quantities `12, 18, 9, 0`, request:
+
+```bash
+curl --fail-with-body \
+  'http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/stockout-exposure?lookback_observations=4&as_of_date=2026-07-04'
+```
+
+The average is `9.75`, lead-time demand is `48.75`, available inventory is
+`50`, and the response reports a sufficient balance of `1.25`:
+
+```json
+{
+  "product_id": "00000000-0000-0000-0000-000000000001",
+  "forecast_method": "simple_mean",
+  "as_of_date": "2026-07-04",
+  "lookback_observations_requested": 4,
+  "observations_used": 4,
+  "training_start_date": "2026-07-01",
+  "training_end_date": "2026-07-04",
+  "average_daily_demand": 9.75,
+  "lead_time_days": 5,
+  "on_hand_quantity": 60,
+  "allocated_quantity": 10,
+  "available_inventory": 50,
+  "forecasted_lead_time_demand": 48.75,
+  "projected_inventory_balance": 1.25,
+  "projected_shortage_quantity": 0.0,
+  "status": "sufficient"
+}
+```
+
+Exposure reuses the forecast domain's chronological record selection,
+inclusive cutoff, zero-demand preservation, and missing-date behavior. Later
+observations cannot cross an explicit cutoff. The latest stored demand date is
+the default cutoff, so no system clock affects the result.
+
+Lead-time demand is calculated from the exact unrounded mean. Analytical values
+are independently rounded to two decimal places using `ROUND_HALF_UP` at the
+public boundary. A balance that quantizes to negative zero is normalized to
+`0.00`; shortage is then `0.00` and status is `sufficient`, keeping all public
+fields consistent.
+
+A missing product or missing inventory position returns HTTP 404. An existing
+product without eligible demand returns HTTP 422. Swagger UI at
+`http://127.0.0.1:8000/docs` documents the schema and validation constraints.
+
+The operation is read-only: it stores no exposure or forecast and changes no
+product, inventory, or demand state. Its inputs remain process-local and are
+lost on restart. It provides no stockout probability, uncertainty interval,
+safety-stock optimization, measured forecast accuracy, or reorder quantity. A
+future reviewed milestone may use this deterministic result as one input to a
+reorder recommendation.
 
 ## Contribution Rule
 

@@ -124,8 +124,27 @@
   independently rounded to two decimal places with `ROUND_HALF_UP`.
 - The simple mean does not model trend, seasonality, intermittent demand,
   uncertainty, or measured accuracy.
-- No stockout risk, reorder recommendation, approval workflow, audit history,
-  PostgreSQL, frontend, Docker, AWS, or deployment capability exists yet.
-- Issue #20 remains in progress and incomplete until its pull request is merged.
-- GitHub-hosted validation for issue #20 is not claimed before its pull request
+- No stockout probability, reorder recommendation, approval workflow, audit
+  history, PostgreSQL, frontend, Docker, AWS, or deployment capability exists
+  yet.
+- Issue #20 was completed when PR #21 merged the baseline forecast API.
+
+## Phase 2 Deterministic Stockout Exposure API
+
+- Issue #22 combines product lead time, current inventory, and the exact
+  simple-mean demand statistics into deterministic stockout exposure.
+- Exposure is calculated on demand and is never persisted.
+- Available inventory remains on-hand quantity minus allocated quantity,
+  including negative values.
+- The product's lead time defines the horizon; clients do not submit one.
+- Results explain lead-time demand, projected inventory balance, projected
+  shortage, and either `sufficient` or `shortage_projected` status.
+- Status and shortage derive from the two-decimal public balance after
+  `ROUND_HALF_UP` quantization and negative-zero normalization.
+- The capability is not a stockout probability, calibrated risk score, or
+  reorder recommendation.
+- No reorder, approval, audit, database, authentication, frontend, Docker, AWS,
+  or deployment capability exists yet.
+- Issue #22 remains in progress and incomplete until its pull request is merged.
+- GitHub-hosted validation for issue #22 is not claimed before its pull request
   runs.
