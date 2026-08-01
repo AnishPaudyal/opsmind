@@ -11,15 +11,16 @@ coherent product.
 Phase 0, project definition and governance, is complete. The Phase 1 repository,
 Python, quality, and CI foundations are established. Phase 2 has begun with the
 reviewed FastAPI backend foundation from issue #14 and the first bounded
-supply-chain business APIs from issues #16 and #18.
+supply-chain business APIs from issues #16, #18, and #20.
 
 The current backend can create and retrieve products, record one in-memory
 inventory position for each product, and ingest and retrieve daily demand
-history. This repository does not yet contain:
+history. It can also calculate a transparent arithmetic-mean demand forecast
+on request. This repository does not yet contain:
 
 - Persistence or migrations
 - Authentication or authorization
-- Forecasting, risk, or reorder recommendations
+- Model training, stockout risk, or reorder recommendations
 - Cloud infrastructure
 - Deployed AWS resources
 - Trained machine-learning models
@@ -109,8 +110,9 @@ with:
 uv run uvicorn opsmind.main:app --reload
 ```
 
-The API exposes an unversioned deterministic process-health endpoint and seven
-product, inventory, and demand operations under the configured business prefix:
+The API exposes an unversioned deterministic process-health endpoint and eight
+product, inventory, demand, and forecast operations under the configured
+business prefix:
 
 | Method | Path | Result |
 | --- | --- | --- |
@@ -122,6 +124,7 @@ product, inventory, and demand operations under the configured business prefix:
 | `GET` | `/api/v1/products/{product_id}/inventory` | Retrieve inventory. |
 | `POST` | `/api/v1/products/{product_id}/demand` | Atomically add daily demand. |
 | `GET` | `/api/v1/products/{product_id}/demand` | Retrieve daily demand. |
+| `GET` | `/api/v1/products/{product_id}/forecast` | Calculate a baseline demand forecast. |
 
 Application settings use the `OPSMIND_` environment-variable prefix. Supported
 overrides are:
@@ -190,16 +193,16 @@ negative value represents a shortage and is not clamped to zero.
 
 Products and inventory are stored only in an isolated in-memory repository for
 each application instance. Restarting the process loses all product and
-inventory data. There is no database, migration, authentication, forecasting,
-risk, reorder, approval, frontend, Docker, AWS, or deployment capability in
-this milestone.
+inventory data. There is no database, migration, authentication, stockout risk,
+reorder, approval, frontend, Docker, AWS, or deployment capability in this
+milestone.
 
 ### Demand history
 
 Demand history records the non-negative quantity observed for one product on
 one calendar date. It uses daily granularity, accepts zero as valid demand, and
-allows only one observation per product/date combination. Demand is historical
-input for a future forecasting feature; this API does not produce forecasts.
+allows only one observation per product/date combination. Demand is the
+historical input for the baseline forecast described below.
 
 Submit one or more observations as an atomic batch using the UUID returned when
 the product was created:
@@ -252,8 +255,82 @@ curl --fail-with-body \
 Swagger UI at `http://127.0.0.1:8000/docs` documents both demand operations and
 their schemas. Demand uses the same isolated in-memory repository as products
 and inventory, so all observations are lost when the application process
-restarts. Database persistence, ingestion pipelines, forecasting, risk, and
+restarts. Database persistence, ingestion pipelines, model training, risk, and
 recommendations remain outside this milestone.
+
+### Baseline demand forecast
+
+The baseline forecast is a transparent reference calculation that averages the
+most recent eligible demand observations and projects that exact average across
+a requested horizon:
+
+```text
+exact average = sum(selected quantities) / observations used
+exact forecast = exact average * horizon days
+```
+
+A simple baseline comes before complex models so future forecasting work can be
+compared with a deterministic, explainable reference. The endpoint calculates
+the result on demand and never stores a forecast or changes product, inventory,
+or demand state:
+
+```text
+GET /api/v1/products/{product_id}/forecast
+```
+
+| Query parameter | Default | Bounds | Meaning |
+| --- | --- | --- | --- |
+| `lookback_observations` | `7` | 1–365 | Most recent eligible records to select. |
+| `horizon_days` | `7` | 1–365 | Days covered by the projected quantity. |
+| `as_of_date` | latest demand date | Optional date | Inclusive cutoff for eligible history. |
+
+Lookback counts recorded observations, not elapsed calendar days. A recorded
+zero is real demand and remains in the calculation; a missing date remains
+missing and is never imputed as zero. When an explicit cutoff is supplied,
+later observations are excluded to prevent future-data leakage. Without a
+cutoff, the latest stored demand date becomes the effective cutoff—no system
+clock is used.
+
+For the July 1–4 quantities `12, 18, 9, 0`, request a seven-day forecast with:
+
+```bash
+curl --fail-with-body \
+  'http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/forecast?lookback_observations=4&horizon_days=7&as_of_date=2026-07-04'
+```
+
+The explanatory response identifies the selected window and calculation:
+
+```json
+{
+  "product_id": "00000000-0000-0000-0000-000000000001",
+  "method": "simple_mean",
+  "as_of_date": "2026-07-04",
+  "lookback_observations_requested": 4,
+  "observations_used": 4,
+  "training_start_date": "2026-07-01",
+  "training_end_date": "2026-07-04",
+  "average_daily_demand": 9.75,
+  "horizon_days": 7,
+  "forecast_quantity": 68.25
+}
+```
+
+Average and forecast values use exact standard-library decimal arithmetic.
+Each is independently rounded to two decimal places with `ROUND_HALF_UP` only
+at the result boundary. The horizon forecast is calculated from the unrounded
+exact mean, not the displayed average: demand `1, 0, 0` displays an average of
+`0.33`, while its three-day forecast is correctly `1.00`, not `0.99`.
+
+An existing product without eligible history returns HTTP 422; a missing
+product returns HTTP 404. Swagger UI at `http://127.0.0.1:8000/docs` documents
+the response metadata and parameter constraints.
+
+This baseline uses source demand from the process-local in-memory repository,
+so restarting the application loses the input history. The simple mean does not
+model trend, seasonality, intermittent demand, or uncertainty; it supplies no
+confidence interval and has no measured accuracy. It is not production-grade
+machine learning. A future milestone may use this baseline as one input to a
+separately reviewed stockout-risk calculation.
 
 ## Contribution Rule
 
