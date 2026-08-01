@@ -143,8 +143,28 @@
   `ROUND_HALF_UP` quantization and negative-zero normalization.
 - The capability is not a stockout probability, calibrated risk score, or
   reorder recommendation.
-- No reorder, approval, audit, database, authentication, frontend, Docker, AWS,
-  or deployment capability exists yet.
-- Issue #22 remains in progress and incomplete until its pull request is merged.
-- GitHub-hosted validation for issue #22 is not claimed before its pull request
+- No recommendation approval, ordering, audit, database, authentication,
+  frontend, Docker, AWS, or deployment capability exists yet.
+- Issue #22 was completed when PR #23 merged the stockout-exposure API.
+
+## Phase 2 Deterministic Reorder Recommendation API
+
+- Issue #24 implements a read-only recommendation endpoint beneath the configured
+  `/api/v1` business prefix.
+- The recommendation reuses the deterministic stockout-exposure result and
+  preserves its complete public evidence.
+- The sole `projected_shortage_ceiling` policy applies `Decimal`
+  `ROUND_CEILING` directly to the public two-decimal projected shortage.
+- Zero recommended units report `no_reorder_needed`; positive whole-unit
+  results report `reorder_recommended` and preserve the product's unit of
+  measure.
+- Requests retain the established inclusive cutoff, record-count lookback,
+  recorded-zero, missing-date, negative-inventory, and zero-lead-time behavior.
+- Results are calculated on demand and are never persisted. Product, inventory,
+  and demand state remain unchanged.
+- This capability does not create an order or provide approval, audit,
+  supplier, cost, pack-size, safety-stock, service-level, probability, database,
+  authentication, frontend, Docker, AWS, or deployment behavior.
+- Issue #24 remains in progress and incomplete until its pull request is merged.
+- GitHub-hosted validation for issue #24 is not claimed before its pull request
   runs.
