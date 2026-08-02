@@ -1,0 +1,22 @@
+services:
+  postgresql:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${OPSMIND_POSTGRES_DB:-opsmind}
+      POSTGRES_USER: ${OPSMIND_POSTGRES_USER:-opsmind}
+      POSTGRES_PASSWORD: ${OPSMIND_POSTGRES_PASSWORD:-opsmind-development-only}
+    ports:
+      - "127.0.0.1:${OPSMIND_POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+
+volumes:
+  postgresql-data:

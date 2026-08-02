@@ -16,6 +16,24 @@ jobs:
     name: Python quality
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      OPSMIND_DATABASE_URL: postgresql+psycopg://opsmind:opsmind-ci-only@localhost:5432/opsmind_test
+      OPSMIND_TEST_DATABASE_URL: postgresql+psycopg://opsmind:opsmind-ci-only@localhost:5432/opsmind_test
+
+    services:
+      postgresql:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: opsmind_test
+          POSTGRES_USER: opsmind
+          POSTGRES_PASSWORD: opsmind-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U opsmind -d opsmind_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
 
     steps:
       - name: Check out repository
@@ -42,6 +60,9 @@ jobs:
 
       - name: Verify lockfile
         run: uv lock --check
+
+      - name: Apply PostgreSQL migrations
+        run: uv run alembic upgrade head
 
       - name: Verify formatting
         run: uv run ruff format --check .

@@ -2,7 +2,7 @@
 
 from datetime import date
 from typing import cast
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -27,6 +27,20 @@ def test_positive_quantity_and_typed_date_are_preserved() -> None:
 
     assert item.demand_date is demand_date
     assert item.quantity == 12
+    assert isinstance(item.id, UUID)
+
+
+def test_caller_supplied_observation_id_is_preserved() -> None:
+    observation_id = uuid4()
+
+    item = DemandObservation(
+        PRODUCT_ID,
+        date(2026, 7, 1),
+        12,
+        id=observation_id,
+    )
+
+    assert item.id == observation_id
 
 
 def test_zero_quantity_is_valid() -> None:
@@ -38,6 +52,13 @@ def test_product_id_and_demand_date_must_use_required_domain_types() -> None:
         DemandObservation(cast(UUID, None), date(2026, 7, 1), 1)
     with pytest.raises(TypeError, match=r"^demand_date must be a date$"):
         DemandObservation(PRODUCT_ID, cast(date, None), 1)
+    with pytest.raises(TypeError, match=r"^id must be a UUID$"):
+        DemandObservation(
+            PRODUCT_ID,
+            date(2026, 7, 1),
+            1,
+            id=cast(UUID, None),
+        )
 
 
 def test_negative_quantity_is_rejected() -> None:

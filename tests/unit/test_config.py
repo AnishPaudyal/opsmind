@@ -3,10 +3,11 @@
 import os
 
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from opsmind.core.config import (
     Environment,
+    PersistenceBackend,
     Settings,
     get_settings,
     reset_settings_cache,
@@ -30,6 +31,8 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.environment is Environment.LOCAL
     assert settings.debug is False
     assert settings.api_v1_prefix == "/api/v1"
+    assert settings.persistence_backend is PersistenceBackend.MEMORY
+    assert settings.database_url is None
 
 
 def test_settings_accept_prefixed_environment_overrides(
@@ -74,6 +77,75 @@ def test_settings_cache_is_stable_and_explicitly_resettable(
 ) -> None:
     clear_opsmind_environment(monkeypatch)
     reset_settings_cache()
+
+
+def test_settings_accept_explicit_memory_without_database_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    clear_opsmind_environment(monkeypatch)
+    monkeypatch.setenv("OPSMIND_PERSISTENCE_BACKEND", "memory")
+
+    settings = Settings()
+
+    assert settings.persistence_backend is PersistenceBackend.MEMORY
+    assert settings.database_url is None
+
+
+def test_settings_accept_postgresql_with_selected_driver_url() -> None:
+    settings = Settings(
+        persistence_backend=PersistenceBackend.POSTGRESQL,
+        database_url=SecretStr(
+            "postgresql+psycopg://user:password@localhost:5432/opsmind"
+        ),
+    )
+
+    assert settings.persistence_backend is PersistenceBackend.POSTGRESQL
+    assert settings.database_url is not None
+
+
+def test_settings_require_database_url_for_postgresql() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="OPSMIND_DATABASE_URL is required when PostgreSQL is selected",
+    ):
+        Settings(persistence_backend=PersistenceBackend.POSTGRESQL)
+
+
+def test_settings_reject_invalid_persistence_backend() -> None:
+    with pytest.raises(ValidationError):
+        Settings(persistence_backend="sqlite")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "database_url",
+    [
+        "postgresql://user:password@localhost/opsmind",
+        "postgresql+asyncpg://user:password@localhost/opsmind",
+        "sqlite:///opsmind.db",
+        "not-a-url",
+    ],
+)
+def test_settings_require_psycopg_sqlalchemy_url(database_url: str) -> None:
+    with pytest.raises(ValidationError) as error:
+        Settings(
+            persistence_backend=PersistenceBackend.POSTGRESQL,
+            database_url=SecretStr(database_url),
+        )
+
+    assert database_url not in str(error.value)
+
+
+def test_settings_hide_database_credentials_in_representations() -> None:
+    password = "do-not-display-this-password"
+    settings = Settings(
+        persistence_backend=PersistenceBackend.POSTGRESQL,
+        database_url=SecretStr(
+            f"postgresql+psycopg://user:{password}@localhost/opsmind"
+        ),
+    )
+
+    assert password not in repr(settings)
+    assert password not in str(settings.model_dump())
 
     first_settings = get_settings()
     second_settings = get_settings()
