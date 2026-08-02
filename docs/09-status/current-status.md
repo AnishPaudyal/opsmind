@@ -223,8 +223,11 @@
   spoofable. Events do not prove who performed a decision.
 - History is not cryptographically signed, hash chained, tamper-evident,
   event-sourced, durably retained, externally published, or compliance-grade.
-- ADR-0004 records the proposed decision to co-locate workflow state and audit
-  events behind one repository boundary. Repository-owner acceptance remains
-  pending.
-- Issue #28 remains incomplete until its pull request is reviewed and merged.
-  GitHub-hosted check results are not claimed before the pull request runs them.
+- ADR-0004 records the accepted decision to keep recommendation workflow state
+  and matching audit events within one atomic repository transaction boundary.
+  The current process-local implementation uses one repository lock, and a
+  future PostgreSQL implementation must preserve the guarantee through one
+  database transaction.
+- The repository owner formally accepted ADR-0004 after PR #29 merged. Issue
+  #28 was completed by that merge, and its GitHub-hosted repository and Python
+  quality checks passed.
