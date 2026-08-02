@@ -197,4 +197,34 @@
 - Approval does not create a purchase order, select a supplier, reserve or
   mutate inventory, or initiate an external action. No database, frontend,
   Docker, AWS, or deployment capability is introduced.
-- Issue #26 remains in progress until its pull request is reviewed and merged.
+- Issue #26 was completed when PR #27 merged the recommendation-review API.
+
+## Phase 2 Recommendation Audit History API
+
+- Issue #28 adds an append-only, process-local event history to each stored
+  recommendation review.
+- Review creation automatically stores sequence `1` `review_created`. The first
+  successful approval or rejection stores sequence `2`
+  `recommendation_approved` or `recommendation_rejected`.
+- Review state and its matching event are prepared and stored together by the
+  existing workflow repository under one in-memory lock. Both changes succeed
+  together or neither is stored.
+- Events are retrieved in sequence order through
+  `GET /api/v1/reorder-recommendations/{recommendation_id}/audit-events`.
+  Retrieval performs no recalculation and changes neither workflow nor source
+  operational state.
+- Identical normalized terminal retries return the original review and append no
+  duplicate event. Changed or opposite retries conflict and append no event.
+- Sequence numbers, not timestamps, define event order because fixed-clock
+  events can share one timestamp.
+- Event streams are immutable through supported repository and HTTP APIs, but
+  remain in memory, are lost on restart, and are not shared across workers.
+- The actor remains caller supplied, unauthenticated, unverified, and potentially
+  spoofable. Events do not prove who performed a decision.
+- History is not cryptographically signed, hash chained, tamper-evident,
+  event-sourced, durably retained, externally published, or compliance-grade.
+- ADR-0004 records the proposed decision to co-locate workflow state and audit
+  events behind one repository boundary. Repository-owner acceptance remains
+  pending.
+- Issue #28 remains incomplete until its pull request is reviewed and merged.
+  GitHub-hosted check results are not claimed before the pull request runs them.
