@@ -1,4 +1,4 @@
-"""Typed errors for product, inventory, demand, and forecast operations."""
+"""Typed errors for OpsMind business operations."""
 
 from datetime import date
 from uuid import UUID
@@ -58,3 +58,33 @@ class InsufficientDemandHistoryError(Exception):
                 f"on or before '{effective_cutoff.isoformat()}'."
             )
         super().__init__(message)
+
+
+class NoActionableReorderRecommendationError(Exception):
+    """The calculated recommendation cannot enter human review."""
+
+    def __init__(self, product_id: UUID) -> None:
+        self.product_id = product_id
+        super().__init__(
+            f"Product '{product_id}' has no actionable reorder recommendation."
+        )
+
+
+class RecommendationReviewNotFoundError(Exception):
+    """The requested stored recommendation review does not exist."""
+
+    def __init__(self, recommendation_id: UUID) -> None:
+        self.recommendation_id = recommendation_id
+        super().__init__(str(recommendation_id))
+
+
+class DuplicateRecommendationReviewError(Exception):
+    """A stored recommendation already uses the generated identifier."""
+
+    def __init__(self, recommendation_id: UUID) -> None:
+        self.recommendation_id = recommendation_id
+        super().__init__(str(recommendation_id))
+
+
+class RecommendationReviewConflictError(Exception):
+    """A requested decision conflicts with the terminal stored decision."""

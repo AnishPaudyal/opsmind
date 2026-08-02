@@ -165,6 +165,36 @@
 - This capability does not create an order or provide approval, audit,
   supplier, cost, pack-size, safety-stock, service-level, probability, database,
   authentication, frontend, Docker, AWS, or deployment behavior.
-- Issue #24 remains in progress and incomplete until its pull request is merged.
-- GitHub-hosted validation for issue #24 is not claimed before its pull request
-  runs.
+- Issue #24 was completed when PR #25 merged the deterministic reorder
+  recommendation API.
+
+## Phase 2 Reorder Recommendation Review API
+
+- Issue #26 implements the first state-changing recommendation-review workflow
+  beneath the configured `/api/v1` business prefix.
+- Only actionable positive reorder recommendations can be stored. Each stored
+  review receives a server-generated UUID, a timezone-aware UTC timestamp, and
+  an immutable copy of the recommendation and its original forecast, exposure,
+  inventory, and demand-selection evidence.
+- Reviews begin as `pending_review` and can transition once to either
+  `approved` or `rejected`. Identical normalized retries return the original
+  decision UUID and timestamp; changed or opposite retries conflict without
+  changing state.
+- Approval records a positive approved quantity separately from the immutable
+  recommended quantity. Omitted approval quantity defaults to the original
+  recommendation. Rejection records a required reason and no approved quantity.
+- Retrieval and decisions use a separate thread-safe recommendation-workflow
+  repository and never recalculate forecast, exposure, or recommendation data.
+  Concurrent approval and rejection cannot both succeed.
+- Workflow storage is isolated per application instance, process-local,
+  nonpersistent, and lost on restart. Product, inventory, and demand use their
+  existing repository unchanged.
+- The caller supplies `decided_by`; the value is trimmed but is not authenticated,
+  authorized, or verified. No role-based access control exists.
+- The snapshot and one terminal decision are not a complete audit system. There
+  is no append-only history, correlation ID, tamper protection, durable
+  retention, reversal, or decision-history query.
+- Approval does not create a purchase order, select a supplier, reserve or
+  mutate inventory, or initiate an external action. No database, frontend,
+  Docker, AWS, or deployment capability is introduced.
+- Issue #26 remains in progress until its pull request is reviewed and merged.

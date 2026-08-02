@@ -11,17 +11,19 @@ coherent product.
 Phase 0, project definition and governance, is complete. The Phase 1 repository,
 Python, quality, and CI foundations are established. Phase 2 has begun with the
 reviewed FastAPI backend foundation from issue #14 and the first bounded
-supply-chain business APIs from issues #16, #18, #20, #22, and #24.
+supply-chain business APIs from issues #16, #18, #20, #22, #24, and #26.
 
 The current backend can create and retrieve products, record one in-memory
 inventory position for each product, and ingest and retrieve daily demand
 history. It can also calculate a transparent arithmetic-mean demand forecast,
 deterministic stockout exposure, and a whole-unit reorder recommendation on
-request. This repository does not yet contain:
+request. Actionable recommendations can now be stored as immutable in-memory
+snapshots for approval or rejection. This repository does not yet contain:
 
 - Persistence or migrations
-- Authentication or authorization
-- Model training, stockout probability, or recommendation approval workflows
+- Authentication, authorization, or verified reviewer identity
+- Durable workflow persistence or complete audit history
+- Model training or stockout probability
 - Cloud infrastructure
 - Deployed AWS resources
 - Trained machine-learning models
@@ -111,9 +113,9 @@ with:
 uv run uvicorn opsmind.main:app --reload
 ```
 
-The API exposes an unversioned deterministic process-health endpoint and ten
-product, inventory, demand, forecast, exposure, and recommendation operations
-under the configured business prefix:
+The API exposes an unversioned deterministic process-health endpoint and
+fourteen product, inventory, demand, forecast, exposure, recommendation, and
+review operations under the configured business prefix:
 
 | Method | Path | Result |
 | --- | --- | --- |
@@ -128,6 +130,10 @@ under the configured business prefix:
 | `GET` | `/api/v1/products/{product_id}/forecast` | Calculate a baseline demand forecast. |
 | `GET` | `/api/v1/products/{product_id}/stockout-exposure` | Calculate deterministic lead-time exposure. |
 | `GET` | `/api/v1/products/{product_id}/reorder-recommendation` | Calculate a whole-unit reorder recommendation. |
+| `POST` | `/api/v1/products/{product_id}/reorder-recommendations` | Store one actionable recommendation snapshot for review. |
+| `GET` | `/api/v1/reorder-recommendations/{recommendation_id}` | Retrieve a stored recommendation review. |
+| `POST` | `/api/v1/reorder-recommendations/{recommendation_id}/approve` | Approve a pending recommendation. |
+| `POST` | `/api/v1/reorder-recommendations/{recommendation_id}/reject` | Reject a pending recommendation. |
 
 Application settings use the `OPSMIND_` environment-variable prefix. Supported
 overrides are:
@@ -501,12 +507,107 @@ The route shares the exposure endpoint's cutoff, chronological selection,
 record-count lookback, recorded-zero, missing-date, negative-inventory,
 zero-lead-time, and custom-prefix behavior.
 
-The operation is read-only and nonpersistent. It stores no forecast, exposure,
-recommendation, order, or approval and does not mutate product, inventory, or
-demand state. It does not select suppliers, prices, pack sizes, minimum order
-quantities, safety stock, service levels, probabilities, or confidence. A
-future reviewed issue must define any approval, order creation, or audit
-workflow.
+The calculated operation remains read-only and nonpersistent. It stores no
+forecast, exposure, recommendation, order, or approval and does not mutate
+product, inventory, or demand state. It does not select suppliers, prices,
+pack sizes, minimum order quantities, safety stock, service levels,
+probabilities, or confidence. The bounded stored-review workflow below is a
+separate capability.
+
+### Stored reorder recommendation review
+
+An actionable calculated recommendation can be captured as an immutable
+snapshot before human review:
+
+```text
+POST /api/v1/products/{product_id}/reorder-recommendations
+```
+
+Creation supports the same optional inclusive `as_of_date` and the same
+`lookback_observations` default of `7` with bounds from 1 through 365. It reads
+product, inventory, and demand through the existing repository, invokes the
+existing stockout and reorder domain calculations, and stores only a result
+whose status is `reorder_recommended` with a positive whole-unit quantity. A
+current `no_reorder_needed` result returns HTTP 409 and creates no review.
+
+The server assigns a UUID and a timezone-aware UTC creation time. The response
+contains the complete original recommendation evidence under `recommendation`,
+a `pending_review` status, and no decision. A product can have multiple separate
+snapshots; each represents the inputs and calculation at its own creation time.
+Later inventory or demand changes do not alter, refresh, or invalidate an
+existing snapshot.
+
+Retrieve a snapshot and its current state without recalculation:
+
+```text
+GET /api/v1/reorder-recommendations/{recommendation_id}
+```
+
+The only workflow transitions are:
+
+```text
+pending_review -> approved
+pending_review -> rejected
+```
+
+Both terminal states are final in this milestone. Approve a recommendation
+with:
+
+```bash
+curl --fail-with-body \
+  --request POST \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "decided_by": "Anish Paudyal",
+    "approved_quantity": 24,
+    "note": "Physical ordering occurs in case packs of six."
+  }' \
+  http://127.0.0.1:8000/api/v1/reorder-recommendations/00000000-0000-0000-0000-000000000101/approve
+```
+
+`approved_quantity` is optional and defaults to the stored recommended
+quantity. A different positive approved quantity records the human decision
+without changing the original recommendation. `decided_by` is required and
+trimmed; an optional blank note becomes `null`.
+
+Reject a recommendation with:
+
+```bash
+curl --fail-with-body \
+  --request POST \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "decided_by": "Anish Paudyal",
+    "reason": "Inbound inventory is already scheduled."
+  }' \
+  http://127.0.0.1:8000/api/v1/reorder-recommendations/00000000-0000-0000-0000-000000000101/reject
+```
+
+A rejection requires a nonblank reason and never has an approved quantity.
+Workflow timestamps reject naive datetimes and normalize aware datetimes to
+UTC. The application supplies time through a narrow clock boundary so tests do
+not depend on the system clock.
+
+An identical normalized retry returns the existing terminal review with its
+original decision UUID and timestamp. A changed retry or the opposite decision
+returns HTTP 409 and leaves state unchanged. Each full read-transition-write is
+serialized by the workflow repository, so concurrent approval and rejection
+cannot both win.
+
+Review storage is a separate, application-instance-local in-memory repository.
+It is thread-safe within one process, but every review and decision is lost on
+restart and is not shared across workers. Retrieval, approval, and rejection
+read the stored workflow object only; they do not recalculate forecast,
+exposure, or recommendation values and do not mutate product, inventory, or
+demand.
+
+The `decided_by` value is caller supplied and unverified. There is no
+authentication, authorization, role check, or trusted user identity. The stored
+snapshot and single terminal decision are useful workflow evidence, but they
+are not a complete audit system: there is no append-only event history,
+correlation identifier, tamper protection, durable retention, reversal, or
+decision-history query. Approval does not create a purchase order, reserve or
+change inventory, select a supplier, or initiate any external action.
 
 ## Contribution Rule
 
