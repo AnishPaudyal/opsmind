@@ -1,6 +1,6 @@
 # ADR-0004: Co-locate Recommendation Workflow State and Audit Events
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-08-01
 - Decision owners: Anish Paudyal
 - Related issues: #28
