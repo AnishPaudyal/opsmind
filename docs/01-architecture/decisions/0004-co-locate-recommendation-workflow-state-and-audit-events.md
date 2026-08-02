@@ -197,8 +197,7 @@ comparison; and artifact review.
 - Failed attempts, reads, conflicts, and retries are not events.
 - The existing application factory continues to inject one workflow repository
   per application instance; no new dependency-injection mechanism is needed.
-- ADR-0004 remains Proposed until the repository owner explicitly accepts it
-  through review.
+- ADR-0004 was accepted by the repository owner after PR #29 merged.
 
 ## References
 
