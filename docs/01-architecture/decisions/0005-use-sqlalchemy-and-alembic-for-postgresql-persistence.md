@@ -1,6 +1,6 @@
 # ADR-0005: Use SQLAlchemy and Alembic for PostgreSQL Persistence
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-08-02
 - Decision owners: Anish Paudyal
 - Related issues: #32
@@ -230,7 +230,7 @@ secret patterns, protected-file hashes, and generated-artifact review.
 
 ## Implementation notes
 
-- ADR-0005 remains Proposed until the repository owner explicitly accepts it.
+- ADR-0005 was accepted by the repository owner during PR #33 review.
 - The initial revision identifier is `0005_operational_data`.
 - PostgreSQL 17 is the pinned major line for local Compose and CI.
 - No production database, deployment manifest, API container, or cloud resource

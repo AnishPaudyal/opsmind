@@ -260,10 +260,10 @@
   ending in `_test` or `_testing`.
 - The Python-quality workflow adds only a PostgreSQL test service, applies
   Alembic migrations, and runs the complete suite with the dedicated test URL.
-  Hosted results cannot be claimed until the pull request checks run.
+  GitHub-hosted repository and Python-quality checks pass for PR #33.
 - ADR-0005 records the SQLAlchemy, Alembic, synchronous-session, domain/ORM,
-  real-PostgreSQL-test, and phased-persistence decisions. It remains `Proposed`
-  pending repository-owner review.
+  real-PostgreSQL-test, and phased-persistence decisions. The repository owner
+  accepted ADR-0005 during PR #33 review.
 - Issue #32 remains incomplete until its pull request is reviewed and merged.
   No workflow persistence, authentication, API container, production database,
   AWS resource, deployment, backup, replication, or high-availability
