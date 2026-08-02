@@ -7,13 +7,21 @@ from typing import Protocol, cast
 import pytest
 from fastapi import FastAPI
 
-from opsmind.api.dependencies import get_product_inventory_repository
+from opsmind.api.dependencies import (
+    get_clock,
+    get_product_inventory_repository,
+    get_recommendation_workflow_repository,
+)
 from opsmind.application import create_app
+from opsmind.core.clock import SystemClock
 from opsmind.core.config import (
     Environment,
     Settings,
     get_settings,
     reset_settings_cache,
+)
+from opsmind.repositories.in_memory_recommendation_workflow import (
+    InMemoryRecommendationWorkflowRepository,
 )
 from opsmind.repositories.memory import InMemoryProductInventoryRepository
 
@@ -78,6 +86,37 @@ def test_unbound_repository_dependency_fails_fast() -> None:
         match=r"^Product inventory repository is not configured$",
     ):
         get_product_inventory_repository()
+
+
+def test_create_app_provides_supplied_workflow_repository_and_clock() -> None:
+    settings = Settings(environment=Environment.TEST)
+    product_repository = InMemoryProductInventoryRepository()
+    workflow_repository = InMemoryRecommendationWorkflowRepository()
+    clock = SystemClock()
+    application = create_app(
+        settings,
+        product_repository,
+        workflow_repository,
+        clock,
+    )
+
+    workflow_provider = application.dependency_overrides[
+        get_recommendation_workflow_repository
+    ]
+    clock_provider = application.dependency_overrides[get_clock]
+
+    assert workflow_provider() is workflow_repository
+    assert clock_provider() is clock
+
+
+def test_unbound_workflow_dependencies_fail_fast() -> None:
+    with pytest.raises(
+        RuntimeError,
+        match=r"^Recommendation workflow repository is not configured$",
+    ):
+        get_recommendation_workflow_repository()
+    with pytest.raises(RuntimeError, match=r"^Clock is not configured$"):
+        get_clock()
 
 
 def test_main_exposes_the_default_asgi_application(

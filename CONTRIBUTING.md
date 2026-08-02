@@ -249,6 +249,36 @@ coverage for forecast, exposure, product, inventory, demand, health, custom
 prefixes, OpenAPI, and shared dependency injection without relying on test
 order.
 
+Run focused recommendation-review tests with:
+
+```bash
+uv run pytest -p no:cacheprovider \
+  tests/unit/test_recommendation_review_domain.py \
+  tests/repositories/test_recommendation_workflow_repository.py \
+  tests/api/test_recommendation_reviews.py
+```
+
+Recommendation reviews must store the complete actionable recommendation as
+an immutable snapshot before a decision is made. Keep the workflow repository
+separate from the product, inventory, and demand repository. Retrieval and
+decision operations must use only stored workflow state and must never
+recalculate forecast, exposure, or recommendation results.
+
+Domain transitions are pure and receive decision identifiers and timestamps as
+inputs. Reject naive timestamps and normalize aware timestamps to UTC. Use an
+injected fixed clock in API tests. Approval and rejection are terminal;
+identical normalized retries return the original decision, while changed or
+opposite retries conflict without changing stored state. Repository tests must
+exercise the full read-transition-write under one lock, including a
+deterministic concurrent approve-versus-reject race.
+
+Use fresh workflow repositories for application isolation. The current
+repository is process-local and nonpersistent. Treat `decided_by` as unverified
+caller input: no authentication, authorization, or role check exists. The
+snapshot and one terminal decision are not an append-only or tamper-resistant
+audit history, and approval must not create an order or mutate operational
+state.
+
 ### Continuous integration
 
 The [Python-quality workflow](.github/workflows/python-quality.yml) reproduces
