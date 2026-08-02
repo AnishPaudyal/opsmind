@@ -6,6 +6,9 @@ from typing import Protocol, cast
 
 import pytest
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from pydantic import SecretStr
+from sqlalchemy.engine import Engine
 
 from opsmind.api.dependencies import (
     get_clock,
@@ -16,9 +19,13 @@ from opsmind.application import create_app
 from opsmind.core.clock import SystemClock
 from opsmind.core.config import (
     Environment,
+    PersistenceBackend,
     Settings,
     get_settings,
     reset_settings_cache,
+)
+from opsmind.persistence.postgresql.repository import (
+    PostgresProductInventoryRepository,
 )
 from opsmind.repositories.in_memory_recommendation_workflow import (
     InMemoryRecommendationWorkflowRepository,
@@ -78,6 +85,58 @@ def test_create_app_provides_the_supplied_repository_instance() -> None:
     ]
 
     assert repository_provider() is repository
+
+
+def test_explicit_repository_precedes_postgresql_backend_selection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = Settings(
+        environment=Environment.TEST,
+        persistence_backend=PersistenceBackend.POSTGRESQL,
+        database_url=SecretStr(
+            "postgresql+psycopg://opsmind:secret@127.0.0.1:1/opsmind"
+        ),
+    )
+    repository = InMemoryProductInventoryRepository()
+
+    def unexpected_engine_creation(_: object) -> Engine:
+        raise AssertionError("explicit injection must not create an engine")
+
+    monkeypatch.setattr(
+        "opsmind.application.create_postgresql_engine",
+        unexpected_engine_creation,
+    )
+    application = create_app(settings, repository)
+
+    repository_provider = application.dependency_overrides[
+        get_product_inventory_repository
+    ]
+    assert repository_provider() is repository
+
+
+def test_postgresql_backend_selects_repository_and_disposes_owned_engine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = Settings(
+        environment=Environment.TEST,
+        persistence_backend=PersistenceBackend.POSTGRESQL,
+        database_url=SecretStr(
+            "postgresql+psycopg://opsmind:secret@127.0.0.1:1/opsmind"
+        ),
+    )
+    disposed_engines: list[Engine] = []
+    application = create_app(settings)
+    repository_provider = application.dependency_overrides[
+        get_product_inventory_repository
+    ]
+    monkeypatch.setattr("opsmind.application.dispose_engine", disposed_engines.append)
+
+    with TestClient(application) as client:
+        assert client.get("/health").status_code == 200
+        assert isinstance(repository_provider(), PostgresProductInventoryRepository)
+
+    assert len(disposed_engines) == 1
+    disposed_engines[0].dispose()
 
 
 def test_unbound_repository_dependency_fails_fast() -> None:

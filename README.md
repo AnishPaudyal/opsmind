@@ -13,17 +13,18 @@ Python, quality, and CI foundations are established. Phase 2 has begun with the
 reviewed FastAPI backend foundation from issue #14 and the first bounded
 supply-chain business APIs from issues #16, #18, #20, #22, #24, and #26.
 
-The current backend can create and retrieve products, record one in-memory
-inventory position for each product, and ingest and retrieve daily demand
-history. It can also calculate a transparent arithmetic-mean demand forecast,
+The current backend can create and retrieve products, record one inventory
+position for each product, and ingest and retrieve daily demand history through
+either an isolated memory backend or an explicitly selected PostgreSQL backend.
+PostgreSQL makes this operational source data durable and shared across
+application instances. The backend can also calculate a transparent arithmetic-mean demand forecast,
 deterministic stockout exposure, and a whole-unit reorder recommendation on
 request. Actionable recommendations can now be stored as immutable in-memory
 snapshots for approval or rejection, with a process-local append-only event
 history for each stored review. This repository does not yet contain:
 
-- Persistence or migrations
 - Authentication, authorization, or verified reviewer identity
-- Durable workflow persistence or complete audit history
+- Durable workflow, decision, or audit-history persistence
 - Model training or stockout probability
 - Cloud infrastructure
 - Deployed AWS resources
@@ -44,9 +45,9 @@ The first end-to-end workflow will be:
 5. Let a user approve or reject the recommendation.
 6. Record the decision and its audit history.
 
-## Planned Technical Direction
+## Technical Direction
 
-The initial local stack is expected to use:
+The current local backend stack uses:
 
 - Python and FastAPI
 - PostgreSQL, SQLAlchemy, and Alembic
@@ -145,6 +146,8 @@ overrides are:
 - `OPSMIND_ENVIRONMENT` (`local`, `test`, `staging`, or `production`)
 - `OPSMIND_DEBUG`
 - `OPSMIND_API_V1_PREFIX`
+- `OPSMIND_PERSISTENCE_BACKEND` (`memory` or `postgresql`)
+- `OPSMIND_DATABASE_URL` (required only for `postgresql`)
 
 The default service is `opsmind-api`, the default environment is `local`, debug
 mode is disabled, and the default business prefix is `/api/v1`. The application
@@ -152,7 +155,119 @@ does not load a repository `.env` file implicitly.
 
 `GET /health` reports only that the API process can serve a request. It does not
 claim readiness for a database, AWS resource, external service, or product
-workflow. No such dependency is configured by this foundation.
+workflow. PostgreSQL backend selection does not change this process-health
+contract and no readiness endpoint is introduced.
+
+### Operational persistence backends
+
+The migration-phase default remains `memory`. Each memory-backed application
+has its own isolated product, inventory, and demand repository, and that data is
+lost when the process stops. Select PostgreSQL explicitly to make those three
+operational resources durable and shared:
+
+```bash
+export OPSMIND_PERSISTENCE_BACKEND=postgresql
+export OPSMIND_DATABASE_URL='postgresql+psycopg://opsmind:opsmind-development-only@127.0.0.1:5432/opsmind'
+```
+
+The URL must use the `postgresql+psycopg` SQLAlchemy driver form. Treat every
+database URL as a secret: provide it through the environment or a governed
+secret manager, never commit a real value, and never paste it into logs, issues,
+screenshots, or support output. The application does not load `.env`
+automatically. An explicitly injected repository still takes precedence over
+backend selection.
+
+Issue #32 intentionally creates a mixed-persistence state:
+
+```text
+PostgreSQL selected:
+products / inventory / demand -> durable and shared
+
+recommendation reviews / decisions / audit events
+-> process-local, restart-volatile, and isolated per application
+```
+
+Forecasts, stockout exposure, and calculated reorder recommendations remain
+read-only calculations. PostgreSQL stores their operational inputs, not their
+outputs. PostgreSQL selection therefore does not make approvals or audit
+history durable and does not provide production readiness.
+
+#### Start and migrate local PostgreSQL
+
+The Compose file runs PostgreSQL 17 only; it does not containerize OpsMind:
+
+```bash
+docker compose -f compose.postgresql.yml up -d --wait
+docker compose -f compose.postgresql.yml ps
+```
+
+Apply the schema before starting a PostgreSQL-backed application:
+
+```bash
+export OPSMIND_DATABASE_URL='postgresql+psycopg://opsmind:opsmind-development-only@127.0.0.1:5432/opsmind'
+uv run alembic upgrade head
+uv run alembic current
+export OPSMIND_PERSISTENCE_BACKEND=postgresql
+uv run uvicorn opsmind.main:app --reload
+```
+
+Alembic revision `0005_operational_data` creates products, inventory positions,
+and demand observations. Runtime startup never creates or migrates tables.
+Foreign keys are restrictive, available inventory remains derived, and schema
+changes must use reviewed Alembic revisions.
+
+Stopping Compose preserves the named data volume:
+
+```bash
+docker compose -f compose.postgresql.yml down
+```
+
+Deleting the volume permanently destroys the local development database:
+
+```bash
+docker compose -f compose.postgresql.yml down --volumes
+```
+
+That destructive command is also the local reset procedure. Start the service
+again and reapply `alembic upgrade head` afterward.
+
+#### Run PostgreSQL integration tests
+
+Use a separate Compose project, port, volume, and database whose name ends in
+`_test`:
+
+```bash
+OPSMIND_POSTGRES_DB=opsmind_test \
+OPSMIND_POSTGRES_PORT=55432 \
+docker compose -p opsmind-test -f compose.postgresql.yml up -d --wait
+
+export OPSMIND_TEST_DATABASE_URL='postgresql+psycopg://opsmind:opsmind-development-only@127.0.0.1:55432/opsmind_test'
+uv run pytest -p no:cacheprovider tests/integration/postgresql
+```
+
+The integration fixture refuses destructive setup when the variable is absent,
+the host is not local or loopback, or the database name does not end in `_test`
+or `_testing`. It initializes schema through Alembic and never uses the normal
+application URL for cleanup. With no test URL, integration tests skip clearly
+while memory and unit tests still run.
+
+Migration downgrade validation is allowed only against this disposable test
+database:
+
+```bash
+export OPSMIND_DATABASE_URL="$OPSMIND_TEST_DATABASE_URL"
+uv run alembic downgrade base
+uv run alembic upgrade head
+```
+
+Stop the test service without deleting data using `docker compose -p
+opsmind-test -f compose.postgresql.yml down`. Add `--volumes` only when the
+dedicated test data may be permanently deleted.
+
+For troubleshooting, use `docker compose -f compose.postgresql.yml ps`, the
+PostgreSQL health status, and Alembic's revision output. Do not print the
+database URL. Confirm that the selected port is free, the database name is
+correct, and migrations reached head before investigating application code.
 
 ### Product and inventory example
 
@@ -202,11 +317,11 @@ allocated is the quantity already committed to demand, and available is
 calculated as on-hand minus allocated. Available quantity may be negative; a
 negative value represents a shortage and is not clamped to zero.
 
-Products and inventory are stored only in an isolated in-memory repository for
-each application instance. Restarting the process loses all product and
-inventory data. There is no database, migration, authentication, stockout
-probability, reorder, approval, frontend, Docker, AWS, or deployment capability
-in this milestone.
+With the default memory backend, products and inventory remain isolated per
+application and are lost on restart. With PostgreSQL explicitly selected and
+migrated, they persist across restarts and are shared by applications using the
+same database. Neither backend adds authentication, stockout probability,
+ordering, frontend, AWS, or deployment capability.
 
 ### Demand history
 
@@ -264,10 +379,9 @@ curl --fail-with-body \
 ```
 
 Swagger UI at `http://127.0.0.1:8000/docs` documents both demand operations and
-their schemas. Demand uses the same isolated in-memory repository as products
-and inventory, so all observations are lost when the application process
-restarts. Database persistence, ingestion pipelines, model training, risk, and
-recommendations remain outside this milestone.
+their schemas. Demand uses the same selected operational repository as products
+and inventory. It is restart-volatile with memory and durable with PostgreSQL.
+Ingestion pipelines and model training remain outside this milestone.
 
 ### Baseline demand forecast
 
@@ -336,8 +450,8 @@ An existing product without eligible history returns HTTP 422; a missing
 product returns HTTP 404. Swagger UI at `http://127.0.0.1:8000/docs` documents
 the response metadata and parameter constraints.
 
-This baseline uses source demand from the process-local in-memory repository,
-so restarting the application loses the input history. The simple mean does not
+This baseline uses source demand through the selected operational repository.
+PostgreSQL-backed history survives restart; memory-backed history does not. The simple mean does not
 model trend, seasonality, intermittent demand, or uncertainty; it supplies no
 confidence interval and has no measured accuracy. It is not production-grade
 machine learning. The deterministic exposure and recommendation calculations

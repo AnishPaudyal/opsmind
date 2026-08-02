@@ -231,3 +231,40 @@
 - The repository owner formally accepted ADR-0004 after PR #29 merged. Issue
   #28 was completed by that merge, and its GitHub-hosted repository and Python
   quality checks passed.
+
+## Phase 3 PostgreSQL Operational Persistence
+
+- Issue #32 implements PostgreSQL persistence for products, current inventory
+  positions, and daily demand observations behind the unchanged
+  `ProductInventoryRepository` Protocol.
+- The existing in-memory operational repository remains available and is the
+  temporary migration-phase default. PostgreSQL must be selected explicitly
+  with a secret-wrapped `OPSMIND_DATABASE_URL` using the
+  `postgresql+psycopg` driver form.
+- SQLAlchemy 2.x supplies synchronous persistence, Psycopg 3 supplies the
+  PostgreSQL driver, and Alembic owns schema migrations. Runtime code does not
+  create or migrate tables.
+- Initial Alembic revision `0005_operational_data` creates products, inventory
+  positions, and demand observations with deterministic primary-key,
+  foreign-key, unique, check, and index names.
+- Product creation, inventory upsert, and demand-batch insertion use explicit
+  transaction boundaries. Known uniqueness failures translate to existing
+  business errors after rollback.
+- PostgreSQL-backed applications using the same database share operational
+  state, and products, inventory, and demand survive application restart.
+- Recommendation reviews, decisions, and audit events remain in their separate
+  process-local repository. They are still restart-volatile and isolated across
+  application instances and workers.
+- Local and CI integration tests use PostgreSQL 17. Destructive local fixtures
+  require `OPSMIND_TEST_DATABASE_URL`, a loopback host, and a database name
+  ending in `_test` or `_testing`.
+- The Python-quality workflow adds only a PostgreSQL test service, applies
+  Alembic migrations, and runs the complete suite with the dedicated test URL.
+  GitHub-hosted repository and Python-quality checks pass for PR #33.
+- ADR-0005 records the SQLAlchemy, Alembic, synchronous-session, domain/ORM,
+  real-PostgreSQL-test, and phased-persistence decisions. The repository owner
+  accepted ADR-0005 during PR #33 review.
+- Issue #32 remains incomplete until its pull request is reviewed and merged.
+  No workflow persistence, authentication, API container, production database,
+  AWS resource, deployment, backup, replication, or high-availability
+  capability is included.

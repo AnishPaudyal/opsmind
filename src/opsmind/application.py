@@ -1,6 +1,10 @@
 """FastAPI application factory."""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+from sqlalchemy.engine import Engine
 
 from opsmind.api.dependencies import (
     get_clock,
@@ -9,7 +13,15 @@ from opsmind.api.dependencies import (
 )
 from opsmind.api.router import create_api_router
 from opsmind.core.clock import Clock, SystemClock
-from opsmind.core.config import Settings, get_settings
+from opsmind.core.config import PersistenceBackend, Settings, get_settings
+from opsmind.persistence.postgresql.database import (
+    create_postgresql_engine,
+    create_session_factory,
+    dispose_engine,
+)
+from opsmind.persistence.postgresql.repository import (
+    PostgresProductInventoryRepository,
+)
 from opsmind.repositories.in_memory_recommendation_workflow import (
     InMemoryRecommendationWorkflowRepository,
 )
@@ -28,11 +40,19 @@ def create_app(
 ) -> FastAPI:
     """Create an OpsMind application with isolated settings and repositories."""
     resolved_settings = settings if settings is not None else get_settings()
-    resolved_repository = (
-        product_inventory_repository
-        if product_inventory_repository is not None
-        else InMemoryProductInventoryRepository()
-    )
+    owned_engine: Engine | None = None
+    resolved_repository: ProductInventoryRepository
+    if product_inventory_repository is not None:
+        resolved_repository = product_inventory_repository
+    elif resolved_settings.persistence_backend is PersistenceBackend.MEMORY:
+        resolved_repository = InMemoryProductInventoryRepository()
+    else:
+        if resolved_settings.database_url is None:
+            raise RuntimeError("PostgreSQL database URL is not configured.")
+        owned_engine = create_postgresql_engine(resolved_settings.database_url)
+        resolved_repository = PostgresProductInventoryRepository(
+            create_session_factory(owned_engine)
+        )
     resolved_workflow_repository = (
         recommendation_workflow_repository
         if recommendation_workflow_repository is not None
@@ -54,10 +74,19 @@ def create_app(
     def provide_clock() -> Clock:
         return resolved_clock
 
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        try:
+            yield
+        finally:
+            if owned_engine is not None:
+                dispose_engine(owned_engine)
+
     application = FastAPI(
         title=resolved_settings.application_name,
         description=f"{resolved_settings.service_name} API",
         debug=resolved_settings.debug,
+        lifespan=lifespan,
     )
     application.dependency_overrides[get_settings] = provide_settings
     application.dependency_overrides[get_product_inventory_repository] = (

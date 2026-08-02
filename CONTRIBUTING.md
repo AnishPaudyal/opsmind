@@ -300,6 +300,55 @@ or role check exists. Append-only behavior applies only through supported APIs;
 history is not cryptographically tamper-evident or compliance-grade, and
 approval must not create an order or mutate operational state.
 
+### PostgreSQL persistence development
+
+PostgreSQL operational persistence follows ADR-0005 while that decision remains
+Proposed for owner review. The `ProductInventoryRepository` Protocol remains the
+domain-facing boundary; SQLAlchemy models stay inside
+`src/opsmind/persistence/postgresql`, and immutable domain models must not import
+SQLAlchemy, Psycopg, Alembic, engines, sessions, or ORM rows.
+
+All schema changes are Alembic-first. Add and review a migration, update the
+authoritative SQLAlchemy metadata, and validate both upgrade and downgrade
+against real PostgreSQL. Runtime application code and test fixtures must never
+call `metadata.create_all()` as a substitute for migrations.
+
+Repository methods own their transaction boundaries. Use one short-lived
+session per operation or explicit transaction, close it on success and failure,
+and roll back before translating a recognized integrity violation. Translate
+only known constraints into existing business errors; never expose SQL, driver
+details, table or constraint names, or connection URLs to API clients. ORM
+instances must be mapped to domain objects before leaving the repository.
+
+PostgreSQL integration tests require `OPSMIND_TEST_DATABASE_URL`. The safety
+gate accepts only the `postgresql+psycopg` driver, a local or loopback host, and
+a database name ending in `_test` or `_testing`. Do not use
+`OPSMIND_DATABASE_URL` for destructive cleanup, do not target a shared or
+production-like database, and do not weaken the gate. Initialize schema through
+Alembic and delete table data in dependency-safe order between tests.
+
+Use the PostgreSQL-only Compose service for local integration work:
+
+```bash
+OPSMIND_POSTGRES_DB=opsmind_test \
+OPSMIND_POSTGRES_PORT=55432 \
+docker compose -p opsmind-test -f compose.postgresql.yml up -d --wait
+
+export OPSMIND_TEST_DATABASE_URL='postgresql+psycopg://opsmind:opsmind-development-only@127.0.0.1:55432/opsmind_test'
+uv run pytest -p no:cacheprovider tests/integration/postgresql
+```
+
+Concurrency tests must use barriers or other deterministic coordination, never
+sleep-based timing. Every persistence change must retain memory-backend
+regressions and verify PostgreSQL behavior with real PostgreSQL rather than
+SQLite. Database URLs are secrets even in diagnostic paths: use synthetic local
+or CI examples only and never log, snapshot, or commit real credentials.
+
+The current persistence boundary is mixed. PostgreSQL stores products,
+inventory, and demand; recommendation reviews, decisions, and audit events
+remain process-local and restart-volatile. Do not describe the application as
+fully durable or the audit history as PostgreSQL-backed.
+
 ### Continuous integration
 
 The [Python-quality workflow](.github/workflows/python-quality.yml) reproduces

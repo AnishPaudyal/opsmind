@@ -110,3 +110,4 @@ when an ADR is required.
 | [ADR-0002](0002-select-python-quality-and-testing-toolchain.md) | Select Python Quality and Testing Toolchain | Accepted | 2026-07-31 | #9, #10 |
 | [ADR-0003](0003-select-backend-application-structure.md) | Select Backend Application Structure | Accepted | 2026-07-31 | #14 |
 | [ADR-0004](0004-co-locate-recommendation-workflow-state-and-audit-events.md) | Co-locate Recommendation Workflow State and Audit Events | Accepted | 2026-08-01 | #28, #30 |
+| [ADR-0005](0005-use-sqlalchemy-and-alembic-for-postgresql-persistence.md) | Use SQLAlchemy and Alembic for PostgreSQL Persistence | Accepted | 2026-08-02 | #32 |

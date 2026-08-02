@@ -1,8 +1,8 @@
 """Demand-observation domain model and validation rules."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from opsmind.domain.errors import DuplicateDemandDateError
 
@@ -14,6 +14,7 @@ class DemandObservation:
     product_id: UUID
     demand_date: date
     quantity: int
+    id: UUID = field(default_factory=uuid4, kw_only=True)
 
     def __post_init__(self) -> None:
         if not isinstance(self.product_id, UUID):
@@ -24,6 +25,8 @@ class DemandObservation:
             raise TypeError("quantity must be an integer")
         if self.quantity < 0:
             raise ValueError("quantity must be non-negative")
+        if not isinstance(self.id, UUID):
+            raise TypeError("id must be a UUID")
 
 
 def validate_demand_batch(
