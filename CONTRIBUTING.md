@@ -302,9 +302,9 @@ approval must not create an order or mutate operational state.
 
 ### PostgreSQL persistence development
 
-PostgreSQL operational persistence follows ADR-0005 while that decision remains
-Proposed for owner review. The `ProductInventoryRepository` Protocol remains the
-domain-facing boundary; SQLAlchemy models stay inside
+PostgreSQL operational persistence follows accepted ADR-0005. The
+`ProductInventoryRepository` Protocol remains the domain-facing boundary;
+SQLAlchemy models stay inside
 `src/opsmind/persistence/postgresql`, and immutable domain models must not import
 SQLAlchemy, Psycopg, Alembic, engines, sessions, or ORM rows.
 
