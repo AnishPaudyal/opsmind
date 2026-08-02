@@ -264,7 +264,8 @@
 - ADR-0005 records the SQLAlchemy, Alembic, synchronous-session, domain/ORM,
   real-PostgreSQL-test, and phased-persistence decisions. The repository owner
   accepted ADR-0005 during PR #33 review.
-- Issue #32 remains incomplete until its pull request is reviewed and merged.
+- Issue #32 was completed when PR #33 merged PostgreSQL operational
+  persistence.
   No workflow persistence, authentication, API container, production database,
   AWS resource, deployment, backup, replication, or high-availability
   capability is included.
