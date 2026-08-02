@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
+from opsmind.domain.recommendation_audit import RecommendationAuditEvent
 from opsmind.domain.recommendation_review import ReorderRecommendationReview
 
 
@@ -13,12 +14,21 @@ class RecommendationWorkflowRepository(Protocol):
     def create_review(
         self,
         review: ReorderRecommendationReview,
+        *,
+        event_id: UUID,
     ) -> ReorderRecommendationReview:
-        """Store a new immutable recommendation review."""
+        """Atomically store a new review and its creation event."""
         ...
 
     def get_review(self, recommendation_id: UUID) -> ReorderRecommendationReview:
         """Return a stored review or raise a typed not-found error."""
+        ...
+
+    def list_audit_events(
+        self,
+        recommendation_id: UUID,
+    ) -> tuple[RecommendationAuditEvent, ...]:
+        """Return one review's immutable audit history in sequence order."""
         ...
 
     def approve_review(
@@ -26,6 +36,7 @@ class RecommendationWorkflowRepository(Protocol):
         recommendation_id: UUID,
         *,
         decision_id: UUID,
+        event_id: UUID,
         decided_by: str,
         decided_at: datetime,
         approved_quantity: int | None = None,
@@ -39,6 +50,7 @@ class RecommendationWorkflowRepository(Protocol):
         recommendation_id: UUID,
         *,
         decision_id: UUID,
+        event_id: UUID,
         decided_by: str,
         decided_at: datetime,
         reason: str,

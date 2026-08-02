@@ -43,10 +43,12 @@ class TrackingWorkflowRepository(InMemoryRecommendationWorkflowRepository):
     def create_review(
         self,
         review: ReorderRecommendationReview,
+        *,
+        event_id: UUID,
     ) -> ReorderRecommendationReview:
         """Record and delegate a creation attempt."""
         self.create_calls += 1
-        return super().create_review(review)
+        return super().create_review(review, event_id=event_id)
 
 
 def make_settings(api_v1_prefix: str = "/api/v1") -> Settings:
@@ -179,6 +181,20 @@ def create_review(
     return cast(dict[str, object], response.json())
 
 
+def get_audit_history(
+    client: TestClient,
+    recommendation_id: object,
+    *,
+    api_v1_prefix: str = "/api/v1",
+) -> dict[str, object]:
+    """Retrieve one stored recommendation's audit history."""
+    response = client.get(
+        f"{api_v1_prefix}/reorder-recommendations/{recommendation_id}/audit-events"
+    )
+    assert response.status_code == 200
+    return cast(dict[str, object], response.json())
+
+
 def test_create_review_returns_pending_immutable_recommendation_snapshot() -> None:
     client = make_client()
     product_id = prepare_actionable_product(client)
@@ -215,6 +231,91 @@ def test_create_review_returns_pending_immutable_recommendation_snapshot() -> No
         "projected_shortage_quantity": 18.75,
         "recommended_reorder_quantity": 19,
     }
+
+
+def test_pending_review_history_contains_one_creation_event() -> None:
+    client = make_client()
+    product_id = prepare_actionable_product(client)
+    created = create_review(client, product_id)
+
+    history = get_audit_history(client, created["recommendation_id"])
+
+    assert history["recommendation_id"] == created["recommendation_id"]
+    events = cast(list[dict[str, object]], history["events"])
+    assert len(events) == 1
+    event = events[0]
+    UUID(cast(str, event["event_id"]))
+    assert event == {
+        "event_id": event["event_id"],
+        "recommendation_id": created["recommendation_id"],
+        "sequence_number": 1,
+        "event_type": "review_created",
+        "occurred_at": created["created_at"],
+        "review_status": "pending_review",
+        "decision_id": None,
+        "actor": None,
+        "recommended_reorder_quantity": 19,
+        "approved_quantity": None,
+        "note": None,
+    }
+
+
+def test_approved_history_links_original_snapshot_and_decision() -> None:
+    client = make_client()
+    product_id = prepare_actionable_product(client)
+    created = create_review(client, product_id)
+    recommendation_id = created["recommendation_id"]
+    approved = client.post(
+        f"/api/v1/reorder-recommendations/{recommendation_id}/approve",
+        json={
+            "decided_by": " Reviewer ",
+            "approved_quantity": 24,
+            "note": " Case pack ",
+        },
+    ).json()
+
+    history = get_audit_history(client, recommendation_id)
+    events = cast(list[dict[str, object]], history["events"])
+
+    assert [event["sequence_number"] for event in events] == [1, 2]
+    assert [event["event_type"] for event in events] == [
+        "review_created",
+        "recommendation_approved",
+    ]
+    terminal = events[1]
+    assert terminal["review_status"] == "approved"
+    assert terminal["decision_id"] == approved["decision"]["decision_id"]
+    assert terminal["actor"] == "Reviewer"
+    assert terminal["recommended_reorder_quantity"] == 19
+    assert terminal["approved_quantity"] == 24
+    assert terminal["note"] == "Case pack"
+    assert terminal["occurred_at"] == approved["decision"]["decided_at"]
+
+
+def test_rejected_history_links_reason_and_decision() -> None:
+    client = make_client()
+    product_id = prepare_actionable_product(client)
+    created = create_review(client, product_id)
+    recommendation_id = created["recommendation_id"]
+    rejected = client.post(
+        f"/api/v1/reorder-recommendations/{recommendation_id}/reject",
+        json={"decided_by": " Reviewer ", "reason": " Inbound scheduled. "},
+    ).json()
+
+    history = get_audit_history(client, recommendation_id)
+    events = cast(list[dict[str, object]], history["events"])
+    terminal = events[1]
+
+    assert [event["event_type"] for event in events] == [
+        "review_created",
+        "recommendation_rejected",
+    ]
+    assert terminal["review_status"] == "rejected"
+    assert terminal["decision_id"] == rejected["decision"]["decision_id"]
+    assert terminal["actor"] == "Reviewer"
+    assert terminal["approved_quantity"] is None
+    assert terminal["note"] == "Inbound scheduled."
+    assert terminal["occurred_at"] == rejected["decision"]["decided_at"]
 
 
 def test_default_creation_parameters_use_latest_eligible_history() -> None:
@@ -354,6 +455,19 @@ def test_retrieval_returns_safe_404_and_invalid_uuid_returns_422() -> None:
     assert invalid.status_code == 422
 
 
+def test_audit_history_returns_safe_404_and_invalid_uuid_returns_422() -> None:
+    client = make_client()
+
+    missing = client.get(f"/api/v1/reorder-recommendations/{MISSING_ID}/audit-events")
+    invalid = client.get("/api/v1/reorder-recommendations/not-a-uuid/audit-events")
+
+    assert missing.status_code == 404
+    assert missing.json() == {
+        "detail": f"Reorder recommendation '{MISSING_ID}' was not found."
+    }
+    assert invalid.status_code == 422
+
+
 def test_approval_defaults_quantity_and_normalizes_actor_and_note() -> None:
     client = make_client()
     product_id = prepare_actionable_product(client)
@@ -418,6 +532,10 @@ def test_identical_approval_retry_preserves_original_decision() -> None:
     assert (
         retry.json()["decision"]["decided_at"] == first.json()["decision"]["decided_at"]
     )
+    first_history = get_audit_history(client, created["recommendation_id"])
+    second_history = get_audit_history(client, created["recommendation_id"])
+    assert first_history == second_history
+    assert len(cast(list[object], first_history["events"])) == 2
 
 
 @pytest.mark.parametrize(
@@ -440,12 +558,15 @@ def test_changed_approval_retry_returns_409_and_preserves_state(
         path,
         json={"decided_by": "Reviewer", "approved_quantity": 19, "note": "Ok"},
     ).json()
+    history_before = get_audit_history(client, recommendation_id)
 
     conflict = client.post(path, json=changed_request)
     stored = client.get(f"/api/v1/reorder-recommendations/{recommendation_id}")
+    history_after = get_audit_history(client, recommendation_id)
 
     assert conflict.status_code == 409
     assert stored.json() == approved
+    assert history_after == history_before
 
 
 def test_rejection_records_reason_and_identical_retry_is_stable() -> None:
@@ -469,6 +590,8 @@ def test_rejection_records_reason_and_identical_retry_is_stable() -> None:
     assert first.json()["decision"]["decision_type"] == "rejected"
     assert first.json()["decision"]["approved_quantity"] is None
     assert first.json()["decision"]["note"] == "Inbound scheduled."
+    history = get_audit_history(client, created["recommendation_id"])
+    assert len(cast(list[object], history["events"])) == 2
 
 
 def test_changed_rejection_and_cross_decision_requests_conflict() -> None:
@@ -489,6 +612,8 @@ def test_changed_rejection_and_cross_decision_requests_conflict() -> None:
         f"/api/v1/reorder-recommendations/{rejected_id}/reject",
         json={"decided_by": "Reviewer", "reason": "Inbound"},
     )
+    approved_history = get_audit_history(client, approved_id)
+    rejected_history = get_audit_history(client, rejected_id)
 
     assert (
         client.post(
@@ -497,6 +622,8 @@ def test_changed_rejection_and_cross_decision_requests_conflict() -> None:
         ).status_code
         == 409
     )
+    assert get_audit_history(client, approved_id) == approved_history
+    assert get_audit_history(client, rejected_id) == rejected_history
     assert (
         client.post(
             f"/api/v1/reorder-recommendations/{rejected_id}/approve",
@@ -511,6 +638,8 @@ def test_changed_rejection_and_cross_decision_requests_conflict() -> None:
         ).status_code
         == 409
     )
+    assert get_audit_history(client, approved_id) == approved_history
+    assert get_audit_history(client, rejected_id) == rejected_history
 
 
 @pytest.mark.parametrize(
@@ -574,6 +703,41 @@ def test_decisions_use_only_workflow_repository_after_snapshot_creation() -> Non
     assert response.json()["review_status"] == "approved"
 
 
+def test_audit_retrieval_is_read_only_and_uses_only_workflow_repository() -> None:
+    application, _, _ = make_application()
+    client = TestClient(application)
+    product_id = prepare_actionable_product(client)
+    created = create_review(client, product_id)
+    recommendation_id = created["recommendation_id"]
+    review_before = client.get(
+        f"/api/v1/reorder-recommendations/{recommendation_id}"
+    ).json()
+    history_before = get_audit_history(client, recommendation_id)
+
+    set_inventory(client, product_id, 100, 0)
+    demand_response = client.post(
+        f"/api/v1/products/{product_id}/demand",
+        json={"observations": [{"demand_date": "2026-07-05", "quantity": 99}]},
+    )
+    assert demand_response.status_code == 201
+
+    def fail_product_repository() -> NoReturn:
+        raise AssertionError("audit retrieval must not access operational data")
+
+    application.dependency_overrides[get_product_inventory_repository] = (
+        fail_product_repository
+    )
+
+    first = get_audit_history(client, recommendation_id)
+    second = get_audit_history(client, recommendation_id)
+    review_after = client.get(
+        f"/api/v1/reorder-recommendations/{recommendation_id}"
+    ).json()
+
+    assert first == second == history_before
+    assert review_after == review_before
+
+
 def test_default_applications_isolate_workflow_state() -> None:
     first = make_client()
     second = make_client()
@@ -591,6 +755,40 @@ def test_default_applications_isolate_workflow_state() -> None:
             f"/api/v1/reorder-recommendations/{created['recommendation_id']}"
         ).status_code
         == 404
+    )
+    assert (
+        second.get(
+            f"/api/v1/reorder-recommendations/"
+            f"{created['recommendation_id']}/audit-events"
+        ).status_code
+        == 404
+    )
+
+
+def test_shared_workflow_repository_exposes_shared_history_deliberately() -> None:
+    shared = InMemoryRecommendationWorkflowRepository()
+    first_product_repository = InMemoryProductInventoryRepository()
+    first = TestClient(
+        create_app(
+            make_settings(),
+            first_product_repository,
+            shared,
+            FixedClock(),
+        )
+    )
+    second = TestClient(
+        create_app(
+            make_settings(),
+            InMemoryProductInventoryRepository(),
+            shared,
+            FixedClock(),
+        )
+    )
+    product_id = prepare_actionable_product(first)
+    created = create_review(first, product_id)
+
+    assert get_audit_history(second, created["recommendation_id"]) == (
+        get_audit_history(first, created["recommendation_id"])
     )
 
 
@@ -612,6 +810,13 @@ def test_custom_prefix_applies_and_health_remains_exact_and_unversioned() -> Non
             f"/api/v1/reorder-recommendations/{created['recommendation_id']}"
         ).status_code
         == 404
+    )
+    assert (
+        client.get(
+            f"{prefix}/reorder-recommendations/"
+            f"{created['recommendation_id']}/audit-events"
+        ).status_code
+        == 200
     )
     assert client.get("/health").json() == {
         "status": "ok",
@@ -655,11 +860,18 @@ def test_openapi_documents_review_contract_and_bounded_responses() -> None:
     reject_operation = paths[
         "/api/v1/reorder-recommendations/{recommendation_id}/reject"
     ]["post"]
+    audit_path = paths[
+        "/api/v1/reorder-recommendations/{recommendation_id}/audit-events"
+    ]
+    audit_operation = audit_path["get"]
 
     assert set(create_operation["responses"]) >= {"201", "404", "409", "422"}
     assert set(get_operation["responses"]) >= {"200", "404", "422"}
     assert set(approve_operation["responses"]) >= {"200", "404", "409", "422"}
     assert set(reject_operation["responses"]) >= {"200", "404", "409", "422"}
+    assert set(audit_operation["responses"]) >= {"200", "404", "422"}
+    assert set(audit_path) == {"get"}
+    assert audit_operation["parameters"][0]["schema"]["format"] == "uuid"
     assert schema["components"]["schemas"]["RecommendationReviewStatus"]["enum"] == [
         "pending_review",
         "approved",
@@ -668,6 +880,11 @@ def test_openapi_documents_review_contract_and_bounded_responses() -> None:
     assert schema["components"]["schemas"]["RecommendationDecisionType"]["enum"] == [
         "approved",
         "rejected",
+    ]
+    assert schema["components"]["schemas"]["RecommendationAuditEventType"]["enum"] == [
+        "review_created",
+        "recommendation_approved",
+        "recommendation_rejected",
     ]
     review_properties = schema["components"]["schemas"][
         "ReorderRecommendationReviewResponse"
@@ -699,3 +916,32 @@ def test_openapi_documents_review_contract_and_bounded_responses() -> None:
         "correlation_id",
     }
     assert forbidden_fields.isdisjoint(review_properties | decision_properties)
+    history_properties = schema["components"]["schemas"][
+        "RecommendationAuditHistoryResponse"
+    ]["properties"]
+    event_properties = schema["components"]["schemas"][
+        "RecommendationAuditEventResponse"
+    ]["properties"]
+    assert set(history_properties) == {"recommendation_id", "events"}
+    assert set(event_properties) == {
+        "event_id",
+        "recommendation_id",
+        "sequence_number",
+        "event_type",
+        "occurred_at",
+        "review_status",
+        "decision_id",
+        "actor",
+        "recommended_reorder_quantity",
+        "approved_quantity",
+        "note",
+    }
+    assert event_properties["occurred_at"]["format"] == "date-time"
+    assert event_properties["sequence_number"]["type"] == "integer"
+    assert event_properties["recommended_reorder_quantity"]["type"] == "integer"
+    assert {
+        choice.get("type") for choice in event_properties["decision_id"]["anyOf"]
+    } == {
+        "string",
+        "null",
+    }

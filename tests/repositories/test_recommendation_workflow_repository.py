@@ -4,6 +4,7 @@ from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from queue import Queue
 from threading import Barrier, Thread
+from typing import cast
 from uuid import UUID
 
 import pytest
@@ -14,6 +15,7 @@ from opsmind.domain.errors import (
     RecommendationReviewNotFoundError,
 )
 from opsmind.domain.forecast import ForecastMethod
+from opsmind.domain.recommendation_audit import RecommendationAuditEventType
 from opsmind.domain.recommendation_review import (
     RecommendationReviewStatus,
     ReorderRecommendationReview,
@@ -35,6 +37,10 @@ PRODUCT_ID = UUID("00000000-0000-0000-0000-000000000001")
 RECOMMENDATION_ID = UUID("00000000-0000-0000-0000-000000000101")
 APPROVAL_ID = UUID("00000000-0000-0000-0000-000000000201")
 REJECTION_ID = UUID("00000000-0000-0000-0000-000000000202")
+CREATION_EVENT_ID = UUID("00000000-0000-0000-0000-000000000301")
+APPROVAL_EVENT_ID = UUID("00000000-0000-0000-0000-000000000302")
+REJECTION_EVENT_ID = UUID("00000000-0000-0000-0000-000000000303")
+RETRY_EVENT_ID = UUID("00000000-0000-0000-0000-000000000304")
 CREATED_AT = datetime(2026, 8, 1, 12, 0, tzinfo=UTC)
 DECIDED_AT = datetime(2026, 8, 1, 13, 0, tzinfo=UTC)
 
@@ -77,20 +83,58 @@ def test_repository_satisfies_protocol_and_returns_same_immutable_review() -> No
     )
     review = make_review()
 
-    stored = repository.create_review(review)
+    stored = repository.create_review(review, event_id=CREATION_EVENT_ID)
 
     assert stored is review
     assert repository.get_review(RECOMMENDATION_ID) is review
+    events = repository.list_audit_events(RECOMMENDATION_ID)
+    assert len(events) == 1
+    assert events[0].event_id == CREATION_EVENT_ID
+    assert events[0].event_type is RecommendationAuditEventType.REVIEW_CREATED
+    assert events[0].sequence_number == 1
 
 
 def test_duplicate_identifier_never_overwrites_existing_review() -> None:
     repository = InMemoryRecommendationWorkflowRepository()
-    original = repository.create_review(make_review())
+    original = repository.create_review(
+        make_review(),
+        event_id=CREATION_EVENT_ID,
+    )
+    original_history = repository.list_audit_events(RECOMMENDATION_ID)
 
     with pytest.raises(DuplicateRecommendationReviewError):
-        repository.create_review(make_review())
+        repository.create_review(make_review(), event_id=RETRY_EVENT_ID)
 
     assert repository.get_review(RECOMMENDATION_ID) is original
+    assert repository.list_audit_events(RECOMMENDATION_ID) is original_history
+
+
+def test_event_construction_failure_stores_neither_review_nor_history() -> None:
+    repository = InMemoryRecommendationWorkflowRepository()
+
+    with pytest.raises(ValueError, match="event_id must be a UUID"):
+        repository.create_review(
+            make_review(),
+            event_id=cast(UUID, "not-a-uuid"),
+        )
+
+    with pytest.raises(RecommendationReviewNotFoundError):
+        repository.get_review(RECOMMENDATION_ID)
+    with pytest.raises(RecommendationReviewNotFoundError):
+        repository.list_audit_events(RECOMMENDATION_ID)
+
+
+def test_returned_history_is_an_immutable_tuple_and_cannot_change_storage() -> None:
+    repository = InMemoryRecommendationWorkflowRepository()
+    repository.create_review(make_review(), event_id=CREATION_EVENT_ID)
+
+    history = repository.list_audit_events(RECOMMENDATION_ID)
+    locally_extended = history + history
+
+    assert isinstance(history, tuple)
+    assert len(locally_extended) == 2
+    assert repository.list_audit_events(RECOMMENDATION_ID) is history
+    assert len(repository.list_audit_events(RECOMMENDATION_ID)) == 1
 
 
 def test_missing_review_raises_typed_not_found_error() -> None:
@@ -98,17 +142,20 @@ def test_missing_review_raises_typed_not_found_error() -> None:
 
     with pytest.raises(RecommendationReviewNotFoundError) as captured:
         repository.get_review(RECOMMENDATION_ID)
+    with pytest.raises(RecommendationReviewNotFoundError):
+        repository.list_audit_events(RECOMMENDATION_ID)
 
     assert captured.value.recommendation_id == RECOMMENDATION_ID
 
 
 def test_approval_is_stored_atomically_and_identical_retry_is_idempotent() -> None:
     repository = InMemoryRecommendationWorkflowRepository()
-    repository.create_review(make_review())
+    repository.create_review(make_review(), event_id=CREATION_EVENT_ID)
 
     approved = repository.approve_review(
         RECOMMENDATION_ID,
         decision_id=APPROVAL_ID,
+        event_id=APPROVAL_EVENT_ID,
         decided_by="Reviewer",
         decided_at=DECIDED_AT,
         note="Approved",
@@ -116,6 +163,7 @@ def test_approval_is_stored_atomically_and_identical_retry_is_idempotent() -> No
     retried = repository.approve_review(
         RECOMMENDATION_ID,
         decision_id=REJECTION_ID,
+        event_id=RETRY_EVENT_ID,
         decided_by=" Reviewer ",
         decided_at=DECIDED_AT + timedelta(days=1),
         approved_quantity=19,
@@ -127,15 +175,73 @@ def test_approval_is_stored_atomically_and_identical_retry_is_idempotent() -> No
     assert approved.decision is not None
     assert approved.decision.decision_id == APPROVAL_ID
     assert approved.decision.decided_at == DECIDED_AT
+    events = repository.list_audit_events(RECOMMENDATION_ID)
+    assert [event.sequence_number for event in events] == [1, 2]
+    assert events[1].event_id == APPROVAL_EVENT_ID
+    assert events[1].event_type is (
+        RecommendationAuditEventType.RECOMMENDATION_APPROVED
+    )
+    assert events[1].decision_id == APPROVAL_ID
+    assert events[1].occurred_at == DECIDED_AT
+
+
+def test_changed_approval_retries_append_nothing() -> None:
+    repository = InMemoryRecommendationWorkflowRepository()
+    repository.create_review(make_review(), event_id=CREATION_EVENT_ID)
+    approved = repository.approve_review(
+        RECOMMENDATION_ID,
+        decision_id=APPROVAL_ID,
+        event_id=APPROVAL_EVENT_ID,
+        decided_by="Reviewer",
+        decided_at=DECIDED_AT,
+        approved_quantity=19,
+        note="Approved",
+    )
+    history = repository.list_audit_events(RECOMMENDATION_ID)
+
+    with pytest.raises(RecommendationReviewConflictError):
+        repository.approve_review(
+            RECOMMENDATION_ID,
+            decision_id=REJECTION_ID,
+            event_id=RETRY_EVENT_ID,
+            decided_by="Other",
+            decided_at=DECIDED_AT,
+            approved_quantity=19,
+            note="Approved",
+        )
+    with pytest.raises(RecommendationReviewConflictError):
+        repository.approve_review(
+            RECOMMENDATION_ID,
+            decision_id=REJECTION_ID,
+            event_id=RETRY_EVENT_ID,
+            decided_by="Reviewer",
+            decided_at=DECIDED_AT,
+            approved_quantity=20,
+            note="Approved",
+        )
+    with pytest.raises(RecommendationReviewConflictError):
+        repository.approve_review(
+            RECOMMENDATION_ID,
+            decision_id=REJECTION_ID,
+            event_id=RETRY_EVENT_ID,
+            decided_by="Reviewer",
+            decided_at=DECIDED_AT,
+            approved_quantity=19,
+            note="Changed",
+        )
+
+    assert repository.get_review(RECOMMENDATION_ID) is approved
+    assert repository.list_audit_events(RECOMMENDATION_ID) is history
 
 
 def test_rejection_is_stored_atomically_and_identical_retry_is_idempotent() -> None:
     repository = InMemoryRecommendationWorkflowRepository()
-    repository.create_review(make_review())
+    repository.create_review(make_review(), event_id=CREATION_EVENT_ID)
 
     rejected = repository.reject_review(
         RECOMMENDATION_ID,
         decision_id=REJECTION_ID,
+        event_id=REJECTION_EVENT_ID,
         decided_by="Reviewer",
         decided_at=DECIDED_AT,
         reason="Inbound",
@@ -143,6 +249,7 @@ def test_rejection_is_stored_atomically_and_identical_retry_is_idempotent() -> N
     retried = repository.reject_review(
         RECOMMENDATION_ID,
         decision_id=APPROVAL_ID,
+        event_id=RETRY_EVENT_ID,
         decided_by=" Reviewer ",
         decided_at=DECIDED_AT + timedelta(days=1),
         reason=" Inbound ",
@@ -152,38 +259,138 @@ def test_rejection_is_stored_atomically_and_identical_retry_is_idempotent() -> N
     assert repository.get_review(RECOMMENDATION_ID) is rejected
     assert rejected.decision is not None
     assert rejected.decision.decision_id == REJECTION_ID
+    events = repository.list_audit_events(RECOMMENDATION_ID)
+    assert len(events) == 2
+    assert events[1].event_id == REJECTION_EVENT_ID
+    assert events[1].event_type is (
+        RecommendationAuditEventType.RECOMMENDATION_REJECTED
+    )
+    assert events[1].decision_id == REJECTION_ID
+
+
+def test_changed_rejection_retries_append_nothing() -> None:
+    repository = InMemoryRecommendationWorkflowRepository()
+    repository.create_review(make_review(), event_id=CREATION_EVENT_ID)
+    rejected = repository.reject_review(
+        RECOMMENDATION_ID,
+        decision_id=REJECTION_ID,
+        event_id=REJECTION_EVENT_ID,
+        decided_by="Reviewer",
+        decided_at=DECIDED_AT,
+        reason="Inbound",
+    )
+    history = repository.list_audit_events(RECOMMENDATION_ID)
+
+    with pytest.raises(RecommendationReviewConflictError):
+        repository.reject_review(
+            RECOMMENDATION_ID,
+            decision_id=APPROVAL_ID,
+            event_id=RETRY_EVENT_ID,
+            decided_by="Other",
+            decided_at=DECIDED_AT,
+            reason="Inbound",
+        )
+    with pytest.raises(RecommendationReviewConflictError):
+        repository.reject_review(
+            RECOMMENDATION_ID,
+            decision_id=APPROVAL_ID,
+            event_id=RETRY_EVENT_ID,
+            decided_by="Reviewer",
+            decided_at=DECIDED_AT,
+            reason="Changed",
+        )
+
+    assert repository.get_review(RECOMMENDATION_ID) is rejected
+    assert repository.list_audit_events(RECOMMENDATION_ID) is history
 
 
 def test_conflicting_retry_leaves_stored_state_unchanged() -> None:
     repository = InMemoryRecommendationWorkflowRepository()
-    repository.create_review(make_review())
+    repository.create_review(make_review(), event_id=CREATION_EVENT_ID)
     approved = repository.approve_review(
         RECOMMENDATION_ID,
         decision_id=APPROVAL_ID,
+        event_id=APPROVAL_EVENT_ID,
         decided_by="Reviewer",
         decided_at=DECIDED_AT,
     )
+    original_history = repository.list_audit_events(RECOMMENDATION_ID)
 
     with pytest.raises(RecommendationReviewConflictError):
         repository.reject_review(
             RECOMMENDATION_ID,
             decision_id=REJECTION_ID,
+            event_id=REJECTION_EVENT_ID,
             decided_by="Reviewer",
             decided_at=DECIDED_AT,
             reason="Changed",
         )
 
     assert repository.get_review(RECOMMENDATION_ID) is approved
+    assert repository.list_audit_events(RECOMMENDATION_ID) is original_history
+
+
+def test_same_timestamp_events_remain_ordered_by_sequence() -> None:
+    repository = InMemoryRecommendationWorkflowRepository()
+    repository.create_review(make_review(), event_id=CREATION_EVENT_ID)
+    repository.approve_review(
+        RECOMMENDATION_ID,
+        decision_id=APPROVAL_ID,
+        event_id=APPROVAL_EVENT_ID,
+        decided_by="Reviewer",
+        decided_at=CREATED_AT,
+    )
+
+    events = repository.list_audit_events(RECOMMENDATION_ID)
+
+    assert events[0].occurred_at == events[1].occurred_at
+    assert [event.sequence_number for event in events] == [1, 2]
+
+
+@pytest.mark.parametrize("operation", ["approve", "reject"])
+def test_terminal_event_failure_stores_neither_transition_nor_event(
+    operation: str,
+) -> None:
+    repository = InMemoryRecommendationWorkflowRepository()
+    pending = repository.create_review(
+        make_review(),
+        event_id=CREATION_EVENT_ID,
+    )
+    original_history = repository.list_audit_events(RECOMMENDATION_ID)
+
+    with pytest.raises(ValueError, match="event_id must be a UUID"):
+        if operation == "approve":
+            repository.approve_review(
+                RECOMMENDATION_ID,
+                decision_id=APPROVAL_ID,
+                event_id=cast(UUID, "not-a-uuid"),
+                decided_by="Reviewer",
+                decided_at=DECIDED_AT,
+            )
+        else:
+            repository.reject_review(
+                RECOMMENDATION_ID,
+                decision_id=REJECTION_ID,
+                event_id=cast(UUID, "not-a-uuid"),
+                decided_by="Reviewer",
+                decided_at=DECIDED_AT,
+                reason="Inbound",
+            )
+
+    assert repository.get_review(RECOMMENDATION_ID) is pending
+    assert repository.list_audit_events(RECOMMENDATION_ID) is original_history
 
 
 def test_separate_repository_instances_are_isolated() -> None:
     first = InMemoryRecommendationWorkflowRepository()
     second = InMemoryRecommendationWorkflowRepository()
-    first.create_review(make_review())
+    first.create_review(make_review(), event_id=CREATION_EVENT_ID)
 
     assert first.get_review(RECOMMENDATION_ID).recommendation_id == RECOMMENDATION_ID
     with pytest.raises(RecommendationReviewNotFoundError):
         second.get_review(RECOMMENDATION_ID)
+    with pytest.raises(RecommendationReviewNotFoundError):
+        second.list_audit_events(RECOMMENDATION_ID)
 
 
 def test_internal_mapping_has_no_public_exposure() -> None:
@@ -195,13 +402,14 @@ def test_internal_mapping_has_no_public_exposure() -> None:
         "approve_review",
         "create_review",
         "get_review",
+        "list_audit_events",
         "reject_review",
     )
 
 
 def test_concurrent_approve_and_reject_have_exactly_one_winner() -> None:
     repository = InMemoryRecommendationWorkflowRepository()
-    repository.create_review(make_review())
+    repository.create_review(make_review(), event_id=CREATION_EVENT_ID)
     barrier = Barrier(3)
     results: Queue[tuple[str, str]] = Queue()
 
@@ -211,6 +419,7 @@ def test_concurrent_approve_and_reject_have_exactly_one_winner() -> None:
             approved = repository.approve_review(
                 RECOMMENDATION_ID,
                 decision_id=APPROVAL_ID,
+                event_id=APPROVAL_EVENT_ID,
                 decided_by="Approver",
                 decided_at=DECIDED_AT,
             )
@@ -224,6 +433,7 @@ def test_concurrent_approve_and_reject_have_exactly_one_winner() -> None:
             rejected = repository.reject_review(
                 RECOMMENDATION_ID,
                 decision_id=REJECTION_ID,
+                event_id=REJECTION_EVENT_ID,
                 decided_by="Rejector",
                 decided_at=DECIDED_AT,
                 reason="No longer needed",
@@ -250,3 +460,9 @@ def test_concurrent_approve_and_reject_have_exactly_one_winner() -> None:
     assert [item for item in outcomes if item[0] == "success"] == [
         ("success", stored.review_status.value)
     ]
+    events = repository.list_audit_events(RECOMMENDATION_ID)
+    assert len(events) == 2
+    assert [event.sequence_number for event in events] == [1, 2]
+    assert len({event.sequence_number for event in events}) == 2
+    assert events[-1].review_status is stored.review_status
+    assert events[-1].event_type.value == f"recommendation_{stored.review_status.value}"

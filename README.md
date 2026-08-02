@@ -18,7 +18,8 @@ inventory position for each product, and ingest and retrieve daily demand
 history. It can also calculate a transparent arithmetic-mean demand forecast,
 deterministic stockout exposure, and a whole-unit reorder recommendation on
 request. Actionable recommendations can now be stored as immutable in-memory
-snapshots for approval or rejection. This repository does not yet contain:
+snapshots for approval or rejection, with a process-local append-only event
+history for each stored review. This repository does not yet contain:
 
 - Persistence or migrations
 - Authentication, authorization, or verified reviewer identity
@@ -114,8 +115,8 @@ uv run uvicorn opsmind.main:app --reload
 ```
 
 The API exposes an unversioned deterministic process-health endpoint and
-fourteen product, inventory, demand, forecast, exposure, recommendation, and
-review operations under the configured business prefix:
+fifteen product, inventory, demand, forecast, exposure, recommendation, review,
+and audit-history operations under the configured business prefix:
 
 | Method | Path | Result |
 | --- | --- | --- |
@@ -134,6 +135,7 @@ review operations under the configured business prefix:
 | `GET` | `/api/v1/reorder-recommendations/{recommendation_id}` | Retrieve a stored recommendation review. |
 | `POST` | `/api/v1/reorder-recommendations/{recommendation_id}/approve` | Approve a pending recommendation. |
 | `POST` | `/api/v1/reorder-recommendations/{recommendation_id}/reject` | Reject a pending recommendation. |
+| `GET` | `/api/v1/reorder-recommendations/{recommendation_id}/audit-events` | Retrieve ordered workflow history. |
 
 Application settings use the `OPSMIND_` environment-variable prefix. Supported
 overrides are:
@@ -603,11 +605,90 @@ demand.
 
 The `decided_by` value is caller supplied and unverified. There is no
 authentication, authorization, role check, or trusted user identity. The stored
-snapshot and single terminal decision are useful workflow evidence, but they
-are not a complete audit system: there is no append-only event history,
-correlation identifier, tamper protection, durable retention, reversal, or
-decision-history query. Approval does not create a purchase order, reserve or
-change inventory, select a supplier, or initiate any external action.
+snapshot, current aggregate, and process-local event history are useful workflow
+evidence, but they do not prove who performed an action. Approval does not
+create a purchase order, reserve or change inventory, select a supplier, or
+initiate any external action.
+
+### Recommendation audit history
+
+Every stored review has an immutable, append-only event stream available at:
+
+```text
+GET /api/v1/reorder-recommendations/{recommendation_id}/audit-events
+```
+
+The stream records exactly three supported event types:
+
+- `review_created`
+- `recommendation_approved`
+- `recommendation_rejected`
+
+Sequence numbers are local to one recommendation. Sequence `1` is always the
+creation event. A successful first approval or rejection appends sequence `2`.
+Sequence, rather than timestamp, defines order because an injected fixed clock
+can legitimately give creation and decision events the same time.
+
+Events are generated automatically by successful workflow writes. The existing
+workflow repository stores current review state and its event tuple together
+under one process-local lock. Review creation and its creation event therefore
+succeed together, and a terminal state change and matching terminal event
+succeed together. HTTP routes never perform independent state and event writes.
+
+An identical normalized approval or rejection retry returns the original
+decision and appends no duplicate event. A changed or opposite retry returns
+HTTP 409 and appends nothing. Clients cannot create, update, delete, reorder, or
+correct events directly.
+
+Retrieve a review's history with:
+
+```bash
+curl --fail-with-body \
+  http://127.0.0.1:8000/api/v1/reorder-recommendations/00000000-0000-0000-0000-000000000101/audit-events
+```
+
+An approved history keeps the original system recommendation separate from the
+human-approved quantity:
+
+```json
+{
+  "recommendation_id": "00000000-0000-0000-0000-000000000101",
+  "events": [
+    {
+      "sequence_number": 1,
+      "event_type": "review_created",
+      "review_status": "pending_review",
+      "recommended_reorder_quantity": 19,
+      "approved_quantity": null
+    },
+    {
+      "sequence_number": 2,
+      "event_type": "recommendation_approved",
+      "review_status": "approved",
+      "actor": "Anish Paudyal",
+      "recommended_reorder_quantity": 19,
+      "approved_quantity": 24
+    }
+  ]
+}
+```
+
+The actual response also includes event, recommendation, and decision UUIDs;
+aware UTC timestamps; and explicit nullable actor, decision, quantity, and note
+fields. Swagger UI documents the complete response schema and 200, 404, and 422
+behavior.
+
+The immutable recommendation snapshot preserves calculation evidence, the
+review aggregate answers the current state, and audit events record the two
+successful workflow facts in order. The aggregate remains the current-state
+source of truth; events are not replayed to rebuild it, so this is audited state
+storage rather than full event sourcing.
+
+History remains in memory, is lost on restart, and is not shared across workers.
+The actor is caller supplied, unauthenticated, unverified, and potentially
+spoofable. Events are not cryptographically signed, hash chained,
+tamper-evident, durably retained, externally published, or protected from direct
+process-memory manipulation. This is not a production compliance ledger.
 
 ## Contribution Rule
 

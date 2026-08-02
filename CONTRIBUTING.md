@@ -253,6 +253,7 @@ Run focused recommendation-review tests with:
 
 ```bash
 uv run pytest -p no:cacheprovider \
+  tests/unit/test_recommendation_audit_domain.py \
   tests/unit/test_recommendation_review_domain.py \
   tests/repositories/test_recommendation_workflow_repository.py \
   tests/api/test_recommendation_reviews.py
@@ -264,20 +265,40 @@ separate from the product, inventory, and demand repository. Retrieval and
 decision operations must use only stored workflow state and must never
 recalculate forecast, exposure, or recommendation results.
 
+Every stored review must have an immutable audit history. Pending histories
+contain exactly sequence `1` `review_created`; terminal histories contain that
+event followed by exactly one sequence `2` approval or rejection event. Test
+sequence ordering explicitly when timestamps are equal, because timestamps do
+not determine order.
+
+Review state and matching event writes belong to one workflow repository
+operation under one lock. Tests must cover factory or validation failure before
+storage, atomic creation and terminal transitions, immutable returned tuples,
+duplicate identifiers, and the absence of orphan reviews or events. Do not
+introduce route-level dual writes or a separately coordinated audit repository.
+
 Domain transitions are pure and receive decision identifiers and timestamps as
 inputs. Reject naive timestamps and normalize aware timestamps to UTC. Use an
 injected fixed clock in API tests. Approval and rejection are terminal;
 identical normalized retries return the original decision, while changed or
-opposite retries conflict without changing stored state. Repository tests must
-exercise the full read-transition-write under one lock, including a
-deterministic concurrent approve-versus-reject race.
+opposite retries conflict without changing stored state. Audit assertions must
+also prove that identical retries append no duplicate, conflicts append nothing,
+and original decision and event identifiers remain unchanged. Repository tests
+must exercise the full read-transition-write-and-append under one lock,
+including a deterministic concurrent approve-versus-reject race with exactly
+one terminal event. Do not coordinate concurrency tests with sleeps.
 
-Use fresh workflow repositories for application isolation. The current
-repository is process-local and nonpersistent. Treat `decided_by` as unverified
-caller input: no authentication, authorization, or role check exists. The
-snapshot and one terminal decision are not an append-only or tamper-resistant
-audit history, and approval must not create an order or mutate operational
-state.
+Use fresh workflow repositories for application isolation, and test deliberately
+shared repositories separately when shared-history behavior is relevant.
+History retrieval must be repeatable and read-only, access no operational
+repository, and retain existing product, inventory, demand, forecast, stockout,
+reorder, workflow, custom-prefix, OpenAPI, isolation, and health regressions.
+
+The current repository and event history are process-local and nonpersistent.
+Treat `decided_by` as unverified caller input: no authentication, authorization,
+or role check exists. Append-only behavior applies only through supported APIs;
+history is not cryptographically tamper-evident or compliance-grade, and
+approval must not create an order or mutate operational state.
 
 ### Continuous integration
 

@@ -21,6 +21,7 @@ from opsmind.domain.errors import (
     RecommendationReviewConflictError,
     RecommendationReviewNotFoundError,
 )
+from opsmind.domain.recommendation_audit import RecommendationAuditEvent
 from opsmind.domain.recommendation_review import (
     RecommendationDecision,
     ReorderRecommendationReview,
@@ -34,6 +35,10 @@ from opsmind.domain.stockout import calculate_stockout_exposure
 from opsmind.repositories.product_inventory import ProductInventoryRepository
 from opsmind.repositories.recommendation_workflow import (
     RecommendationWorkflowRepository,
+)
+from opsmind.schemas.recommendation_audit import (
+    RecommendationAuditEventResponse,
+    RecommendationAuditHistoryResponse,
 )
 from opsmind.schemas.recommendation_review import (
     ApproveRecommendationRequest,
@@ -123,6 +128,24 @@ def _review_response(
     )
 
 
+def _audit_event_response(
+    event: RecommendationAuditEvent,
+) -> RecommendationAuditEventResponse:
+    return RecommendationAuditEventResponse(
+        event_id=event.event_id,
+        recommendation_id=event.recommendation_id,
+        sequence_number=event.sequence_number,
+        event_type=event.event_type,
+        occurred_at=event.occurred_at,
+        review_status=event.review_status,
+        decision_id=event.decision_id,
+        actor=event.actor,
+        recommended_reorder_quantity=event.recommended_reorder_quantity,
+        approved_quantity=event.approved_quantity,
+        note=event.note,
+    )
+
+
 def _review_not_found(error: RecommendationReviewNotFoundError) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -177,7 +200,7 @@ def create_reorder_recommendation_review(
             recommendation=recommendation,
             created_at=clock.now(),
         )
-        stored_review = workflow_repository.create_review(review)
+        stored_review = workflow_repository.create_review(review, event_id=uuid4())
     except ProductNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -234,6 +257,35 @@ def get_reorder_recommendation_review(
     return _review_response(review)
 
 
+@router.get(
+    "/reorder-recommendations/{recommendation_id}/audit-events",
+    response_model=RecommendationAuditHistoryResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get recommendation review audit history",
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "description": "Stored recommendation review not found."
+        },
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "description": "Invalid recommendation identifier."
+        },
+    },
+)
+def get_recommendation_audit_history(
+    recommendation_id: UUID,
+    workflow_repository: WorkflowRepositoryDependency,
+) -> RecommendationAuditHistoryResponse:
+    """Return stored events without recalculating or mutating workflow state."""
+    try:
+        events = workflow_repository.list_audit_events(recommendation_id)
+    except RecommendationReviewNotFoundError as error:
+        raise _review_not_found(error) from error
+    return RecommendationAuditHistoryResponse(
+        recommendation_id=recommendation_id,
+        events=[_audit_event_response(event) for event in events],
+    )
+
+
 @router.post(
     "/reorder-recommendations/{recommendation_id}/approve",
     response_model=ReorderRecommendationReviewResponse,
@@ -262,6 +314,7 @@ def approve_reorder_recommendation(
         review = workflow_repository.approve_review(
             recommendation_id,
             decision_id=uuid4(),
+            event_id=uuid4(),
             decided_by=request.decided_by,
             decided_at=clock.now(),
             approved_quantity=request.approved_quantity,
@@ -310,6 +363,7 @@ def reject_reorder_recommendation(
         review = workflow_repository.reject_review(
             recommendation_id,
             decision_id=uuid4(),
+            event_id=uuid4(),
             decided_by=request.decided_by,
             decided_at=clock.now(),
             reason=request.reason,
