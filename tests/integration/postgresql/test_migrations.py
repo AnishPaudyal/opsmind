@@ -10,7 +10,14 @@ from sqlalchemy.engine import URL, Engine
 from opsmind.application import create_app
 from opsmind.core.config import Environment, PersistenceBackend, Settings
 
-EXPECTED_TABLES = {"products", "inventory_positions", "demand_observations"}
+EXPECTED_TABLES = {
+    "products",
+    "inventory_positions",
+    "demand_observations",
+    "recommendation_reviews",
+    "recommendation_decisions",
+    "recommendation_audit_events",
+}
 
 
 def test_initial_migration_has_expected_schema_and_is_idempotent(
