@@ -6,7 +6,7 @@ from collections.abc import Iterator
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import delete
+from sqlalchemy import delete, update
 from sqlalchemy.engine import URL, Engine
 
 from opsmind.persistence.postgresql.database import (
@@ -20,6 +20,9 @@ from opsmind.persistence.postgresql.models import (
     DemandObservationRow,
     InventoryPositionRow,
     ProductRow,
+    RecommendationAuditEventRow,
+    RecommendationDecisionRow,
+    RecommendationReviewRow,
 )
 from opsmind.persistence.postgresql.repository import (
     PostgresProductInventoryRepository,
@@ -64,8 +67,18 @@ def postgresql_engine(
         dispose_engine(engine)
 
 
-def _delete_operational_data(engine: Engine) -> None:
+def _delete_postgresql_data(engine: Engine) -> None:
+    """Delete all persisted test rows in dependency-safe order."""
     with engine.begin() as connection:
+        connection.execute(delete(RecommendationAuditEventRow))
+        connection.execute(
+            update(RecommendationReviewRow).values(
+                review_status="pending_review",
+                decision_id=None,
+            )
+        )
+        connection.execute(delete(RecommendationDecisionRow))
+        connection.execute(delete(RecommendationReviewRow))
         connection.execute(delete(DemandObservationRow))
         connection.execute(delete(InventoryPositionRow))
         connection.execute(delete(ProductRow))
@@ -74,11 +87,11 @@ def _delete_operational_data(engine: Engine) -> None:
 @pytest.fixture
 def clean_postgresql(postgresql_engine: Engine) -> Iterator[None]:
     """Delete test rows in dependency order before and after one test."""
-    _delete_operational_data(postgresql_engine)
+    _delete_postgresql_data(postgresql_engine)
     try:
         yield
     finally:
-        _delete_operational_data(postgresql_engine)
+        _delete_postgresql_data(postgresql_engine)
 
 
 @pytest.fixture
