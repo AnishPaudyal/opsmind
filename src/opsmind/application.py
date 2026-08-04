@@ -22,6 +22,9 @@ from opsmind.persistence.postgresql.database import (
 from opsmind.persistence.postgresql.repository import (
     PostgresProductInventoryRepository,
 )
+from opsmind.persistence.postgresql.workflow_repository import (
+    PostgresRecommendationWorkflowRepository,
+)
 from opsmind.repositories.in_memory_recommendation_workflow import (
     InMemoryRecommendationWorkflowRepository,
 )
@@ -41,23 +44,34 @@ def create_app(
     """Create an OpsMind application with isolated settings and repositories."""
     resolved_settings = settings if settings is not None else get_settings()
     owned_engine: Engine | None = None
-    resolved_repository: ProductInventoryRepository
-    if product_inventory_repository is not None:
-        resolved_repository = product_inventory_repository
-    elif resolved_settings.persistence_backend is PersistenceBackend.MEMORY:
-        resolved_repository = InMemoryProductInventoryRepository()
-    else:
-        if resolved_settings.database_url is None:
-            raise RuntimeError("PostgreSQL database URL is not configured.")
-        owned_engine = create_postgresql_engine(resolved_settings.database_url)
-        resolved_repository = PostgresProductInventoryRepository(
-            create_session_factory(owned_engine)
-        )
-    resolved_workflow_repository = (
-        recommendation_workflow_repository
-        if recommendation_workflow_repository is not None
-        else InMemoryRecommendationWorkflowRepository()
-    )
+    resolved_repository = product_inventory_repository
+    resolved_workflow_repository = recommendation_workflow_repository
+
+    if resolved_repository is None or resolved_workflow_repository is None:
+        if resolved_settings.persistence_backend is PersistenceBackend.MEMORY:
+            if resolved_repository is None:
+                resolved_repository = InMemoryProductInventoryRepository()
+            if resolved_workflow_repository is None:
+                resolved_workflow_repository = (
+                    InMemoryRecommendationWorkflowRepository()
+                )
+        else:
+            if resolved_settings.database_url is None:
+                raise RuntimeError("PostgreSQL database URL is not configured.")
+            owned_engine = create_postgresql_engine(resolved_settings.database_url)
+            session_factory = create_session_factory(owned_engine)
+
+            if resolved_repository is None:
+                resolved_repository = PostgresProductInventoryRepository(
+                    session_factory
+                )
+            if resolved_workflow_repository is None:
+                resolved_workflow_repository = PostgresRecommendationWorkflowRepository(
+                    session_factory
+                )
+
+    assert resolved_repository is not None
+    assert resolved_workflow_repository is not None
     resolved_clock = clock if clock is not None else SystemClock()
 
     def provide_settings() -> Settings:
