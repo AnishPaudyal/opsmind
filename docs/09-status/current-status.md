@@ -1,271 +1,565 @@
-## Codex Repository Verification
+# OpsMind Current Status
 
-- The repository was readable.
-- The root `AGENTS.md` was found and followed.
-- No application code was changed.
-- No dependencies were added.
-- No AWS resources or configuration were added.
-- No automated tests were applicable to this documentation-only change.
+Status basis: implementation merged through PR #43
+Governance basis:
+`docs/00-project-foundation/roadmap-phase-reconciliation.md`
+Documentation reconciliation: Issue #46
 
-## Phase 1 Foundation Status
+This document describes the repository state established when the Issue #46
+documentation reconciliation and retrospective Phase 1–3 reviews are accepted
+and merged.
 
-- Phase 1 established repository governance, the Python project, the local
-  quality toolchain, and Python-quality CI.
-- Issues #2 through #4 established the local Python toolchain.
-- Issues #5, #6, #10, and #12 established the governed Python, ADR, quality, and
-  CI foundations required before application work.
-- ADR-0001 and ADR-0002 record the accepted Python and quality decisions.
+Historical implementation descriptions remain useful evidence, but current
+behavior is determined by the latest merged implementation rather than by an
+earlier memory-only milestone.
 
-## Python Project Foundation
+## Canonical Phase Status
 
-- The foundation contains `pyproject.toml`, `.python-version`, `uv.lock`, and an
-  ignored local `.venv`.
-- Validation uses Homebrew-managed `uv 0.11.28` and `uv`-managed CPython
-  3.13.14 as a native `arm64` runtime.
-- Issue #14 converts the root project to a packaged `src/opsmind` application
-  using the bounded `uv_build` backend.
-- FastAPI, Pydantic Settings, and Uvicorn are the direct runtime dependencies.
-- Application and unit-test layouts now exist for the bounded backend
-  foundation.
+| Phase | Focus                                                                     | Formal status | Current finding                                    |
+| ----- | ------------------------------------------------------------------------- | ------------- | -------------------------------------------------- |
+| 0     | Project definition, scope, governance, and readiness                      | Complete      | Phase 0 review accepted                            |
+| 1     | Repository and local development foundation                               | Complete      | Delivered and retrospectively reviewed             |
+| 2     | Product data and transactional backend                                    | Complete      | Delivered and retrospectively reviewed             |
+| 3     | Web workflow for product and demand operations                            | Complete      | Delivered and retrospectively reviewed             |
+| 4     | Forecasting baseline and evaluation                                       | Current       | Baseline delivered; evaluation remains             |
+| 5     | Stockout risk and reorder recommendations                                 | Gate pending  | Deterministic capability delivered early           |
+| 6     | Decision approval, rejection, and audit history                           | Gate pending  | Workflow and PostgreSQL durability delivered early |
+| 7–12  | Hardening, cloud, pipelines, MLOps, advanced AI, and production readiness | Planned       | Not formally opened                                |
 
-## Python Quality and Testing Toolchain
+Implementation delivery and formal phase completion are separate. Phases 5 and
+6 contain working capability but have not passed their formal gates.
 
-- Issue #9 selected the Python quality baseline, and issue #10 implemented the
-  local toolchain.
-- ADR-0002 was accepted by the repository owner during PR #11 review, and the
-  Python quality and testing toolchain decision is approved.
-- Issue #10 was completed when PR #11 merged.
-- Ruff, mypy, pytest, pytest-cov, and the HTTPX test client are the direct
-  development dependencies, all in one `dev` dependency group.
-- The accepted formatter, linter, type checker, test runner, coverage tool, and
-  their configuration remain unchanged.
-- Pre-commit remains deferred.
-- Coverage collection is configured without a percentage gate.
-- Validation now runs against permanent first-party application and unit-test
-  files.
+## Repository and Development Foundation
 
-## Python Quality Continuous Integration
+Phase 1 established:
 
-- Issue #12 was completed when PR #13 merged
-  `.github/workflows/python-quality.yml`.
-- The workflow reproduces the accepted local Ruff, mypy, and pytest contract.
-- Workflow permissions are read-only, and both external actions are pinned to
-  full commit SHAs.
-- CI pins `uv` to version `0.11.28` and selects Python through
-  `.python-version`.
-- The `uv` download cache is enabled; `.venv` and managed Python installations
-  are not cached.
-- The existing governance workflow remains separate and unchanged.
-- The existing workflow now detects and validates real first-party source and
-  standard pytest test files without a workflow redesign.
-- Pre-commit remains deferred, and application and integration CI remain future
-  work.
+* repository governance;
+* contributor and automated-agent boundaries;
+* Architecture Decision Records;
+* the packaged Python project;
+* dependency locking with `uv`;
+* Ruff formatting and linting;
+* mypy static type checking;
+* pytest and pytest-cov;
+* Python-quality continuous integration;
+* repository-governance validation;
+* pull-request review before merge.
 
-## Phase 2 FastAPI Backend Foundation
+The foundation includes:
 
-- Phase 2 began with issue #14 as the first application-code milestone.
-- ADR-0003 was reviewed and accepted by the repository owner during PR #15
-  review. The packaged `src/opsmind/` FastAPI modular-monolith structure is
-  approved.
-- The approved structure includes the application factory, typed settings,
-  modular routing, separate tests, the unversioned `GET /health` process-health
-  endpoint, and a reserved but unrouted `/api/v1` prefix.
-- Synchronous unit tests cover application construction, configuration,
-  dependency injection, the exact health response, and OpenAPI metadata.
-- HTTPX is development-only; no broad dependency extras were added.
-- GitHub-hosted repository-governance and Python-quality checks passed for PR
-  #15.
-- Issue #14 was completed when PR #15 merged the accepted backend foundation.
+* `pyproject.toml`;
+* `.python-version`;
+* `uv.lock`;
+* the packaged `src/opsmind` layout;
+* application and test layouts;
+* pinned GitHub Actions;
+* read-only workflow permissions.
 
-## Phase 2 Product and Inventory API
+ADR-0000, ADR-0001, and ADR-0002 record the accepted ADR, Python, and
+quality-toolchain decisions.
 
-- Issue #16 implements OpsMind's first supply-chain business API.
-- Product creation, deterministic listing, and UUID retrieval are available
-  under the configured `/api/v1` business prefix.
-- Inventory can be set, replaced, and retrieved for existing products;
-  available quantity is calculated as on-hand quantity minus allocated quantity
-  and may be negative to represent shortage.
-- Product and inventory storage remains isolated in memory for each application
-  instance. Data is not persistent and is lost when the process restarts.
-- The unversioned `GET /health` process-health contract remains unchanged.
-- Issue #16 was completed when PR #17 merged the product and inventory API.
+Pre-commit remains deferred. Coverage is collected without a minimum percentage
+gate.
 
-## Phase 2 Demand History API
+## Phase 2 — Product Data and Transactional Backend
 
-- Issue #18 implements daily demand-history ingestion and retrieval beneath the
-  configured `/api/v1` business prefix.
-- Nonempty demand batches are validated and stored atomically, so a duplicate
-  date conflict leaves all prior state unchanged and stores none of the failed
-  batch.
-- Demand results are chronological, and optional start and end date filters are
-  inclusive.
-- Zero demand is valid; negative quantities are rejected.
-- Demand uses the same isolated in-memory repository as products and inventory.
-  Storage is nonpersistent and all state is lost when the process restarts.
-- No database, migration, risk scoring, reorder recommendation, approval
-  workflow, audit history, authentication, frontend, Docker, AWS, or deployment
-  capability exists yet.
-- Issue #18 was completed when PR #19 merged the demand-history API.
+Phase 2 delivered the reviewed FastAPI backend and operational persistence
+foundation.
 
-## Phase 2 Baseline Demand Forecast API
+### Backend structure
 
-- Issue #20 implements a deterministic arithmetic-mean baseline forecast under
-  the configured `/api/v1` business prefix.
-- Forecasts are calculated on demand from chronological repository demand and
-  are never persisted.
-- Clients can select an observation lookback, horizon, and optional inclusive
-  cutoff. Without a cutoff, the latest stored demand date is used.
-- Missing calendar dates remain missing; recorded zero-demand observations are
-  preserved.
-- Results include the method, effective cutoff, selected training dates,
-  requested and actual observation counts, average daily demand, horizon, and
-  projected quantity.
-- Exact decimal arithmetic drives the forecast before average and forecast are
-  independently rounded to two decimal places with `ROUND_HALF_UP`.
-- The simple mean does not model trend, seasonality, intermittent demand,
-  uncertainty, or measured accuracy.
-- No stockout probability, reorder recommendation, approval workflow, audit
-  history, PostgreSQL, frontend, Docker, AWS, or deployment capability exists
-  yet.
-- Issue #20 was completed when PR #21 merged the baseline forecast API.
+Issue #14 and PR #15 delivered:
 
-## Phase 2 Deterministic Stockout Exposure API
+* the FastAPI application factory;
+* typed settings;
+* modular routing;
+* dependency-injection boundaries;
+* separate schemas, services, repositories, and tests;
+* the unversioned `GET /health` process-health endpoint;
+* the configured versioned business API prefix.
 
-- Issue #22 combines product lead time, current inventory, and the exact
-  simple-mean demand statistics into deterministic stockout exposure.
-- Exposure is calculated on demand and is never persisted.
-- Available inventory remains on-hand quantity minus allocated quantity,
-  including negative values.
-- The product's lead time defines the horizon; clients do not submit one.
-- Results explain lead-time demand, projected inventory balance, projected
-  shortage, and either `sufficient` or `shortage_projected` status.
-- Status and shortage derive from the two-decimal public balance after
-  `ROUND_HALF_UP` quantization and negative-zero normalization.
-- The capability is not a stockout probability, calibrated risk score, or
-  reorder recommendation.
-- No recommendation approval, ordering, audit, database, authentication,
-  frontend, Docker, AWS, or deployment capability exists yet.
-- Issue #22 was completed when PR #23 merged the stockout-exposure API.
+ADR-0003 records the accepted modular-monolith backend structure.
 
-## Phase 2 Deterministic Reorder Recommendation API
+### Product and inventory behavior
 
-- Issue #24 implements a read-only recommendation endpoint beneath the configured
-  `/api/v1` business prefix.
-- The recommendation reuses the deterministic stockout-exposure result and
-  preserves its complete public evidence.
-- The sole `projected_shortage_ceiling` policy applies `Decimal`
-  `ROUND_CEILING` directly to the public two-decimal projected shortage.
-- Zero recommended units report `no_reorder_needed`; positive whole-unit
-  results report `reorder_recommended` and preserve the product's unit of
-  measure.
-- Requests retain the established inclusive cutoff, record-count lookback,
-  recorded-zero, missing-date, negative-inventory, and zero-lead-time behavior.
-- Results are calculated on demand and are never persisted. Product, inventory,
-  and demand state remain unchanged.
-- This capability does not create an order or provide approval, audit,
-  supplier, cost, pack-size, safety-stock, service-level, probability, database,
-  authentication, frontend, Docker, AWS, or deployment behavior.
-- Issue #24 was completed when PR #25 merged the deterministic reorder
-  recommendation API.
+Issue #16 and PR #17 delivered:
 
-## Phase 2 Reorder Recommendation Review API
+* product creation;
+* deterministic product listing;
+* product retrieval by UUID;
+* current-inventory replacement;
+* current-inventory retrieval;
+* available inventory calculated as on-hand minus allocated quantity;
+* negative available inventory preserved as shortage evidence.
 
-- Issue #26 implements the first state-changing recommendation-review workflow
-  beneath the configured `/api/v1` business prefix.
-- Only actionable positive reorder recommendations can be stored. Each stored
-  review receives a server-generated UUID, a timezone-aware UTC timestamp, and
-  an immutable copy of the recommendation and its original forecast, exposure,
-  inventory, and demand-selection evidence.
-- Reviews begin as `pending_review` and can transition once to either
-  `approved` or `rejected`. Identical normalized retries return the original
-  decision UUID and timestamp; changed or opposite retries conflict without
-  changing state.
-- Approval records a positive approved quantity separately from the immutable
-  recommended quantity. Omitted approval quantity defaults to the original
-  recommendation. Rejection records a required reason and no approved quantity.
-- Retrieval and decisions use a separate thread-safe recommendation-workflow
-  repository and never recalculate forecast, exposure, or recommendation data.
-  Concurrent approval and rejection cannot both succeed.
-- Workflow storage is isolated per application instance, process-local,
-  nonpersistent, and lost on restart. Product, inventory, and demand use their
-  existing repository unchanged.
-- The caller supplies `decided_by`; the value is trimmed but is not authenticated,
-  authorized, or verified. No role-based access control exists.
-- The snapshot and one terminal decision are not a complete audit system. There
-  is no append-only history, correlation ID, tamper protection, durable
-  retention, reversal, or decision-history query.
-- Approval does not create a purchase order, select a supplier, reserve or
-  mutate inventory, or initiate an external action. No database, frontend,
-  Docker, AWS, or deployment capability is introduced.
-- Issue #26 was completed when PR #27 merged the recommendation-review API.
+The initial PR #17 implementation used isolated in-memory storage. That remains
+a supported mode, but it is no longer the only persistence mode.
 
-## Phase 2 Recommendation Audit History API
+### Operational persistence
 
-- Issue #28 adds an append-only, process-local event history to each stored
-  recommendation review.
-- Review creation automatically stores sequence `1` `review_created`. The first
-  successful approval or rejection stores sequence `2`
-  `recommendation_approved` or `recommendation_rejected`.
-- Review state and its matching event are prepared and stored together by the
-  existing workflow repository under one in-memory lock. Both changes succeed
-  together or neither is stored.
-- Events are retrieved in sequence order through
-  `GET /api/v1/reorder-recommendations/{recommendation_id}/audit-events`.
-  Retrieval performs no recalculation and changes neither workflow nor source
-  operational state.
-- Identical normalized terminal retries return the original review and append no
-  duplicate event. Changed or opposite retries conflict and append no event.
-- Sequence numbers, not timestamps, define event order because fixed-clock
-  events can share one timestamp.
-- Event streams are immutable through supported repository and HTTP APIs, but
-  remain in memory, are lost on restart, and are not shared across workers.
-- The actor remains caller supplied, unauthenticated, unverified, and potentially
-  spoofable. Events do not prove who performed a decision.
-- History is not cryptographically signed, hash chained, tamper-evident,
-  event-sourced, durably retained, externally published, or compliance-grade.
-- ADR-0004 records the accepted decision to keep recommendation workflow state
-  and matching audit events within one atomic repository transaction boundary.
-  The current process-local implementation uses one repository lock, and a
-  future PostgreSQL implementation must preserve the guarantee through one
-  database transaction.
-- The repository owner formally accepted ADR-0004 after PR #29 merged. Issue
-  #28 was completed by that merge, and its GitHub-hosted repository and Python
-  quality checks passed.
+Issue #32 and PR #33 delivered PostgreSQL persistence for:
 
-## Phase 3 PostgreSQL Operational Persistence
+* products;
+* current inventory positions;
+* daily demand observations.
 
-- Issue #32 implements PostgreSQL persistence for products, current inventory
-  positions, and daily demand observations behind the unchanged
-  `ProductInventoryRepository` Protocol.
-- The existing in-memory operational repository remains available and is the
-  temporary migration-phase default. PostgreSQL must be selected explicitly
-  with a secret-wrapped `OPSMIND_DATABASE_URL` using the
-  `postgresql+psycopg` driver form.
-- SQLAlchemy 2.x supplies synchronous persistence, Psycopg 3 supplies the
-  PostgreSQL driver, and Alembic owns schema migrations. Runtime code does not
-  create or migrate tables.
-- Initial Alembic revision `0005_operational_data` creates products, inventory
-  positions, and demand observations with deterministic primary-key,
-  foreign-key, unique, check, and index names.
-- Product creation, inventory upsert, and demand-batch insertion use explicit
-  transaction boundaries. Known uniqueness failures translate to existing
-  business errors after rollback.
-- PostgreSQL-backed applications using the same database share operational
-  state, and products, inventory, and demand survive application restart.
-- Recommendation reviews, decisions, and audit events remain in their separate
-  process-local repository. They are still restart-volatile and isolated across
-  application instances and workers.
-- Local and CI integration tests use PostgreSQL 17. Destructive local fixtures
-  require `OPSMIND_TEST_DATABASE_URL`, a loopback host, and a database name
-  ending in `_test` or `_testing`.
-- The Python-quality workflow adds only a PostgreSQL test service, applies
-  Alembic migrations, and runs the complete suite with the dedicated test URL.
-  GitHub-hosted repository and Python-quality checks pass for PR #33.
-- ADR-0005 records the SQLAlchemy, Alembic, synchronous-session, domain/ORM,
-  real-PostgreSQL-test, and phased-persistence decisions. The repository owner
-  accepted ADR-0005 during PR #33 review.
-- Issue #32 was completed when PR #33 merged PostgreSQL operational
-  persistence.
-  No workflow persistence, authentication, API container, production database,
-  AWS resource, deployment, backup, replication, or high-availability
-  capability is included.
+PR #35 finalized the operational-persistence status and documentation.
+
+ADR-0005 records the accepted use of:
+
+* SQLAlchemy 2.x;
+* Psycopg 3;
+* synchronous sessions;
+* Alembic migrations;
+* explicit transaction boundaries;
+* domain and ORM separation;
+* real PostgreSQL integration tests;
+* phased persistence adoption.
+
+Migration `0005_operational_data` creates the operational schema.
+
+Runtime application code does not create or migrate tables.
+
+PostgreSQL-backed applications using the same database:
+
+* share product, inventory, and demand state;
+* retain that state across application restart.
+
+The in-memory operational repository remains available for isolated execution.
+
+## Phase 3 — Product and Demand Web Workflow
+
+Phase 3 delivered stable HTTP operations for product, inventory, and demand
+data.
+
+### Product and inventory routes
+
+The configured versioned API supports:
+
+* product creation;
+* deterministic product listing;
+* product retrieval;
+* inventory replacement;
+* inventory retrieval.
+
+Public business behavior remains independent of whether the active repository
+uses memory or PostgreSQL.
+
+### Demand-history routes
+
+Issue #18 and PR #19 delivered:
+
+* nonempty daily demand-batch ingestion;
+* whole-batch validation;
+* atomic storage;
+* duplicate product-date conflict handling;
+* chronological demand retrieval;
+* optional inclusive start-date filtering;
+* optional inclusive end-date filtering;
+* valid zero-demand observations;
+* rejection of negative demand quantities.
+
+The original PR #19 implementation was memory-only. After PR #33, demand uses
+the same supported operational persistence selection as product and inventory.
+
+In memory mode, state remains isolated and restart-volatile.
+
+In PostgreSQL mode, product, inventory, and demand state is shared between
+applications using the same database and survives application restart.
+
+## Phase 4 — Forecasting Baseline and Evaluation
+
+Phase 4 is the current permitted implementation phase after Issue #46 merges.
+
+Issue #20 and PR #21 delivered a deterministic arithmetic-mean forecast that:
+
+* reads chronological demand observations;
+* supports an observation-count lookback;
+* supports a requested horizon;
+* supports an optional inclusive cutoff;
+* uses the latest stored demand date when no cutoff is supplied;
+* preserves recorded zero demand;
+* leaves missing calendar dates missing;
+* uses exact decimal arithmetic;
+* rounds published values to two decimal places with `ROUND_HALF_UP`;
+* returns the selected evidence and effective calculation inputs.
+
+Forecasts are calculated on demand and are not persisted.
+
+The baseline does not yet satisfy the evaluation portion of Phase 4. Missing
+work includes:
+
+* an approved evaluation dataset or generation method;
+* temporal backtesting;
+* forecast-error metrics;
+* measured baseline accuracy;
+* findings by demand pattern;
+* an accepted Phase 4 decision.
+
+The baseline does not currently model:
+
+* trend;
+* seasonality;
+* intermittent-demand structure;
+* uncertainty;
+* calibrated prediction intervals.
+
+## Phase 5 — Stockout Risk and Reorder Recommendations
+
+Phase 5 capability was delivered ahead of its formal gate.
+
+### Deterministic stockout exposure
+
+Issue #22 and PR #23 delivered:
+
+* lead-time demand exposure;
+* projected inventory balance;
+* projected shortage;
+* `sufficient` and `shortage_projected` statuses;
+* deterministic evidence derived from the baseline forecast.
+
+This is not:
+
+* a calibrated stockout probability;
+* a learned risk model;
+* a measured decision-quality model.
+
+### Deterministic reorder recommendation
+
+Issue #24 and PR #25 delivered:
+
+* a read-only recommendation endpoint;
+* preservation of forecast and exposure evidence;
+* the `projected_shortage_ceiling` policy;
+* whole-unit recommendations using `ROUND_CEILING`;
+* `no_reorder_needed` and `reorder_recommended` outcomes.
+
+Recommendations do not:
+
+* create purchase orders;
+* select suppliers;
+* reserve inventory;
+* mutate inventory;
+* optimize cost, pack size, safety stock, or service level.
+
+Phase 5 remains gate pending until Phase 4 is complete and the delivered
+deterministic behavior is formally evaluated against the Phase 5 criteria.
+
+## Phase 6 — Decision Review and Audit History
+
+Phase 6 capability was delivered ahead of its formal gate.
+
+### Recommendation review workflow
+
+Issue #26 and PR #27 delivered:
+
+* storage of actionable positive recommendations;
+* server-generated recommendation-review UUIDs;
+* timezone-aware UTC creation timestamps;
+* immutable recommendation and evidence snapshots;
+* initial `pending_review` state;
+* one terminal `approved` or `rejected` state;
+* normalized idempotent retries;
+* conflict handling for changed or opposite retries;
+* concurrent-decision protection;
+* separately recorded recommended and approved quantities;
+* required rejection reasons.
+
+The workflow does not recalculate forecast, exposure, or recommendation evidence
+during retrieval or decision handling.
+
+### Ordered audit history
+
+Issue #28 and PR #29 delivered:
+
+* automatic `review_created` events;
+* terminal approval or rejection events;
+* sequence-based deterministic ordering;
+* immutable retrieval through supported APIs;
+* no duplicate terminal event for an identical normalized retry;
+* no event append for a conflicting retry.
+
+ADR-0004 records the decision to keep workflow state and its matching audit
+event within one atomic repository transaction boundary.
+
+The original PR #27 and PR #29 implementations used a process-local in-memory
+workflow repository. That remains a supported mode, but it is no longer the
+only implementation.
+
+### PostgreSQL workflow-persistence design
+
+Issue #34 and PR #35 finalized the operational-persistence status.
+
+Issue #36 and PR #37 documented the PostgreSQL recommendation-workflow
+persistence design and transaction requirements.
+
+The design preserves:
+
+* immutable recommendation snapshots;
+* one terminal decision;
+* idempotent normalized retries;
+* conflict behavior;
+* atomic review, decision, and event persistence;
+* deterministic audit-event ordering;
+* repository-interface independence.
+
+### PostgreSQL workflow schema
+
+Issue #38 and PR #39 added migration `0006_workflow_persistence`.
+
+The migration extends `0005_operational_data` with the recommendation-workflow
+schema required for:
+
+* review aggregates;
+* immutable recommendation evidence;
+* approval and rejection data;
+* ordered audit events;
+* documented relational constraints.
+
+Alembic remains the sole schema owner.
+
+### PostgreSQL workflow repository
+
+Issue #40 and PR #41 delivered the PostgreSQL recommendation-workflow
+repository.
+
+The repository preserves:
+
+* atomic aggregate and event changes;
+* idempotent retry behavior;
+* conflict handling;
+* concurrent terminal-decision protection;
+* ordered audit retrieval;
+* PostgreSQL sharing;
+* restart durability.
+
+### Application integration
+
+Issue #42 and PR #43 integrated PostgreSQL workflow persistence into application
+construction.
+
+The application supports coordinated repository selection for:
+
+* operational product, inventory, and demand state;
+* recommendation workflow and audit state.
+
+When the application creates PostgreSQL infrastructure, it owns and disposes
+that infrastructure through the application lifecycle.
+
+When repositories or related resources are explicitly injected, caller
+ownership is preserved and the application does not take ownership of those
+external resources.
+
+Phase 6 remains gate pending. Delivered implementation is not equivalent to an
+accepted Phase 6 review.
+
+## Persistence Modes
+
+| Behavior                                  | In-memory mode | PostgreSQL mode                          |
+| ----------------------------------------- | -------------- | ---------------------------------------- |
+| Product, inventory, and demand storage    | Supported      | Supported                                |
+| Recommendation workflow and audit storage | Supported      | Supported                                |
+| Shared between independent applications   | No             | Yes, when using the same database        |
+| Survives application restart              | No             | Yes                                      |
+| External database required                | No             | Yes                                      |
+| Schema ownership                          | Not applicable | Alembic                                  |
+| Suitable for isolated tests               | Yes            | Yes, with controlled PostgreSQL fixtures |
+| Production readiness established          | No             | No                                       |
+
+Memory behavior is intentionally isolated and restart-volatile.
+
+PostgreSQL behavior is evidenced through local and CI integration tests for
+sharing and restart durability. This evidence does not establish a production
+database or production-readiness posture.
+
+## Validation Status
+
+The accepted reconciliation recorded 446 collected tests through PR #43.
+
+The validation surface includes:
+
+* application-construction tests;
+* configuration tests;
+* product API tests;
+* inventory API tests;
+* demand API tests;
+* forecast API and domain tests;
+* stockout API and domain tests;
+* reorder API and domain tests;
+* recommendation-review tests;
+* audit-history tests;
+* operational repository-contract tests;
+* in-memory repository tests;
+* PostgreSQL operational repository tests;
+* PostgreSQL workflow-schema tests;
+* PostgreSQL workflow-constraint tests;
+* PostgreSQL workflow-repository tests;
+* application-level PostgreSQL integration tests;
+* migration tests;
+* cross-application sharing tests;
+* restart-durability tests;
+* concurrency tests;
+* transaction and rollback tests.
+
+Local and CI PostgreSQL integration tests use PostgreSQL 17.
+
+Destructive local fixtures require:
+
+* `OPSMIND_TEST_DATABASE_URL`;
+* a loopback database host;
+* a database name ending in `_test` or `_testing`.
+
+Repository-governance and Python-quality checks remain required.
+
+A known Starlette TestClient/httpx deprecation warning remains unresolved.
+
+## Security and Privacy Status
+
+Current safeguards include:
+
+* environment-supplied PostgreSQL credentials;
+* secret-aware database settings;
+* ignored local environment files;
+* read-only CI permissions;
+* pinned external GitHub Actions;
+* controlled destructive-test database requirements;
+* domain-level translation of expected storage conflicts;
+* human pull-request review.
+
+Current limitations include:
+
+* no user authentication;
+* no role-based authorization;
+* caller-supplied and unverified `decided_by`;
+* no proof that an audit actor is authentic;
+* no cryptographic signatures;
+* no hash chaining;
+* no tamper-evident audit storage;
+* no compliance-ledger guarantee;
+* no production network or database-security posture.
+
+No production, customer, personal, or regulated data is required for the
+implemented tests.
+
+## Cost Status
+
+* No AWS resources exist.
+* No managed production database exists.
+* Local PostgreSQL and GitHub-hosted CI are the evidenced infrastructure.
+* No production capacity or cost estimate is justified.
+* No production cost-control system exists.
+
+## Data Status
+
+* Tests use synthetic or controlled data.
+* Products use UUID identifiers.
+* Inventory represents the latest current position, not a movement ledger.
+* Available inventory may be negative.
+* Demand observations are keyed by product and calendar date.
+* Recorded zero demand remains distinct from a missing observation.
+* Demand batches are atomic.
+* Recommendation snapshots preserve decision evidence.
+* Audit events use deterministic sequence ordering.
+* Backup, retention, archival, correction, and deletion policies remain
+  undefined.
+
+## Operational Status
+
+Evidenced:
+
+* reproducible local setup;
+* pull-request CI;
+* Alembic migration execution;
+* local and CI PostgreSQL integration tests;
+* explicit transaction boundaries;
+* rollback behavior;
+* shared PostgreSQL state;
+* restart durability;
+* application-owned resource cleanup;
+* preservation of explicit-injection ownership.
+
+Not implemented or approved:
+
+* API containerization;
+* AWS deployment;
+* production database provisioning;
+* backups;
+* restore procedures;
+* replication;
+* high availability;
+* monitoring;
+* alerting;
+* service-level objectives;
+* incident response;
+* production secret rotation;
+* production-readiness approval.
+
+## Historical Delivery Record
+
+The implementation history remains chronological:
+
+* PR #7 — Architecture Decision Record system;
+* PR #8 — Python project foundation;
+* PR #11 — Python quality toolchain;
+* PR #13 — Python-quality CI;
+* PR #15 — FastAPI backend foundation;
+* PR #17 — product and inventory API;
+* PR #19 — demand-history API;
+* PR #21 — baseline demand forecast;
+* PR #23 — deterministic stockout exposure;
+* PR #25 — deterministic reorder recommendation;
+* PR #27 — recommendation-review workflow;
+* PR #29 — recommendation audit history;
+* PR #31 — ADR-0004 acceptance;
+* PR #33 — PostgreSQL operational persistence;
+* PR #35 — PostgreSQL persistence status finalization;
+* PR #37 — PostgreSQL workflow-persistence design;
+* PR #39 — PostgreSQL workflow schema;
+* PR #41 — PostgreSQL recommendation-workflow repository;
+* PR #43 — application integration of PostgreSQL workflow persistence;
+* PR #45 — accepted roadmap-phase reconciliation.
+
+Historical memory-only descriptions remain accurate for the point in history at
+which their associated PR merged. They must not be interpreted as the current
+limit of supported behavior after PR #43.
+
+## Current Limitations
+
+OpsMind currently has no:
+
+* formal forecast-baseline evaluation;
+* measured forecast accuracy;
+* calibrated stockout probability;
+* learned stockout model;
+* supplier optimization;
+* cost optimization;
+* safety-stock optimization;
+* purchase-order creation;
+* external ordering integration;
+* authenticated reviewer identity;
+* authorization;
+* tamper-evident audit ledger;
+* frontend user interface;
+* API container;
+* AWS infrastructure;
+* cloud deployment;
+* production database;
+* backups or high availability;
+* production observability;
+* governed model lifecycle;
+* advanced-AI production capability;
+* production-readiness approval.
+
+## Next Permitted Work
+
+After the Issue #46 documentation reconciliation is accepted and merged, the
+next permitted implementation work is:
+
+**Phase 4 — Forecasting baseline and evaluation**
+
+The next implementation issue should define and validate a reproducible
+forecast-evaluation method.
+
+Do not begin Phase 5 or Phase 6 formal completion, Phase 7 hardening, Docker,
+AWS, deployment, or production-readiness work as a substitute for the missing
+Phase 4 evaluation.
