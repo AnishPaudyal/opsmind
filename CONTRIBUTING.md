@@ -294,7 +294,11 @@ History retrieval must be repeatable and read-only, access no operational
 repository, and retain existing product, inventory, demand, forecast, stockout,
 reorder, workflow, custom-prefix, OpenAPI, isolation, and health regressions.
 
-The current repository and event history are process-local and nonpersistent.
+The selected recommendation-workflow repository stores review state and ordered
+event history. Memory mode remains process-local and nonpersistent; PostgreSQL
+mode shares that state through the selected database and preserves it across
+application restart.
+
 Treat `decided_by` as unverified caller input: no authentication, authorization,
 or role check exists. Append-only behavior applies only through supported APIs;
 history is not cryptographically tamper-evident or compliance-grade, and
@@ -344,10 +348,17 @@ regressions and verify PostgreSQL behavior with real PostgreSQL rather than
 SQLite. Database URLs are secrets even in diagnostic paths: use synthetic local
 or CI examples only and never log, snapshot, or commit real credentials.
 
-The current persistence boundary is mixed. PostgreSQL stores products,
-inventory, and demand; recommendation reviews, decisions, and audit events
-remain process-local and restart-volatile. Do not describe the application as
-fully durable or the audit history as PostgreSQL-backed.
+The application supports coordinated operational and recommendation-workflow
+persistence. Memory mode keeps products, inventory, demand, recommendation
+reviews, decisions, and audit events isolated per application and
+restart-volatile. PostgreSQL mode shares those persisted resources through the
+selected database and preserves them across application restart.
+
+Forecasts, stockout exposure, and calculated reorder recommendations remain
+read-only and nonpersistent unless a recommendation is intentionally captured
+as a stored review snapshot. PostgreSQL durability does not provide
+authentication, verified actor identity, cryptographic tamper evidence,
+external ordering, deployment, or production readiness.
 
 ### Continuous integration
 

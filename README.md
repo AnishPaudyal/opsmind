@@ -8,35 +8,38 @@ coherent product.
 
 ## Current Status
 
-Phase 0, project definition and governance, is complete. The Phase 1 repository,
-Python, quality, and CI foundations are established. Phase 2 has begun with the
-reviewed FastAPI backend foundation from issue #14 and the first bounded
-supply-chain business APIs from issues #16, #18, #20, #22, #24, and #26.
+Phase 0 and the retrospectively reviewed Phases 1 through 3 are complete.
+Phase 4, forecasting baseline and evaluation, is Current. Capabilities associated
+with Phases 5 and 6 were delivered ahead of their formal gates and are not
+formally complete.
 
-The current backend can create and retrieve products, record one inventory
-position for each product, and ingest and retrieve daily demand history through
-either an isolated memory backend or an explicitly selected PostgreSQL backend.
-PostgreSQL makes this operational source data durable and shared across
-application instances. The backend can also calculate a transparent arithmetic-mean demand forecast,
-deterministic stockout exposure, and a whole-unit reorder recommendation on
-request. Actionable recommendations can now be stored as immutable in-memory
-snapshots for approval or rejection, with a process-local append-only event
-history for each stored review. This repository does not yet contain:
+The current backend can create and retrieve products, store current inventory,
+and ingest and retrieve daily demand history through either an isolated memory
+backend or an explicitly selected PostgreSQL backend. It can calculate a
+transparent arithmetic-mean demand forecast, deterministic stockout exposure,
+and a whole-unit reorder recommendation on request.
 
+Actionable recommendations can be stored as immutable snapshots for approval or
+rejection with ordered audit-event history. Memory mode keeps operational and
+workflow state isolated and restart-volatile. PostgreSQL mode makes both forms
+of state durable across application restart and shared by applications using
+the same database.
+
+This repository does not yet contain:
+
+- Formal forecast-baseline evaluation or measured forecast accuracy
 - Authentication, authorization, or verified reviewer identity
-- Durable workflow, decision, or audit-history persistence
-- Model training or stockout probability
-- Cloud infrastructure
-- Deployed AWS resources
-- Trained machine-learning models
-- Production data
+- Calibrated stockout probability or a trained stockout model
+- Purchase-order creation or external ordering integration
+- A frontend user interface or containerized API
+- AWS infrastructure or cloud deployment
+- A production database, production data, or production-readiness approval
 
-Those capabilities will be introduced only through reviewed issues and phase
-gates.
+Those capabilities require reviewed issues and their applicable phase gates.
 
 ## First Product Slice
 
-The first end-to-end workflow will be:
+The first end-to-end workflow is:
 
 1. Load product and demand-history data.
 2. Produce a demand forecast.
@@ -47,13 +50,15 @@ The first end-to-end workflow will be:
 
 ## Technical Direction
 
-The current local backend stack uses:
+The current implemented local stack uses:
 
 - Python and FastAPI
 - PostgreSQL, SQLAlchemy, and Alembic
-- Next.js and TypeScript
-- Docker Compose
-- pytest, Ruff, mypy, and frontend checks
+- pytest, Ruff, mypy, and PostgreSQL integration tests
+
+Docker Compose is used only to run local PostgreSQL; it does not containerize
+the OpsMind API. Next.js and TypeScript remain a later product direction, and no
+frontend is currently implemented.
 
 Later phases may introduce AWS services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each
@@ -158,12 +163,15 @@ claim readiness for a database, AWS resource, external service, or product
 workflow. PostgreSQL backend selection does not change this process-health
 contract and no readiness endpoint is introduced.
 
-### Operational persistence backends
+### Persistence backends
 
 The migration-phase default remains `memory`. Each memory-backed application
-has its own isolated product, inventory, and demand repository, and that data is
-lost when the process stops. Select PostgreSQL explicitly to make those three
-operational resources durable and shared:
+has isolated operational and recommendation-workflow repositories. Products,
+inventory, demand, reviews, decisions, and audit events are lost when the
+process stops and are not shared with independent applications.
+
+Select PostgreSQL explicitly to make those persisted operational and workflow
+resources durable and shared:
 
 ```bash
 export OPSMIND_PERSISTENCE_BACKEND=postgresql
@@ -177,20 +185,29 @@ screenshots, or support output. The application does not load `.env`
 automatically. An explicitly injected repository still takes precedence over
 backend selection.
 
-Issue #32 intentionally creates a mixed-persistence state:
+When the application creates the PostgreSQL engine and session factory, it
+shares them for the application lifespan and disposes the engine during
+application shutdown. Explicitly injected repositories and related resources
+remain caller owned.
+
+The current persistence behavior is:
 
 ```text
-PostgreSQL selected:
-products / inventory / demand -> durable and shared
-
+Memory selected:
+products / inventory / demand
 recommendation reviews / decisions / audit events
--> process-local, restart-volatile, and isolated per application
+-> isolated, restart-volatile, and not shared between applications
+
+PostgreSQL selected:
+products / inventory / demand
+recommendation reviews / decisions / audit events
+-> durable across restart and shared through the same database
 ```
 
 Forecasts, stockout exposure, and calculated reorder recommendations remain
-read-only calculations. PostgreSQL stores their operational inputs, not their
-outputs. PostgreSQL selection therefore does not make approvals or audit
-history durable and does not provide production readiness.
+read-only calculations and are not persisted. PostgreSQL stores their
+operational inputs and the stored review workflow, including decisions and
+audit events. PostgreSQL selection does not provide production readiness.
 
 #### Start and migrate local PostgreSQL
 
@@ -212,9 +229,12 @@ uv run uvicorn opsmind.main:app --reload
 ```
 
 Alembic revision `0005_operational_data` creates products, inventory positions,
-and demand observations. Runtime startup never creates or migrates tables.
-Foreign keys are restrictive, available inventory remains derived, and schema
-changes must use reviewed Alembic revisions.
+and demand observations. Revision `0006_workflow_persistence` creates the
+recommendation-review, decision, evidence, and audit-event schema.
+
+Runtime startup never creates or migrates tables. Foreign keys are restrictive,
+available inventory remains derived, and schema changes must use reviewed
+Alembic revisions.
 
 Stopping Compose preserves the named data volume:
 
@@ -544,8 +564,11 @@ product without eligible demand returns HTTP 422. Swagger UI at
 `http://127.0.0.1:8000/docs` documents the schema and validation constraints.
 
 The operation is read-only: it stores no exposure or forecast and changes no
-product, inventory, or demand state. Its inputs remain process-local and are
-lost on restart. It provides no stockout probability, uncertainty interval,
+product, inventory, or demand state. Its operational inputs follow the active
+persistence backend: memory is isolated and restart-volatile, while PostgreSQL
+is shared and restart-durable.
+
+The operation provides no stockout probability, uncertainty interval,
 safety-stock optimization, or measured forecast accuracy. The deterministic
 recommendation below uses its public shortage as the recommendation boundary.
 
@@ -553,8 +576,8 @@ recommendation below uses its public shortage as the recommendation boundary.
 
 A reorder recommendation converts the public projected shortage from the
 stockout-exposure calculation into a whole-unit proposal. Exposure is the
-evidence, the recommendation is an unapproved calculation, and a future
-approval workflow would be a separate capability:
+evidence, the recommendation is an unapproved calculation, and the stored
+review workflow described below is a separate capability:
 
 ```text
 recommended reorder quantity = ceiling(public projected shortage quantity)
@@ -710,16 +733,18 @@ returns HTTP 409 and leaves state unchanged. Each full read-transition-write is
 serialized by the workflow repository, so concurrent approval and rejection
 cannot both win.
 
-Review storage is a separate, application-instance-local in-memory repository.
-It is thread-safe within one process, but every review and decision is lost on
-restart and is not shared across workers. Retrieval, approval, and rejection
-read the stored workflow object only; they do not recalculate forecast,
-exposure, or recommendation values and do not mutate product, inventory, or
-demand.
+Review storage uses the selected recommendation-workflow repository. Memory
+mode is thread-safe within one process but is isolated and restart-volatile.
+PostgreSQL mode shares reviews and decisions through the selected database and
+preserves them across application restart.
+
+Retrieval, approval, and rejection read the stored workflow object only; they
+do not recalculate forecast, exposure, or recommendation values and do not
+mutate product, inventory, or demand.
 
 The `decided_by` value is caller supplied and unverified. There is no
 authentication, authorization, role check, or trusted user identity. The stored
-snapshot, current aggregate, and process-local event history are useful workflow
+snapshot, current aggregate, and ordered event history are useful workflow
 evidence, but they do not prove who performed an action. Approval does not
 create a purchase order, reserve or change inventory, select a supplier, or
 initiate any external action.
@@ -743,11 +768,15 @@ creation event. A successful first approval or rejection appends sequence `2`.
 Sequence, rather than timestamp, defines order because an injected fixed clock
 can legitimately give creation and decision events the same time.
 
-Events are generated automatically by successful workflow writes. The existing
-workflow repository stores current review state and its event tuple together
-under one process-local lock. Review creation and its creation event therefore
-succeed together, and a terminal state change and matching terminal event
-succeed together. HTTP routes never perform independent state and event writes.
+Events are generated automatically by successful workflow writes. The selected
+workflow repository stores current review state and its event tuple within one
+atomic repository transaction boundary.
+
+Memory mode enforces this boundary under one repository lock. PostgreSQL mode
+enforces it through one database transaction. Review creation and its creation
+event therefore succeed together, and a terminal state change and matching
+terminal event succeed together. HTTP routes never perform independent state
+and event writes.
 
 An identical normalized approval or rejection retry returns the original
 decision and appends no duplicate event. A changed or opposite retry returns
@@ -798,11 +827,14 @@ successful workflow facts in order. The aggregate remains the current-state
 source of truth; events are not replayed to rebuild it, so this is audited state
 storage rather than full event sourcing.
 
-History remains in memory, is lost on restart, and is not shared across workers.
-The actor is caller supplied, unauthenticated, unverified, and potentially
-spoofable. Events are not cryptographically signed, hash chained,
-tamper-evident, durably retained, externally published, or protected from direct
-process-memory manipulation. This is not a production compliance ledger.
+In memory mode, history is lost on restart and is not shared between
+applications. In PostgreSQL mode, history is durable across application restart
+and shared by applications using the same database.
+
+The actor remains caller supplied, unauthenticated, unverified, and potentially
+spoofable. Events are not cryptographically signed, hash chained, tamper
+evident, externally published, or protected from privileged direct storage
+modification. This is not a production compliance ledger.
 
 ## Contribution Rule
 

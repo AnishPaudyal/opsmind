@@ -1,51 +1,198 @@
 # OpsMind Roadmap
 
-The roadmap is phase-gated. A later phase may be explored, but implementation
-should not bypass the exit criteria of the current phase.
+The roadmap is phase-gated. Implementation may explore or deliver capability
+associated with a later phase, but early delivery does not make that phase
+formally complete.
+
+A phase is complete only when:
+
+* its exit criteria are satisfied;
+* its validation and limitations are documented;
+* its phase review records a Proceed, Revise, or Stop decision;
+* the repository owner accepts that review.
+
+The accepted phase mapping and historical reconciliation are recorded in
+[Roadmap Phase Reconciliation](docs/00-project-foundation/roadmap-phase-reconciliation.md).
 
 ## Phase Status
 
-| Phase | Focus | Status |
-| --- | --- | --- |
-| 0 | Project definition, scope, governance, and readiness | Complete |
-| 1 | Repository and local development foundation | Current |
-| 2 | Product data and transactional backend | Planned |
-| 3 | Web workflow for product and demand operations | Planned |
-| 4 | Forecasting baseline and evaluation | Planned |
-| 5 | Stockout risk and reorder recommendations | Planned |
-| 6 | Decision approval, rejection, and audit history | Planned |
-| 7 | Testing, security, and observability hardening | Planned |
-| 8 | AWS foundation and first cloud deployment | Planned |
-| 9 | Data engineering and analytical pipelines | Planned |
-| 10 | MLOps and model lifecycle | Planned |
-| 11 | Advanced AI, retrieval, and event-driven capabilities | Planned |
-| 12 | Production-readiness review and portfolio packaging | Planned |
+| Phase | Focus                                                 | Formal status | Implementation note                                                 |
+| ----- | ----------------------------------------------------- | ------------- | ------------------------------------------------------------------- |
+| 0     | Project definition, scope, governance, and readiness  | Complete      | Reviewed in `phase-0-review.md`                                     |
+| 1     | Repository and local development foundation           | Complete      | Delivered and retrospectively reviewed                              |
+| 2     | Product data and transactional backend                | Complete      | Delivered and retrospectively reviewed                              |
+| 3     | Web workflow for product and demand operations        | Complete      | Delivered and retrospectively reviewed                              |
+| 4     | Forecasting baseline and evaluation                   | Current       | Baseline forecast exists; formal evaluation remains                 |
+| 5     | Stockout risk and reorder recommendations             | Gate pending  | Deterministic capability delivered ahead of formal gate             |
+| 6     | Decision approval, rejection, and audit history       | Gate pending  | Workflow and PostgreSQL durability delivered ahead of formal gate   |
+| 7     | Testing, security, and observability hardening        | Planned       | Earlier phases include tests, but Phase 7 hardening is not approved |
+| 8     | AWS foundation and first cloud deployment             | Planned       | No API container or AWS deployment exists                           |
+| 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
+| 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
+| 11    | Advanced AI, retrieval, and event-driven capabilities | Planned       | Not started                                                         |
+| 12    | Production-readiness review and portfolio packaging   | Planned       | No production-readiness approval exists                             |
+
+## Status Meanings
+
+* **Complete**: exit criteria and an accepted phase review are recorded.
+* **Current**: this is the next permitted phase for implementation work.
+* **Gate pending**: relevant implementation exists, but preceding gates, exit
+  criteria, or the phase review are incomplete.
+* **Planned**: the phase has not been formally opened.
+
+Implementation status and formal phase status are intentionally separate. A
+merged capability is evidence for a phase review; it is not a substitute for
+that review.
+
+## First Vertical Slice
+
+Phases 2 through 6 form one coherent workflow:
+
+`product data -> demand history -> forecast -> stockout risk -> reorder
+recommendation -> approval or rejection -> audit record`
+
+Parts of Phases 5 and 6 were delivered before the formal Phase 4 evaluation
+gate was completed. That implementation remains valid, but Phases 5 and 6
+remain gate pending.
 
 ## Phase 1 Exit Criteria
 
 Phase 1 is complete when:
 
-- Repository governance is merged.
-- Local development prerequisites and setup are documented.
-- The initial application architecture is reviewed.
-- Quality checks can run consistently.
-- Secret prevention and dependency-management practices are established.
-- The first implementation issue is ready and approved.
+* repository governance is merged;
+* local development prerequisites and setup are documented;
+* Python version and dependency management are reproducible;
+* formatting, linting, type checking, and testing run consistently;
+* equivalent quality checks run in CI;
+* secret-prevention and dependency-management practices are established;
+* the first backend implementation issue is ready and approved;
+* a Phase 1 review records an accepted decision.
 
-## First Vertical Slice
+## Phase 2 Exit Criteria
 
-Phases 2 through 6 will build one coherent workflow:
+Phase 2 is complete when:
 
-`product data -> demand history -> forecast -> stockout risk -> reorder
-recommendation -> approval or rejection -> audit record`
+* the application has a reviewed modular backend structure;
+* product and inventory contracts are implemented;
+* repository interfaces separate domain and API behavior from storage details;
+* an isolated in-memory repository remains available;
+* PostgreSQL provides durable product and inventory persistence;
+* Alembic owns schema creation and migration;
+* runtime application code does not create or migrate tables;
+* transaction, rollback, constraint, sharing, and restart behavior are tested;
+* a Phase 2 review records an accepted decision.
+
+## Phase 3 Exit Criteria
+
+Phase 3 is complete when:
+
+* product, inventory, and demand operations are exposed through stable HTTP
+  contracts;
+* validation and business conflicts do not expose storage implementation
+  details;
+* demand batches are stored atomically;
+* demand history is returned chronologically with deterministic filtering;
+* operational state supports isolated memory and durable PostgreSQL modes;
+* API behavior remains consistent across supported persistence backends;
+* a Phase 3 review records an accepted decision.
+
+## Phase 4 Exit Criteria
+
+Phase 4 is complete when:
+
+* the deterministic forecast baseline remains reproducible;
+* an approved evaluation dataset or deterministic dataset-generation method is
+  documented;
+* temporal evaluation prevents future observations from leaking into training
+  inputs;
+* at least one approved forecast-error metric is implemented and explained;
+* baseline results are measured and reproducible;
+* limitations for trend, seasonality, intermittent demand, uncertainty, and
+  decision use are documented;
+* evaluation findings produce explicit follow-up issues or an accepted decision;
+* a Phase 4 review records an accepted Proceed, Revise, or Stop decision.
+
+The existing arithmetic-mean endpoint satisfies the baseline-implementation
+portion of this phase. It does not yet satisfy the evaluation portion.
+
+## Phase 5 Exit Criteria
+
+Phase 5 cannot complete before Phase 4.
+
+Phase 5 is complete when:
+
+* stockout exposure uses documented and reproducible evidence;
+* reorder recommendations preserve the evidence used to produce them;
+* quantity and rounding policies are explicit and tested;
+* deterministic behavior is distinguished from probability, calibrated risk,
+  or learned prediction;
+* decision-quality evaluation is completed or its absence is explicitly
+  accepted with documented limitations;
+* supplier, cost, pack-size, safety-stock, service-level, and ordering
+  exclusions remain explicit unless separately implemented;
+* a Phase 5 review records an accepted Proceed, Revise, or Stop decision.
+
+The deterministic stockout-exposure and reorder-recommendation APIs are already
+delivered. Phase 5 remains gate pending until these criteria are evaluated
+after Phase 4.
+
+## Phase 6 Exit Criteria
+
+Phase 6 cannot complete before Phase 5.
+
+Phase 6 is complete when:
+
+* actionable recommendation snapshots are immutable after creation;
+* each review begins pending and permits only one terminal approval or
+  rejection;
+* normalized retries are idempotent;
+* changed or opposite terminal retries conflict without mutating state;
+* review state, terminal decisions, and matching audit events share one atomic
+  transaction boundary;
+* audit events have deterministic ordering;
+* supported PostgreSQL state is shared and survives application restart;
+* supported memory state remains isolated and restart-volatile;
+* application-created PostgreSQL repositories share application-owned
+  infrastructure without taking ownership of explicitly injected resources;
+* authentication, authorization, actor verification, tamper evidence, external
+  ordering, and compliance limitations remain explicit;
+* a Phase 6 review records an accepted Proceed, Revise, or Stop decision.
+
+The review workflow, ordered audit history, PostgreSQL schema, PostgreSQL
+repository, and application integration are already delivered. Phase 6 remains
+gate pending until Phase 4 and Phase 5 are formally completed and the Phase 6
+review is accepted.
 
 ## Phase-Gate Rule
 
 Each phase review must record:
 
-- Delivered capabilities
-- Validation evidence
-- Documentation changes
-- Security, cost, and operational findings
-- Deferred risks and follow-up issues
-- A clear proceed, revise, or stop decision
+* delivered capabilities;
+* validation evidence;
+* documentation changes;
+* security, privacy, cost, data, and operational findings;
+* deferred risks and follow-up issues;
+* a clear Proceed, Revise, or Stop decision.
+
+Work must not claim deployment, security, model quality, compliance, or
+production readiness beyond the evidence actually reviewed.
+
+## Current Direction
+
+The next permitted implementation phase is:
+
+**Phase 4 — Forecasting baseline and evaluation**
+
+Before Phase 4 application work begins, the documentation corrections and
+retrospective Phase 1–3 reviews governed by Issue #46 must be reviewed and
+merged.
+
+The following work remains outside the current phase:
+
+* Phase 5 or Phase 6 formal completion;
+* Phase 7 security and observability hardening;
+* API containerization;
+* AWS resources or cloud deployment;
+* production database operations;
+* backup, replication, and high availability;
+* production-readiness claims.
