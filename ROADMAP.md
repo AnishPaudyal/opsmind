@@ -22,8 +22,8 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 1     | Repository and local development foundation           | Complete      | Delivered and retrospectively reviewed                              |
 | 2     | Product data and transactional backend                | Complete      | Delivered and retrospectively reviewed                              |
 | 3     | Web workflow for product and demand operations        | Complete      | Delivered and retrospectively reviewed                              |
-| 4     | Forecasting baseline and evaluation                   | Current       | Baseline forecast exists; formal evaluation remains                 |
-| 5     | Stockout risk and reorder recommendations             | Gate pending  | Deterministic capability delivered ahead of formal gate             |
+| 4     | Forecasting baseline and evaluation                   | Complete      | Owner-accepted Phase 4 review under Issue #48                       |
+| 5     | Stockout risk and reorder recommendations             | Current       | Delivered early; formal Phase 5 evaluation and review are next      |
 | 6     | Decision approval, rejection, and audit history       | Gate pending  | Workflow and PostgreSQL durability delivered ahead of formal gate   |
 | 7     | Testing, security, and observability hardening        | Planned       | Earlier phases include tests, but Phase 7 hardening is not approved |
 | 8     | AWS foundation and first cloud deployment             | Planned       | No API container or AWS deployment exists                           |
@@ -112,12 +112,14 @@ Phase 4 is complete when:
 * evaluation findings produce explicit follow-up issues or an accepted decision;
 * a Phase 4 review records an accepted Proceed, Revise, or Stop decision.
 
-The existing arithmetic-mean endpoint satisfies the baseline-implementation
-portion of this phase. It does not yet satisfy the evaluation portion.
+Issue #48 implements the evaluation portion with deterministic synthetic data,
+temporal no-leakage windows, MAE, bias, WAPE, and reproducible reports. The
+repository owner accepted the Phase 4 Proceed decision on 2026-08-06, completing
+the Phase 4 gate in the merged repository state.
 
 ## Phase 5 Exit Criteria
 
-Phase 5 cannot complete before Phase 4.
+Phase 4 is complete. Phase 5 is the current formal gate.
 
 Phase 5 is complete when:
 
@@ -179,17 +181,18 @@ production readiness beyond the evidence actually reviewed.
 
 ## Current Direction
 
-The next permitted implementation phase is:
+The next permitted formal phase is:
 
-**Phase 4 — Forecasting baseline and evaluation**
+**Phase 5 — Stockout risk and reorder recommendations**
 
-Before Phase 4 application work begins, the documentation corrections and
-retrospective Phase 1–3 reviews governed by Issue #46 must be reviewed and
-merged.
+The deterministic Phase 5 capability was delivered ahead of its gate. The next
+work must evaluate its evidence preservation, deterministic-versus-probabilistic
+claims, rounding policy, exclusions, and downstream decision-quality limits
+before recording a Phase 5 decision.
 
 The following work remains outside the current phase:
 
-* Phase 5 or Phase 6 formal completion;
+* Phase 6 formal completion before the Phase 5 gate closes;
 * Phase 7 security and observability hardening;
 * API containerization;
 * AWS resources or cloud deployment;
