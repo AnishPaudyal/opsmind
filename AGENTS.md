@@ -4,16 +4,18 @@ These instructions govern AI-assisted work in the OpsMind repository.
 
 ## Current Phase
 
-The repository owner accepted the Phase 4 forecasting-baseline and evaluation
-review under Issue #48 on 2026-08-06. This branch is limited to finalizing that
-accepted Issue #48 work and preparing it for review and merge.
+The repository owner accepted the Phase 5 stockout/reorder evaluation review
+under Issue #50 on 2026-08-07 with a `Proceed` decision, including the documented
+decision-quality limitations.
 
-Phase 4 is Complete in the merged repository state. Phase 5, stockout risk and
-reorder recommendations, becomes the next formal phase after the Issue #48 pull
-request merges.
+This branch is limited to finalizing that accepted Issue #50 work: canonical
+documentation, validation, review, commit, pull request, and merge preparation.
 
-Do not begin Phase 5 implementation on this branch. Phase 5 work must start
-through a separately approved issue and task branch. Phase 6 formal completion,
+In the merged repository state, Phase 5 is Complete and Phase 6 — decision
+approval, rejection, and audit history — becomes the Current formal gate.
+
+Do not begin Phase 6 implementation on this branch. Phase 6 formal evaluation
+and review must start through a separately approved issue and task branch.
 Phase 7 hardening, API containerization, AWS, deployment, and
 production-readiness work remain outside the current authorization.
 
