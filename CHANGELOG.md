@@ -7,6 +7,26 @@ when the first application release is defined.
 
 ## Unreleased
 
+### Phase 6 decision-review and audit evaluation
+
+- Added the accepted Phase 6 decision-review/audit evaluation design.
+- Added deterministic `phase6-synthetic-v1` workflow-policy evaluation with
+  12/12 governed scenarios passing.
+- Recorded direct PostgreSQL rollback, concurrency, sharing, restart-durability,
+  and application resource-ownership evidence.
+- Validated 117 focused tests, 41 targeted Phase 6 PostgreSQL tests, 56 complete
+  PostgreSQL integration tests, and 499 complete PostgreSQL-backed tests with
+  zero skips.
+- Recorded byte-identical Phase 6 evaluation artifacts and stable SHA-256
+  evidence.
+- Recorded the owner-accepted Phase 6 `Proceed` review under Issue #52.
+- Prepared merged-state governance so Phase 6 is Complete and Phase 7 becomes
+  Current after the Issue #52 pull request merges.
+- Kept authentication, authorization, actor verification, cryptographic audit
+  integrity, compliance guarantees, external ordering, deployment, and
+  production-readiness work outside Phase 6.
+
+
 ### Added
 
 * Repository governance, contribution rules, and automated-agent boundaries.

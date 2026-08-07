@@ -25,7 +25,8 @@ earlier memory-only milestone.
 | 3     | Web workflow for product and demand operations                            | Complete      | Delivered and retrospectively reviewed             |
 | 4     | Forecasting baseline and evaluation                                       | Complete      | Owner-accepted Phase 4 review                        |
 | 5     | Stockout risk and reorder recommendations                                 | Complete      | Owner-accepted Phase 5 review under Issue #50      |
-| 6     | Decision approval, rejection, and audit history                           | Current       | Delivered early; formal Phase 6 review is next     |
+| 6     | Decision approval, rejection, and audit history                           | Complete      | Owner-accepted Phase 6 review under Issue #52      |
+| 7     | Testing, security, and observability hardening                            | Current       | Next formal gate after Issue #52 merges           |
 | 7–12  | Hardening, cloud, pipelines, MLOps, advanced AI, and production readiness | Planned       | Not formally opened                                |
 
 Implementation delivery and formal phase completion are separate. Phases 5 and
@@ -596,3 +597,37 @@ issue and task branch must define and execute the formal evaluation/review.
 Do not begin Phase 6 work on the Issue #50 branch. Phase 7 hardening, API
 containerization, AWS, deployment, and production-readiness work remain outside
 the current authorization.
+
+## Phase 6 Formal Evaluation Status
+
+Issue #52 formally evaluates the already-delivered decision approval, rejection,
+audit-history, PostgreSQL workflow-persistence, and application-lifecycle
+behavior.
+
+The repository owner accepted the Phase 6 review on 2026-08-07 with decision:
+
+**Proceed**
+
+Final governed evidence includes:
+
+- 12/12 deterministic workflow scenarios passed;
+- 117 focused Phase 6 tests passed;
+- 41 targeted Phase 6 PostgreSQL evidence tests passed;
+- 56 complete PostgreSQL integration tests passed;
+- 499 complete PostgreSQL-backed repository tests passed with zero skips;
+- direct terminal-event rollback evidence;
+- real PostgreSQL one-winner concurrency evidence;
+- PostgreSQL restart/share durability evidence;
+- application resource-ownership evidence;
+- byte-identical evaluation artifacts;
+- Ruff, mypy, Alembic, and diff-hygiene gates passed.
+
+The accepted Phase 6 result supports bounded workflow/persistence claims only.
+It does not establish authenticated or authorized reviewer identity,
+cryptographic tamper evidence, compliance certification, arbitrary
+distributed-system correctness, production-scale concurrency, external
+ordering, production security, or production readiness.
+
+In the merged repository state, Phase 6 is Complete and Phase 7 becomes Current.
+Phase 7 implementation must begin through a separate approved issue/task branch;
+it must not begin on the Issue #52 branch.
