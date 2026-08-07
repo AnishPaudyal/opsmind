@@ -4,21 +4,31 @@ These instructions govern AI-assisted work in the OpsMind repository.
 
 ## Current Phase
 
-The repository owner accepted the Phase 5 stockout/reorder evaluation review
-under Issue #50 on 2026-08-07 with a `Proceed` decision, including the documented
-decision-quality limitations.
+Phase 6 — decision approval, rejection, and audit history — is the Current
+formal gate on canonical `main` until Issue #52 merges.
 
-This branch is limited to finalizing that accepted Issue #50 work: canonical
-documentation, validation, review, commit, pull request, and merge preparation.
+Issue #52 governs the formal Phase 6 evaluation and review on branch
+`feat/phase-6-decision-review-audit-evaluation`.
 
-In the merged repository state, Phase 5 is Complete and Phase 6 — decision
-approval, rejection, and audit history — becomes the Current formal gate.
+The repository owner accepted the Phase 6 evaluation design and accepted the
+Phase 6 review with decision `Proceed` on 2026-08-07.
 
-Do not begin Phase 6 implementation on this branch. Phase 6 formal evaluation
-and review must start through a separately approved issue and task branch.
-Phase 7 hardening, API containerization, AWS, deployment, and
-production-readiness work remain outside the current authorization.
+Phase 6 technical and governance gates are passed. This branch is now limited to
+Issue #52 finalization: documentation consistency, validation hygiene, staging,
+commit, pull-request review, CI, and merge preparation.
 
+In the merged repository state:
+
+- Phase 6 is Complete;
+- Phase 7 is Current.
+
+Do not begin Phase 7 implementation on this branch. Phase 7 must begin through a
+separate approved issue/task branch after Issue #52 is merged.
+
+Authentication, authorization, actor verification, cryptographic audit
+integrity, purchase-order execution, external ordering, Phase 7 hardening, API
+containerization, AWS, deployment, and production-readiness implementation are
+outside Issue #52.
 ## Required Context
 
 Before starting work:

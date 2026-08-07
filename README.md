@@ -897,3 +897,30 @@ improvement, or cost savings. See
 `docs/05-evaluation/phase-5-stockout-reorder-evaluation.md` and
 `docs/12-phase-reviews/phase-5-review.md` for the governed evidence and accepted
 limitations.
+
+## Phase 6 Evaluation Status
+
+Phase 6 decision-review and audit-history evaluation is owner accepted with a
+`Proceed` decision under Issue #52.
+
+The governed Phase 6 evidence includes:
+
+- 12/12 deterministic workflow scenarios passed;
+- normalized approval/rejection retry idempotency;
+- conflict-without-mutation behavior;
+- immutable recommendation/evidence preservation;
+- deterministic sequence-based audit ordering;
+- direct PostgreSQL rollback evidence;
+- real PostgreSQL concurrent terminal-decision evidence;
+- PostgreSQL sharing and restart durability;
+- memory-backend isolation;
+- application resource-ownership/disposal evidence;
+- 499 complete PostgreSQL-backed tests passed with zero skips.
+
+The result is intentionally bounded. OpsMind still does not claim authenticated
+reviewer identity, RBAC authorization, cryptographic tamper evidence, compliance
+certification, external ordering, production-scale concurrency, production
+security, or production readiness.
+
+In the merged state, Phase 6 is Complete and Phase 7 becomes the next formal
+gate. Phase 7 work must start from a separate approved issue/task branch.

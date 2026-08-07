@@ -24,8 +24,8 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 3     | Web workflow for product and demand operations        | Complete      | Delivered and retrospectively reviewed                              |
 | 4     | Forecasting baseline and evaluation                   | Complete      | Owner-accepted Phase 4 review under Issue #48                       |
 | 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
-| 6     | Decision approval, rejection, and audit history       | Current       | Delivered early; formal Phase 6 evaluation and review are next     |
-| 7     | Testing, security, and observability hardening        | Planned       | Earlier phases include tests, but Phase 7 hardening is not approved |
+| 6     | Decision approval, rejection, and audit history       | Complete      | Owner-accepted Phase 6 review under Issue #52                       |
+| 7     | Testing, security, and observability hardening        | Current       | Next formal gate after the Issue #52 change is merged               |
 | 8     | AWS foundation and first cloud deployment             | Planned       | No API container or AWS deployment exists                           |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
 | 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
