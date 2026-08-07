@@ -8,10 +8,11 @@ coherent product.
 
 ## Current Status
 
-Phase 0 and the retrospectively reviewed Phases 1 through 3 are complete.
-Phase 4, forecasting baseline and evaluation, is Current. Capabilities associated
-with Phases 5 and 6 were delivered ahead of their formal gates and are not
-formally complete.
+Phases 0 through 4 are complete. The repository owner accepted the Phase 4
+forecasting-baseline and evaluation review under Issue #48 on 2026-08-06.
+Phase 5, stockout risk and reorder recommendations, is Current. Capabilities
+associated with Phases 5 and 6 were delivered ahead of their formal gates and
+are not yet formally complete.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
@@ -27,7 +28,8 @@ the same database.
 
 This repository does not yet contain:
 
-- Formal forecast-baseline evaluation or measured forecast accuracy
+- Real-world forecast validation on governed operational data
+- Probabilistic forecasts, prediction intervals, or trained forecast models
 - Authentication, authorization, or verified reviewer identity
 - Calibrated stockout probability or a trained stockout model
 - Purchase-order creation or external ordering integration
@@ -72,8 +74,10 @@ addition must be justified by a concrete product or learning requirement.
 - [ROADMAP.md](ROADMAP.md) defines phase order and exit criteria.
 - [docs/00-project-foundation](docs/00-project-foundation) contains the project
   charter, scope, competency plan, governance model, and technology principles.
-- [docs/01-architecture](docs/01-architecture) contains the initial architecture
-  hypothesis.
+- [docs/01-architecture](docs/01-architecture) contains architecture and
+  evaluation-design records.
+- [docs/05-evaluation](docs/05-evaluation) contains durable, reviewed evaluation
+  evidence.
 - [docs/09-risk-cost-security](docs/09-risk-cost-security) contains the risk,
   cost, security, and responsible-AI baseline.
 - [docs/12-phase-reviews](docs/12-phase-reviews) records phase reviews.
@@ -473,9 +477,40 @@ the response metadata and parameter constraints.
 This baseline uses source demand through the selected operational repository.
 PostgreSQL-backed history survives restart; memory-backed history does not. The simple mean does not
 model trend, seasonality, intermittent demand, or uncertainty; it supplies no
-confidence interval and has no measured accuracy. It is not production-grade
-machine learning. The deterministic exposure and recommendation calculations
-below use this baseline.
+confidence interval and is not production-grade machine learning. Phase 4 now
+measures this baseline on deterministic synthetic temporal windows, but those
+results do not establish real-world accuracy. The deterministic exposure and
+recommendation calculations below use this baseline.
+
+### Reproducible baseline evaluation
+
+Run the governed Phase 4 evaluation separately from the HTTP API:
+
+```bash
+uv run python -m opsmind.evaluation \
+  --output-dir /tmp/opsmind-phase4-evaluation \
+  --lookback-observations 7 \
+  --horizon-days 7 \
+  --minimum-training-observations 7
+```
+
+The command uses deterministic synthetic demand series, chronological forecast
+origins, complete future target windows, and the existing
+`calculate_simple_mean_forecast` domain implementation. It writes only
+`evaluation.json` and `evaluation.md` to the selected output directory and
+refuses to overwrite existing artifacts unless `--force` is supplied.
+
+The accepted configuration produced 161 valid windows from 288 attempts. The
+aggregate results were MAE `11.26`, forecast bias `-4.57`, and WAPE `17.51%`.
+The simple mean was exact for the controlled stable, all-zero, weekly-cycle,
+and aligned intermittent patterns. It under-forecast upward trend and an abrupt
+upward level shift, and over-forecast downward trend. Missing calendar dates
+reduced evaluable windows rather than being silently interpreted as zero.
+
+These are synthetic reference measurements, not real-world accuracy,
+production-readiness, or downstream decision-quality claims. The durable
+method, findings, checksums, exclusions, and limitations are recorded in
+[the Phase 4 baseline evaluation report](docs/05-evaluation/phase-4-baseline-forecast-evaluation.md).
 
 ### Deterministic stockout exposure
 

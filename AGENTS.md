@@ -4,16 +4,18 @@ These instructions govern AI-assisted work in the OpsMind repository.
 
 ## Current Phase
 
-OpsMind is in Phase 1, repository and development foundation. Phase 0 has been
-reviewed and approved.
+The repository owner accepted the Phase 4 forecasting-baseline and evaluation
+review under Issue #48 on 2026-08-06. This branch is limited to finalizing that
+accepted Issue #48 work and preparing it for review and merge.
 
-Until an approved issue explicitly opens application or cloud implementation:
+Phase 4 is Complete in the merged repository state. Phase 5, stockout risk and
+reorder recommendations, becomes the next formal phase after the Issue #48 pull
+request merges.
 
-- Do not add application scaffolding or production code.
-- Do not create or deploy AWS resources.
-- Do not add infrastructure-as-code modules.
-- Do not add live credentials, secrets, tokens, or private data.
-- Do not claim that planned systems are implemented or production-ready.
+Do not begin Phase 5 implementation on this branch. Phase 5 work must start
+through a separately approved issue and task branch. Phase 6 formal completion,
+Phase 7 hardening, API containerization, AWS, deployment, and
+production-readiness work remain outside the current authorization.
 
 ## Required Context
 

@@ -1,13 +1,14 @@
 # OpsMind Current Status
 
-Status basis: implementation merged through PR #43
+Status basis: Issue #48 owner-accepted repository state
 Governance basis:
 `docs/00-project-foundation/roadmap-phase-reconciliation.md`
-Documentation reconciliation: Issue #46
+Phase 4 evaluation and review: Issue #48
+Owner acceptance: 2026-08-06
 
-This document describes the repository state established when the Issue #46
-documentation reconciliation and retrospective Phase 1–3 reviews are accepted
-and merged.
+This document describes the repository state established by the owner-accepted
+Issue #48 evaluation implementation and Phase 4 Proceed decision. It becomes
+canonical when the associated pull request merges.
 
 Historical implementation descriptions remain useful evidence, but current
 behavior is determined by the latest merged implementation rather than by an
@@ -21,8 +22,8 @@ earlier memory-only milestone.
 | 1     | Repository and local development foundation                               | Complete      | Delivered and retrospectively reviewed             |
 | 2     | Product data and transactional backend                                    | Complete      | Delivered and retrospectively reviewed             |
 | 3     | Web workflow for product and demand operations                            | Complete      | Delivered and retrospectively reviewed             |
-| 4     | Forecasting baseline and evaluation                                       | Current       | Baseline delivered; evaluation remains             |
-| 5     | Stockout risk and reorder recommendations                                 | Gate pending  | Deterministic capability delivered early           |
+| 4     | Forecasting baseline and evaluation                                       | Complete      | Owner-accepted Phase 4 review                        |
+| 5     | Stockout risk and reorder recommendations                                 | Current       | Delivered early; formal Phase 5 review is next      |
 | 6     | Decision approval, rejection, and audit history                           | Gate pending  | Workflow and PostgreSQL durability delivered early |
 | 7–12  | Hardening, cloud, pipelines, MLOps, advanced AI, and production readiness | Planned       | Not formally opened                                |
 
@@ -186,15 +187,32 @@ Issue #20 and PR #21 delivered a deterministic arithmetic-mean forecast that:
 
 Forecasts are calculated on demand and are not persisted.
 
-The baseline does not yet satisfy the evaluation portion of Phase 4. Missing
-work includes:
+Issue #48 adds the governed evaluation portion of Phase 4:
 
-* an approved evaluation dataset or generation method;
-* temporal backtesting;
-* forecast-error metrics;
-* measured baseline accuracy;
-* findings by demand pattern;
-* an accepted Phase 4 decision.
+* deterministic dataset version `phase4-synthetic-v1`;
+* nine synthetic demand patterns with fixed UUIDs and dates;
+* chronological forecast origins;
+* complete seven-calendar-day target windows;
+* an explicit no-future-data-leakage invariant;
+* reuse of the production simple-mean forecast implementation;
+* MAE, signed forecast bias, and WAPE;
+* per-window, aggregate, per-pattern, and exclusion evidence;
+* deterministic JSON and Markdown reports;
+* a CLI that remains separate from the HTTP and persistence boundaries.
+
+With a seven-observation lookback, seven-day horizon, and minimum training
+history of seven observations, the evaluation attempted 288 windows, accepted
+161, and excluded 127. Aggregate MAE was `11.26`, forecast bias was `-4.57`,
+and WAPE was `17.51%`.
+
+The simple mean was exact for the controlled stable, all-zero, weekly-seasonal,
+aligned intermittent, and eligible missing-date windows. It under-forecast
+upward trend and abrupt upward level shifts and over-forecast downward trend.
+The zero-demand pattern correctly leaves WAPE undefined, and the short-history
+pattern produces no valid windows.
+
+The repository owner accepted the Phase 4 Proceed decision on 2026-08-06.
+Phase 4 is Complete in the merged repository state.
 
 The baseline does not currently model:
 
@@ -374,7 +392,9 @@ database or production-readiness posture.
 
 ## Validation Status
 
-The accepted reconciliation recorded 446 collected tests through PR #43.
+Issue #48 validation records 464 passing tests with the isolated PostgreSQL
+test database configured, zero skips, and one known Starlette TestClient/httpx
+deprecation warning.
 
 The validation surface includes:
 
@@ -384,6 +404,9 @@ The validation surface includes:
 * inventory API tests;
 * demand API tests;
 * forecast API and domain tests;
+* deterministic evaluation-dataset tests;
+* temporal-window and no-leakage tests;
+* metric, reporting, CLI, and reproducibility tests;
 * stockout API and domain tests;
 * reorder API and domain tests;
 * recommendation-review tests;
@@ -517,7 +540,8 @@ The implementation history remains chronological:
 * PR #39 — PostgreSQL workflow schema;
 * PR #41 — PostgreSQL recommendation-workflow repository;
 * PR #43 — application integration of PostgreSQL workflow persistence;
-* PR #45 — accepted roadmap-phase reconciliation.
+* PR #45 — accepted roadmap-phase reconciliation;
+* Issue #48 — deterministic baseline evaluation and owner-accepted Phase 4 review.
 
 Historical memory-only descriptions remain accurate for the point in history at
 which their associated PR merged. They must not be interpreted as the current
@@ -527,8 +551,8 @@ limit of supported behavior after PR #43.
 
 OpsMind currently has no:
 
-* formal forecast-baseline evaluation;
-* measured forecast accuracy;
+* real-world forecast validation on governed operational data;
+* probabilistic forecasts, prediction intervals, or trained forecast models;
 * calibrated stockout probability;
 * learned stockout model;
 * supplier optimization;
@@ -552,14 +576,15 @@ OpsMind currently has no:
 
 ## Next Permitted Work
 
-After the Issue #46 documentation reconciliation is accepted and merged, the
-next permitted implementation work is:
+The next permitted formal phase is:
 
-**Phase 4 — Forecasting baseline and evaluation**
+**Phase 5 — Stockout risk and reorder recommendations**
 
-The next implementation issue should define and validate a reproducible
-forecast-evaluation method.
+The existing deterministic exposure and reorder capability must now be reviewed
+against the Phase 5 exit criteria. That review must preserve the distinction
+between deterministic arithmetic and calibrated probability or learned
+prediction, and it must explicitly address downstream decision-quality limits.
 
-Do not begin Phase 5 or Phase 6 formal completion, Phase 7 hardening, Docker,
-AWS, deployment, or production-readiness work as a substitute for the missing
-Phase 4 evaluation.
+Do not begin Phase 6 formal completion, Phase 7 hardening, API containerization,
+AWS, deployment, or production-readiness work as a substitute for the required
+phase gates.

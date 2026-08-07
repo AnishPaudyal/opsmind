@@ -28,6 +28,12 @@ when the first application release is defined.
 * Atomic demand-batch ingestion.
 * Chronological demand retrieval with inclusive date filtering.
 * Deterministic arithmetic-mean demand forecast.
+* Deterministic Phase 4 synthetic demand dataset with nine governed patterns.
+* Temporal baseline-forecast evaluation with explicit no-leakage windows.
+* MAE, signed forecast bias, and WAPE evaluation metrics.
+* Deterministic JSON and Markdown evaluation reporting.
+* `python -m opsmind.evaluation` developer command with overwrite protection.
+* Durable Phase 4 evaluation design, measured report, and proposed phase review.
 * Deterministic stockout exposure.
 * Deterministic reorder recommendations.
 * Recommendation approval and rejection workflow.
@@ -60,9 +66,11 @@ when the first application release is defined.
 
 * Reconciled the formal roadmap with implementation merged through PR #43.
 * Recorded Phases 1 through 3 as retrospectively complete.
-* Recorded Phase 4, forecasting baseline and evaluation, as Current.
-* Recorded Phase 5 and Phase 6 capabilities as delivered ahead of their formal
-  gates rather than formally complete.
+* Recorded Phase 4, forecasting baseline and evaluation, as Complete after
+  repository-owner acceptance of the Issue #48 Proceed decision.
+* Recorded Phase 5, stockout risk and reorder recommendations, as Current.
+* Recorded Phase 6 capability as delivered ahead of its formal gate rather than
+  formally complete.
 * Distinguished implementation delivery from formal phase completion.
 * Distinguished isolated, restart-volatile memory behavior from shared,
   restart-durable PostgreSQL behavior.
@@ -75,8 +83,8 @@ when the first application release is defined.
 
 ### Not Yet Implemented
 
-* Formal forecast-baseline evaluation and temporal backtesting.
-* Measured forecast accuracy and approved forecast-error metrics.
+* Real-world forecast validation on governed operational data.
+* Probabilistic forecasting, prediction intervals, or trained forecast models.
 * Formal Phase 5 and Phase 6 completion.
 * Calibrated stockout probability or learned stockout model.
 * Supplier, pack-size, safety-stock, service-level, and cost optimization.
