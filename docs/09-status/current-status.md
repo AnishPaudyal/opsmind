@@ -1,6 +1,7 @@
 # OpsMind Current Status
 
 Status basis: Issue #48 owner-accepted repository state
+Phase 5 gate basis: Issue #50 owner-accepted `Proceed`, 2026-08-07
 Governance basis:
 `docs/00-project-foundation/roadmap-phase-reconciliation.md`
 Phase 4 evaluation and review: Issue #48
@@ -23,8 +24,8 @@ earlier memory-only milestone.
 | 2     | Product data and transactional backend                                    | Complete      | Delivered and retrospectively reviewed             |
 | 3     | Web workflow for product and demand operations                            | Complete      | Delivered and retrospectively reviewed             |
 | 4     | Forecasting baseline and evaluation                                       | Complete      | Owner-accepted Phase 4 review                        |
-| 5     | Stockout risk and reorder recommendations                                 | Current       | Delivered early; formal Phase 5 review is next      |
-| 6     | Decision approval, rejection, and audit history                           | Gate pending  | Workflow and PostgreSQL durability delivered early |
+| 5     | Stockout risk and reorder recommendations                                 | Complete      | Owner-accepted Phase 5 review under Issue #50      |
+| 6     | Decision approval, rejection, and audit history                           | Current       | Delivered early; formal Phase 6 review is next     |
 | 7–12  | Hardening, cloud, pipelines, MLOps, advanced AI, and production readiness | Planned       | Not formally opened                                |
 
 Implementation delivery and formal phase completion are separate. Phases 5 and
@@ -224,6 +225,12 @@ The baseline does not currently model:
 
 ## Phase 5 — Stockout Risk and Reorder Recommendations
 
+Issue #50 completed the formal Phase 5 evaluation gate. The owner accepted the
+`Proceed` decision on 2026-08-07, including the documented limitation that
+real-world decision quality is not measured in this phase. In the merged Issue
+#50 repository state, Phase 5 is Complete.
+
+
 Phase 5 capability was delivered ahead of its formal gate.
 
 ### Deterministic stockout exposure
@@ -260,8 +267,10 @@ Recommendations do not:
 * mutate inventory;
 * optimize cost, pack size, safety stock, or service level.
 
-Phase 5 remains gate pending until Phase 4 is complete and the delivered
-deterministic behavior is formally evaluated against the Phase 5 criteria.
+The governed Phase 5 evaluation passed: 11 of 11 scenarios passed with
+zero expected-output, evidence-preservation, rounding, or status-invariant
+failures. Two independent evaluation runs were byte-identical. The complete
+PostgreSQL-backed suite passed 488 tests with zero skips.
 
 ## Phase 6 — Decision Review and Audit History
 
@@ -576,15 +585,14 @@ OpsMind currently has no:
 
 ## Next Permitted Work
 
-The next permitted formal phase is:
+After the accepted Issue #50 pull request merges, the next formal gate is:
 
-**Phase 5 — Stockout risk and reorder recommendations**
+**Phase 6 — Decision approval, rejection, and audit history**
 
-The existing deterministic exposure and reorder capability must now be reviewed
-against the Phase 5 exit criteria. That review must preserve the distinction
-between deterministic arithmetic and calibrated probability or learned
-prediction, and it must explicitly address downstream decision-quality limits.
+The review workflow and PostgreSQL durability capability already exist, but
+early delivery does not satisfy the Phase 6 gate. A separate approved Phase 6
+issue and task branch must define and execute the formal evaluation/review.
 
-Do not begin Phase 6 formal completion, Phase 7 hardening, API containerization,
-AWS, deployment, or production-readiness work as a substitute for the required
-phase gates.
+Do not begin Phase 6 work on the Issue #50 branch. Phase 7 hardening, API
+containerization, AWS, deployment, and production-readiness work remain outside
+the current authorization.

@@ -36,6 +36,10 @@ when the first application release is defined.
 * Durable Phase 4 evaluation design, measured report, and proposed phase review.
 * Deterministic stockout exposure.
 * Deterministic reorder recommendations.
+* Governed Phase 5 deterministic stockout/reorder scenario-conformance
+  evaluation with reproducible JSON and Markdown evidence.
+* Owner-accepted Phase 5 `Proceed` review under Issue #50, including explicit
+  acceptance of the documented decision-quality limitations.
 * Recommendation approval and rejection workflow.
 * Immutable recommendation and evidence snapshots.
 * Normalized idempotent terminal-decision retries.

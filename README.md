@@ -876,3 +876,24 @@ modification. This is not a production compliance ledger.
 All meaningful work starts with a scoped issue, is implemented on a task branch,
 and is reviewed before merge. No contributor, human or automated, should merge
 directly into `main` without the required review.
+
+## Phase 5 Evaluation Status
+
+Phase 5 has an owner-accepted `Proceed` decision under Issue #50. The governed
+`phase5-synthetic-v1` evaluation exercises 11 deterministic stockout/reorder
+scenarios covering cutoff behavior, observation-count lookback, recorded zero
+demand, negative available inventory, zero lead time, shortage boundaries, and
+whole-unit `ROUND_CEILING` recommendations.
+
+All 11 scenarios passed with zero expected-output, evidence-preservation,
+rounding, or status-invariant failures. Two independent evaluation runs were
+byte-identical, and the complete PostgreSQL-backed repository suite passed 488
+tests with zero skips.
+
+This establishes deterministic policy conformance for the governed scenarios.
+It does **not** establish calibrated stockout probability, learned risk,
+real-world recommendation accuracy, economic optimality, service-level
+improvement, or cost savings. See
+`docs/05-evaluation/phase-5-stockout-reorder-evaluation.md` and
+`docs/12-phase-reviews/phase-5-review.md` for the governed evidence and accepted
+limitations.

@@ -23,8 +23,8 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 2     | Product data and transactional backend                | Complete      | Delivered and retrospectively reviewed                              |
 | 3     | Web workflow for product and demand operations        | Complete      | Delivered and retrospectively reviewed                              |
 | 4     | Forecasting baseline and evaluation                   | Complete      | Owner-accepted Phase 4 review under Issue #48                       |
-| 5     | Stockout risk and reorder recommendations             | Current       | Delivered early; formal Phase 5 evaluation and review are next      |
-| 6     | Decision approval, rejection, and audit history       | Gate pending  | Workflow and PostgreSQL durability delivered ahead of formal gate   |
+| 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
+| 6     | Decision approval, rejection, and audit history       | Current       | Delivered early; formal Phase 6 evaluation and review are next     |
 | 7     | Testing, security, and observability hardening        | Planned       | Earlier phases include tests, but Phase 7 hardening is not approved |
 | 8     | AWS foundation and first cloud deployment             | Planned       | No API container or AWS deployment exists                           |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
@@ -119,7 +119,7 @@ the Phase 4 gate in the merged repository state.
 
 ## Phase 5 Exit Criteria
 
-Phase 4 is complete. Phase 5 is the current formal gate.
+Phase 4 is complete. The owner accepted the Phase 5 `Proceed` decision under Issue #50 on 2026-08-07. In the merged Issue #50 repository state, Phase 5 is complete and Phase 6 is the current formal gate.
 
 Phase 5 is complete when:
 
@@ -134,9 +134,11 @@ Phase 5 is complete when:
   exclusions remain explicit unless separately implemented;
 * a Phase 5 review records an accepted Proceed, Revise, or Stop decision.
 
-The deterministic stockout-exposure and reorder-recommendation APIs are already
-delivered. Phase 5 remains gate pending until these criteria are evaluated
-after Phase 4.
+The deterministic stockout-exposure and reorder-recommendation APIs were
+delivered ahead of the formal gate. Issue #50 evaluated the governed
+deterministic behavior, recorded reproducible evidence, documented the
+decision-quality limitation, and received an owner-accepted `Proceed` decision
+on 2026-08-07. In the merged repository state, Phase 5 is Complete.
 
 ## Phase 6 Exit Criteria
 
@@ -181,21 +183,15 @@ production readiness beyond the evidence actually reviewed.
 
 ## Current Direction
 
-The next permitted formal phase is:
+After Issue #50 merges, the next formal gate is:
 
-**Phase 5 — Stockout risk and reorder recommendations**
+**Phase 6 — Decision approval, rejection, and audit history**
 
-The deterministic Phase 5 capability was delivered ahead of its gate. The next
-work must evaluate its evidence preservation, deterministic-versus-probabilistic
-claims, rounding policy, exclusions, and downstream decision-quality limits
-before recording a Phase 5 decision.
+Phase 6 capability was delivered ahead of its formal gate. Formal Phase 6 work
+must begin through a separately approved issue and task branch and must evaluate
+the existing review workflow, ordered audit history, PostgreSQL durability,
+transaction/concurrency behavior, and documented security limitations.
 
-The following work remains outside the current phase:
-
-* Phase 6 formal completion before the Phase 5 gate closes;
-* Phase 7 security and observability hardening;
-* API containerization;
-* AWS resources or cloud deployment;
-* production database operations;
-* backup, replication, and high availability;
-* production-readiness claims.
+Do not start Phase 6 implementation or review work on the Issue #50 branch.
+Phase 7 hardening, API containerization, AWS, deployment, and
+production-readiness work remain outside the current authorization.
