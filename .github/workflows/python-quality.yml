@@ -82,7 +82,7 @@ jobs:
             echo "::notice::No tracked Python files exist yet; mypy will run automatically after the first Python file is committed."
           fi
 
-      - name: Test
+      - name: Test with coverage
         shell: bash
         run: |
           tracked_test_files="$(
@@ -91,7 +91,12 @@ jobs:
           )"
 
           if [[ -n "$tracked_test_files" ]]; then
-            uv run pytest -p no:cacheprovider
+            uv run pytest -p no:cacheprovider \
+              --cov=opsmind \
+              --cov-branch \
+              --cov-report=term-missing \
+              --cov-report=xml \
+              --cov-fail-under=95
           else
             echo "::notice::No tracked pytest test files exist yet; pytest will run automatically after the first matching test file is committed."
           fi

@@ -61,8 +61,7 @@ The foundation includes:
 ADR-0000, ADR-0001, and ADR-0002 record the accepted ADR, Python, and
 quality-toolchain decisions.
 
-Pre-commit remains deferred. Coverage is collected without a minimum percentage
-gate.
+Pre-commit remains deferred. Phase 7A establishes a proposed 95.00% combined line-and-branch coverage regression gate after measuring and hardening the first-party baseline.
 
 ## Phase 2 — Product Data and Transactional Backend
 

@@ -3,6 +3,7 @@
 from dataclasses import FrozenInstanceError, replace
 from datetime import UTC, date, datetime, timedelta, timezone
 from decimal import Decimal
+from typing import cast
 from uuid import UUID
 
 import pytest
@@ -275,3 +276,80 @@ def test_event_type_specific_invariants_reject_invalid_combinations() -> None:
     )
     with pytest.raises(ValueError, match="requires decision details"):
         replace(rejection_event, note=" ")
+
+
+def test_event_rejects_invalid_identifier_and_enum_types() -> None:
+    creation = make_creation_event()
+
+    with pytest.raises(ValueError, match="event_id must be a UUID"):
+        replace(creation, event_id=cast(UUID, "not-a-uuid"))
+    with pytest.raises(ValueError, match="recommendation_id must be a UUID"):
+        replace(creation, recommendation_id=cast(UUID, "not-a-uuid"))
+    with pytest.raises(ValueError, match="supported audit event type"):
+        replace(
+            creation,
+            event_type=cast(RecommendationAuditEventType, "unsupported"),
+        )
+    with pytest.raises(ValueError, match="supported review status"):
+        replace(
+            creation,
+            review_status=cast(RecommendationReviewStatus, "unsupported"),
+        )
+    with pytest.raises(ValueError, match="decision_id must be a UUID"):
+        replace(creation, decision_id=cast(UUID, "not-a-uuid"))
+
+
+def test_event_type_specific_guards_reject_inconsistent_status_and_details() -> None:
+    creation = make_creation_event()
+
+    with pytest.raises(ValueError, match="pending_review status"):
+        replace(creation, review_status=RecommendationReviewStatus.APPROVED)
+
+    approved = approve_recommendation(
+        review=make_pending_review(),
+        decision_id=DECISION_ID,
+        decided_by="Reviewer",
+        decided_at=DECIDED_AT,
+    )
+    approval_event = create_review_decision_audit_event(
+        event_id=EVENT_ID,
+        review=approved,
+        sequence_number=2,
+    )
+
+    with pytest.raises(ValueError, match="sequence_number 2"):
+        replace(approval_event, sequence_number=3)
+    with pytest.raises(ValueError, match="approved status"):
+        replace(
+            approval_event,
+            review_status=RecommendationReviewStatus.REJECTED,
+        )
+    with pytest.raises(ValueError, match="requires decision details"):
+        replace(approval_event, actor=None)
+    with pytest.raises(
+        ValueError, match="approved_quantity must be a positive integer"
+    ):
+        replace(approval_event, approved_quantity=0)
+
+    rejected = reject_recommendation(
+        review=make_pending_review(),
+        decision_id=DECISION_ID,
+        decided_by="Reviewer",
+        decided_at=DECIDED_AT,
+        reason="Inbound scheduled",
+    )
+    rejection_event = create_review_decision_audit_event(
+        event_id=EVENT_ID,
+        review=rejected,
+        sequence_number=2,
+    )
+
+    with pytest.raises(ValueError, match="sequence_number 2"):
+        replace(rejection_event, sequence_number=3)
+    with pytest.raises(ValueError, match="rejected status"):
+        replace(
+            rejection_event,
+            review_status=RecommendationReviewStatus.APPROVED,
+        )
+    with pytest.raises(ValueError, match="must not have approved_quantity"):
+        replace(rejection_event, approved_quantity=1)

@@ -7,32 +7,34 @@ These instructions govern AI-assisted work in the OpsMind repository.
 Phase 7 — testing, security, and observability hardening — is the Current formal
 gate on canonical `main`.
 
-Issue #54 governs Phase 7 scope definition on branch
-`docs/phase-7-hardening-scope`.
+The repository owner accepted the Phase 7 hardening plan under Issue #54.
+Issue #56 is the active first child workstream on branch
+`test/phase-7-testing-coverage-hardening`.
 
-The repository owner accepted the Phase 7 hardening plan on 2026-08-07 and
-approved opening the governed child workstreams.
+This branch is authorized only for Phase 7A testing and coverage hardening,
+including:
 
-This scope branch is now limited to Issue #54 finalization: documentation
-consistency, validation hygiene, staging, commit, pull-request review, CI, and
-merge preparation.
+- reproducible statement/branch coverage evidence;
+- risk-based test-gap analysis;
+- focused regression tests for meaningful uncovered behavior;
+- TestClient warning resolution or bounded disposition;
+- an evidence-based coverage-gate decision;
+- testing/coverage documentation and CI updates justified by that decision.
 
-Do not implement Phase 7 application behavior on this branch.
+Do not implement on this branch:
 
-After the Issue #54 scope change is merged, Phase 7 child workstreams may begin
-through separate approved issue/task branches in the accepted order:
+- authentication or authorization behavior;
+- ADR-0006 or trusted-principal implementation;
+- request/correlation-ID middleware;
+- application logging or readiness behavior;
+- observability runtime dependencies;
+- AWS, API containerization, cloud deployment, production monitoring/alerting,
+  HA/DR, production secret-store integration, external ordering, or Phase 8 work.
 
-1. testing/coverage baseline and hardening;
-2. observability/readiness design and implementation;
-3. ADR-0006 security-boundary decision;
-4. security implementation only after ADR-0006 owner acceptance;
-5. integrated Phase 7 evaluation and review.
-
-ADR-0006 remains mandatory before trusted-identity/security implementation.
-
-AWS, API containerization, cloud deployment, production monitoring/alerting,
-HA/DR, production secret-store integration, external ordering, and
-production-readiness implementation remain outside the current authorization.
+After the Phase 7A workstream is accepted and merged, the accepted Phase 7
+sequence continues with observability/readiness, then ADR-0006, then security
+implementation only after ADR-0006 owner acceptance, and finally the integrated
+Phase 7 evaluation/review.
 ## Required Context
 
 Before starting work:
