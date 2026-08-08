@@ -25,7 +25,7 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 4     | Forecasting baseline and evaluation                   | Complete      | Owner-accepted Phase 4 review under Issue #48                       |
 | 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
 | 6     | Decision approval, rejection, and audit history       | Complete      | Owner-accepted Phase 6 review under Issue #52                       |
-| 7     | Testing, security, and observability hardening        | Current       | Next formal gate after the Issue #52 change is merged               |
+| 7     | Testing, security, and observability hardening        | Current       | Phase 7A complete; Issue #58 implementation awaiting owner review   |
 | 8     | AWS foundation and first cloud deployment             | Planned       | No API container or AWS deployment exists                           |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
 | 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
@@ -52,8 +52,9 @@ Phases 2 through 6 form one coherent workflow:
 recommendation -> approval or rejection -> audit record`
 
 Parts of Phases 5 and 6 were delivered before the formal Phase 4 evaluation
-gate was completed. That implementation remains valid, but Phases 5 and 6
-remain gate pending.
+gate was completed. Their later owner-accepted reviews completed both gates;
+the early-delivery history remains relevant without changing their current
+Complete status.
 
 ## Phase 1 Exit Criteria
 
@@ -119,7 +120,8 @@ the Phase 4 gate in the merged repository state.
 
 ## Phase 5 Exit Criteria
 
-Phase 4 is complete. The owner accepted the Phase 5 `Proceed` decision under Issue #50 on 2026-08-07. In the merged Issue #50 repository state, Phase 5 is complete and Phase 6 is the current formal gate.
+The owner accepted the Phase 5 `Proceed` decision under Issue #50 on
+2026-08-07. Phase 5 is Complete.
 
 Phase 5 is complete when:
 
@@ -163,9 +165,9 @@ Phase 6 is complete when:
 * a Phase 6 review records an accepted Proceed, Revise, or Stop decision.
 
 The review workflow, ordered audit history, PostgreSQL schema, PostgreSQL
-repository, and application integration are already delivered. Phase 6 remains
-gate pending until Phase 4 and Phase 5 are formally completed and the Phase 6
-review is accepted.
+repository, and application integration are delivered. The repository owner
+accepted the Phase 6 `Proceed` review under Issue #52 on 2026-08-07, completing
+the Phase 6 gate.
 
 ## Phase-Gate Rule
 
@@ -183,15 +185,15 @@ production readiness beyond the evidence actually reviewed.
 
 ## Current Direction
 
-After Issue #50 merges, the next formal gate is:
+**Phase 7 — Testing, security, and observability hardening** is Current.
 
-**Phase 6 — Decision approval, rejection, and audit history**
+Phase 7A testing and coverage hardening is complete. Issue #58 implements the
+accepted observability/readiness child scope and is awaiting final
+repository-owner review and merge. After Issue #58 is accepted and merged, the
+approved sequence continues with ADR-0006; security implementation remains
+blocked until that ADR is separately accepted. Phase 8, API containerization,
+AWS, deployment, and production-readiness approval remain outside the current
+authorization.
 
-Phase 6 capability was delivered ahead of its formal gate. Formal Phase 6 work
-must begin through a separately approved issue and task branch and must evaluate
-the existing review workflow, ordered audit history, PostgreSQL durability,
-transaction/concurrency behavior, and documented security limitations.
-
-Do not start Phase 6 implementation or review work on the Issue #50 branch.
-Phase 7 hardening, API containerization, AWS, deployment, and
-production-readiness work remain outside the current authorization.
+Detailed current evidence and next-work boundaries live in
+[Current Status](docs/09-status/current-status.md).

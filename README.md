@@ -8,11 +8,10 @@ coherent product.
 
 ## Current Status
 
-Phases 0 through 4 are complete. The repository owner accepted the Phase 4
-forecasting-baseline and evaluation review under Issue #48 on 2026-08-06.
-Phase 5, stockout risk and reorder recommendations, is Current. Capabilities
-associated with Phases 5 and 6 were delivered ahead of their formal gates and
-are not yet formally complete.
+Phases 0 through 6 are complete. Phase 7, testing, security, and observability
+hardening, is the current formal gate. Phase 7A testing and coverage hardening
+is complete, and the Issue #58 observability/readiness implementation is
+complete on its review branch with final repository-owner review pending.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
@@ -38,6 +37,9 @@ This repository does not yet contain:
 - A production database, production data, or production-readiness approval
 
 Those capabilities require reviewed issues and their applicable phase gates.
+The detailed, authoritative project state is maintained in
+[Current Status](docs/09-status/current-status.md); the
+[Roadmap](ROADMAP.md) defines the higher-level phase sequence and gates.
 
 ## First Product Slice
 
@@ -124,13 +126,15 @@ with:
 uv run uvicorn opsmind.main:app --reload
 ```
 
-The API exposes an unversioned deterministic process-health endpoint and
-fifteen product, inventory, demand, forecast, exposure, recommendation, review,
-and audit-history operations under the configured business prefix:
+The API exposes unversioned deterministic process-health and readiness
+endpoints plus fifteen product, inventory, demand, forecast, exposure,
+recommendation, review, and audit-history operations under the configured
+business prefix:
 
 | Method | Path | Result |
 | --- | --- | --- |
 | `GET` | `/health` | Report process health. |
+| `GET` | `/ready` | Report bounded application and persistence readiness. |
 | `POST` | `/api/v1/products` | Create a normalized product. |
 | `GET` | `/api/v1/products` | List products in normalized-SKU order. |
 | `GET` | `/api/v1/products/{product_id}` | Retrieve one product. |
@@ -162,10 +166,12 @@ The default service is `opsmind-api`, the default environment is `local`, debug
 mode is disabled, and the default business prefix is `/api/v1`. The application
 does not load a repository `.env` file implicitly.
 
-`GET /health` reports only that the API process can serve a request. It does not
-claim readiness for a database, AWS resource, external service, or product
-workflow. PostgreSQL backend selection does not change this process-health
-contract and no readiness endpoint is introduced.
+`GET /health` reports only that the API process can serve a request and remains
+separate from dependency readiness. `GET /ready` reports bounded application
+readiness: memory mode is immediately ready, while PostgreSQL mode verifies
+connectivity and the supported Alembic revision without migrating or repairing
+the schema. Neither endpoint claims production readiness, HA/DR, monitoring, or
+cloud-deployment readiness.
 
 ### Persistence backends
 
@@ -922,5 +928,6 @@ reviewer identity, RBAC authorization, cryptographic tamper evidence, compliance
 certification, external ordering, production-scale concurrency, production
 security, or production readiness.
 
-In the merged state, Phase 6 is Complete and Phase 7 becomes the next formal
-gate. Phase 7 work must start from a separate approved issue/task branch.
+Phase 6 is Complete and Phase 7 is the current formal gate. See
+[Current Status](docs/09-status/current-status.md) for the active Phase 7
+workstream and its validation evidence.

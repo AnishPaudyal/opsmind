@@ -1,6 +1,6 @@
 # Issue #58 — Application Observability and Readiness Design Decision
 
-Status: Owner accepted; implementation authorized
+Status: Accepted design; implementation complete; final owner review pending
 Governed by: Issue #58
 Owner acceptance: Anish Paudyal, 2026-08-07
 Accepted design candidate SHA-256: `d200954d30b1534820325ab1e5bce5cea36eaf140ac847213bc7adfd7706d92c`
@@ -16,7 +16,7 @@ before modifying runtime behavior.
 This design does not authorize authentication, authorization, ADR-0006,
 security implementation, cloud monitoring, deployment, or Phase 8 work.
 
-## Existing Architecture Evidence
+## Pre-Implementation Architecture Evidence
 
 The current application has one authoritative factory: `create_app()`.
 
@@ -437,11 +437,10 @@ That handoff records:
 - ADR-0006/security remains blocked;
 - cloud/Phase 8 boundaries remain unchanged.
 
-The handoff documentation and this design are now repository-owner accepted.
-They remain uncommitted until this acceptance record is finalized.
-
-The governed Issue #58 implementation is authorized and will begin after this
-acceptance documentation is committed.
+The handoff documentation and this design were repository-owner accepted and
+committed before implementation began. The governed implementation is now
+complete on the Issue #58 branch; final implementation acceptance and merge
+remain pending.
 
 ## Owner Acceptance
 
@@ -463,9 +462,9 @@ trusted-principal behavior, security implementation, cloud deployment,
 production monitoring infrastructure, HA/DR, Phase 8, or production-readiness
 approval.
 
-## Implementation Order
+## Accepted Implementation Order
 
-If the repository owner accepts this design, the planned execution sequence is:
+The accepted execution sequence was:
 
 1. record repository-owner design acceptance;
 2. finalize, stage, and commit the governance handoff and accepted design
@@ -483,6 +482,70 @@ If the repository owner accepts this design, the planned execution sequence is:
 13. obtain separate repository-owner acceptance of the completed Issue #58
     implementation result;
 14. finalize the pull request and rerun hosted CI before merge.
+
+Steps 1 through 12 are complete. Steps 13 and 14 remain pending; this document
+does not claim final owner acceptance or merge completion.
+
+## Implementation Result
+
+The accepted in-scope implementation is complete in two runtime checkpoints.
+
+### HTTP observability checkpoint
+
+Commit `511c4bf650179bc42a3667a9a10b051b2561fcae` provides bounded request-ID
+validation and resolution, pure ASGI middleware, response and request-state
+correlation, one seven-field structured JSON request event, low-cardinality
+route templates, monotonic duration, bounded error categories, idempotent
+`opsmind.http` logging, a safe unexpected pre-response `500`, and explicit
+`unhandled_exception` and post-start `streaming_error` behavior.
+
+Independent validation passed 569 tests with zero skips, included PostgreSQL
+integration, and achieved approximately 95.96% combined coverage against the
+95.00% gate.
+
+### Readiness checkpoint
+
+Commit `204c1e2961a58d8436fb7601af4a0137f55640cc` provides the typed readiness
+model and protocol, immediate memory readiness, PostgreSQL connectivity and
+supported-revision checks, unversioned `/ready`, bounded `200`/`503` responses,
+application-owned Engine reuse, lazy startup, unchanged `/health` behavior, and
+`dependency_unavailable` request-event classification for known readiness
+failure.
+
+Final PostgreSQL-backed validation passed 585 tests with zero skips and no
+warnings. Ruff and strict mypy passed across 112 source files. Alembic reported
+head `0006_workflow_persistence`; statement coverage was 97.54%, branch
+coverage was 87.90%, combined coverage was 96.05%, and `readiness.py` was 100%
+covered.
+
+## Implementation Conformance Matrix
+
+| Area | Accepted behavior | Result |
+| --- | --- | --- |
+| Request correlation | Generated ID; valid propagation; invalid or duplicate replacement; response and request-state correlation | Complete |
+| Structured observability | Seven bounded JSON fields; route template or unmatched value; monotonic duration; exactly one event; sensitive data excluded | Complete |
+| Safe errors | Handled categories; safe pre-start `500`; `unhandled_exception`; post-start `streaming_error`; re-raise; `BaseException` not swallowed | Complete |
+| Liveness | `/health` exact process-liveness contract without dependency work | Complete |
+| Readiness | `/ready` `200`/`503`; memory and PostgreSQL checks; missing/wrong/multiple revision and unavailable database handled | Complete |
+| Lifecycle | Lazy startup; application-owned Engine reuse; explicit ownership preserved; no migration, repair, or secondary Engine | Complete |
+| Public boundary | Bounded readiness response and request event; no database URL, credentials, SQL, revision detail, exception text, or traceback | Complete |
+| Exclusions | Auth, ADR-0006, security, cloud/deployment, external telemetry, HA/DR, backup/restore, Phase 8, and production-readiness approval absent | Complete |
+
+## Residual Limitations
+
+The following are accepted non-blocking boundaries of this implementation:
+
+- route classification depends on behavior pinned by the current FastAPI
+  version and should be rechecked on framework upgrades;
+- malformed or nonconforming downstream ASGI behavior is outside the governed
+  middleware contract;
+- production log collection and external telemetry remain infrastructure work;
+- readiness demonstrates bounded application/backend compatibility, not
+  HA/DR, production monitoring, or production readiness;
+- security remains blocked pending ADR-0006.
+
+The completed implementation still requires separate repository-owner review,
+hosted pull-request validation, and merge authorization.
 
 ## Explicit Non-Goals
 

@@ -21,16 +21,16 @@ Phase 7A testing and coverage hardening is complete:
   in force.
 
 Issue #58 is the active Phase 7 observability/readiness child workstream on
-branch `feat/phase-7-observability-readiness`.
+branch `feat/phase-7-observability-readiness`. Its in-scope runtime
+implementation and local validation are complete; final repository-owner
+review, hosted validation, and merge remain pending.
 
 The repository owner accepted the Issue #58 pre-implementation design on
 2026-08-07 and authorized the governed implementation to proceed.
 
-This branch is now authorized for:
+This branch remains authorized for:
 
-- the accepted Issue #58 observability/readiness implementation;
-- focused Issue #58 tests;
-- supporting documentation and evidence;
+- completion documentation and evidence;
 - local and hosted validation;
 - pull-request preparation within the accepted scope.
 
