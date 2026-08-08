@@ -61,7 +61,7 @@ The foundation includes:
 ADR-0000, ADR-0001, and ADR-0002 record the accepted ADR, Python, and
 quality-toolchain decisions.
 
-Pre-commit remains deferred. Phase 7A establishes a proposed 95.00% combined line-and-branch coverage regression gate after measuring and hardening the first-party baseline.
+Pre-commit remains deferred. The repository owner accepted the Phase 7A 95.00% combined line-and-branch coverage regression gate under Issue #56 on 2026-08-07. PR #57 is approved for finalization and merge preparation; the acceptance/finalization commit must pass the required GitHub CI before merge.
 
 ## Phase 2 — Product Data and Transactional Backend
 

@@ -8,33 +8,45 @@ Phase 7 — testing, security, and observability hardening — is the Current fo
 gate on canonical `main`.
 
 The repository owner accepted the Phase 7 hardening plan under Issue #54.
-Issue #56 is the active first child workstream on branch
-`test/phase-7-testing-coverage-hardening`.
 
-This branch is authorized only for Phase 7A testing and coverage hardening,
-including:
+The repository owner accepted the Phase 7A testing and coverage hardening result
+under Issue #56 on 2026-08-07, including the 95.00% combined coverage gate,
+documented residual-risk treatment, and Phase 7 boundaries.
 
-- reproducible statement/branch coverage evidence;
-- risk-based test-gap analysis;
-- focused regression tests for meaningful uncovered behavior;
-- TestClient warning resolution or bounded disposition;
-- an evidence-based coverage-gate decision;
-- testing/coverage documentation and CI updates justified by that decision.
+PR #57 is approved for finalization and merge preparation.
 
-Do not implement on this branch:
+The reviewed Phase 7A feature commit
+`2d8425d243e8237046b403b060faa4f8e0cb3b6d` passed both required GitHub-hosted
+pull-request checks before owner acceptance.
 
-- authentication or authorization behavior;
+This branch is now limited to Issue #56 finalization:
+
+- durable owner-acceptance documentation;
+- validation and diff hygiene;
+- staging and commit verification;
+- pull-request CI revalidation;
+- merge preparation.
+
+Any acceptance/finalization commit must pass the required GitHub CI again before
+merge.
+
+Do not begin on this branch:
+
+- observability/readiness implementation;
 - ADR-0006 or trusted-principal implementation;
+- authentication or authorization behavior;
 - request/correlation-ID middleware;
-- application logging or readiness behavior;
-- observability runtime dependencies;
-- AWS, API containerization, cloud deployment, production monitoring/alerting,
-  HA/DR, production secret-store integration, external ordering, or Phase 8 work.
+- AWS or cloud deployment;
+- production monitoring/alerting;
+- HA/DR;
+- production secret-store integration;
+- external ordering;
+- Phase 8 work.
 
-After the Phase 7A workstream is accepted and merged, the accepted Phase 7
-sequence continues with observability/readiness, then ADR-0006, then security
-implementation only after ADR-0006 owner acceptance, and finally the integrated
-Phase 7 evaluation/review.
+After PR #57 is revalidated and merged, the accepted Phase 7 sequence continues
+with observability/readiness through a separately governed issue/task branch,
+then ADR-0006, then security implementation only after ADR-0006 repository-owner
+acceptance, and finally the integrated Phase 7 evaluation/review.
 ## Required Context
 
 Before starting work:
