@@ -157,10 +157,9 @@ uv run pytest -p no:cacheprovider \
 ```
 
 Tests must construct their own repository or application instance, must not
-depend on test execution order, and must not share mutable business state. The
-current repository boundary is deliberately in memory: it is isolated per
-application instance and loses all data on process restart. Database behavior
-and database-backed test fixtures remain outside this milestone.
+depend on test execution order, and must not share mutable business state.
+Memory-backed tests remain isolated per application instance; PostgreSQL
+behavior must use the repository's controlled real-PostgreSQL fixtures.
 
 Run focused demand-history tests with:
 
@@ -173,10 +172,9 @@ uv run pytest -p no:cacheprovider \
 
 Demand tests must verify that a conflicting batch stores no partial data, that
 responses and repository results remain chronological, and that date filters
-are inclusive. Construct fresh repositories or applications so demand state is
-isolated, and never rely on test execution order. Demand remains part of the
-same process-local in-memory repository as products and inventory; persistence
-and database-backed fixtures remain future work.
+are inclusive. Construct fresh repositories or applications so memory state is
+isolated, never rely on test execution order, and use the controlled
+PostgreSQL fixtures for durable-backend behavior.
 
 Run focused baseline-forecast tests with:
 

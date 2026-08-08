@@ -1,6 +1,7 @@
 """FastAPI dependencies for application-bound services."""
 
 from opsmind.core.clock import Clock
+from opsmind.readiness import ReadinessProbe
 from opsmind.repositories.product_inventory import ProductInventoryRepository
 from opsmind.repositories.recommendation_workflow import (
     RecommendationWorkflowRepository,
@@ -20,3 +21,8 @@ def get_recommendation_workflow_repository() -> RecommendationWorkflowRepository
 def get_clock() -> Clock:
     """Return the application-bound workflow clock."""
     raise RuntimeError("Clock is not configured")
+
+
+def get_readiness_probe() -> ReadinessProbe:
+    """Return the application-bound readiness probe."""
+    raise RuntimeError("Readiness probe is not configured")

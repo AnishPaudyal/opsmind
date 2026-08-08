@@ -9,44 +9,62 @@ gate on canonical `main`.
 
 The repository owner accepted the Phase 7 hardening plan under Issue #54.
 
-The repository owner accepted the Phase 7A testing and coverage hardening result
-under Issue #56 on 2026-08-07, including the 95.00% combined coverage gate,
-documented residual-risk treatment, and Phase 7 boundaries.
+Phase 7A testing and coverage hardening is complete:
 
-PR #57 is approved for finalization and merge preparation.
+- Issue #56 is closed;
+- PR #57 is merged;
+- canonical merge commit is
+  `784c9055a393b3febd030ae8d9ce7d82fb110e4a`;
+- the merged tree exactly matches the reviewed final Phase 7A tree
+  `4f592917107dcc2c07ae1d23ecd1cc63ad6729d4`;
+- the accepted 95.00% combined line-and-branch coverage regression gate remains
+  in force.
 
-The reviewed Phase 7A feature commit
-`2d8425d243e8237046b403b060faa4f8e0cb3b6d` passed both required GitHub-hosted
-pull-request checks before owner acceptance.
+Issue #58 is the active Phase 7 observability/readiness child workstream on
+branch `feat/phase-7-observability-readiness`. Its in-scope runtime
+implementation and local validation are complete; final repository-owner
+review, hosted validation, and merge remain pending.
 
-This branch is now limited to Issue #56 finalization:
+The repository owner accepted the Issue #58 pre-implementation design on
+2026-08-07 and authorized the governed implementation to proceed.
 
-- durable owner-acceptance documentation;
-- validation and diff hygiene;
-- staging and commit verification;
-- pull-request CI revalidation;
-- merge preparation.
+This branch remains authorized for:
 
-Any acceptance/finalization commit must pass the required GitHub CI again before
-merge.
+- completion documentation and evidence;
+- local and hosted validation;
+- pull-request preparation within the accepted scope.
+
+The Issue #58 design scope is limited to:
+
+- bounded request-ID propagation;
+- dependency-light structured request logging;
+- safe application error observability;
+- preserving `/health` as process liveness;
+- adding an unversioned readiness contract;
+- memory readiness semantics;
+- PostgreSQL connectivity and schema-revision readiness;
+- focused tests and durable evidence supporting those behaviors.
 
 Do not begin on this branch:
 
-- observability/readiness implementation;
-- ADR-0006 or trusted-principal implementation;
 - authentication or authorization behavior;
-- request/correlation-ID middleware;
+- ADR-0006 or trusted-principal implementation;
+- security implementation;
 - AWS or cloud deployment;
-- production monitoring/alerting;
+- API containerization;
+- production monitoring/alerting infrastructure;
+- external metrics or tracing backends;
 - HA/DR;
+- backup/restore;
 - production secret-store integration;
 - external ordering;
-- Phase 8 work.
+- Phase 8 work;
+- production-readiness approval.
 
-After PR #57 is revalidated and merged, the accepted Phase 7 sequence continues
-with observability/readiness through a separately governed issue/task branch,
-then ADR-0006, then security implementation only after ADR-0006 repository-owner
-acceptance, and finally the integrated Phase 7 evaluation/review.
+After Issue #58 is accepted and merged, the accepted Phase 7 sequence continues
+with ADR-0006, then security implementation only after ADR-0006
+repository-owner acceptance, and finally the integrated Phase 7
+evaluation/review.
 ## Required Context
 
 Before starting work:

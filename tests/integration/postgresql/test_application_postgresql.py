@@ -18,6 +18,23 @@ from opsmind.persistence.postgresql.models import (
 )
 
 
+def test_postgresql_readiness_succeeds_at_current_migration_head(
+    postgresql_url: URL,
+) -> None:
+    with TestClient(create_app(postgresql_settings(postgresql_url))) as client:
+        response = client.get("/ready", headers={"X-Request-ID": "postgres-ready"})
+
+    assert response.status_code == 200
+    assert response.headers.get_list("X-Request-ID") == ["postgres-ready"]
+    assert response.json() == {
+        "status": "ready",
+        "service": "opsmind-postgresql-test",
+        "environment": "test",
+        "backend": "postgresql",
+        "checks": {"persistence": "ready"},
+    }
+
+
 def postgresql_settings(
     postgresql_url: URL,
     *,

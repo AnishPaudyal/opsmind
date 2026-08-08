@@ -7,6 +7,16 @@ when the first application release is defined.
 
 ## Unreleased
 
+### Phase 7 observability and readiness
+
+- Added bounded request-ID propagation, structured HTTP request events, and a
+  safe unexpected-error boundary.
+- Added unversioned application readiness with memory and PostgreSQL
+  connectivity/schema-revision semantics while preserving `/health` as process
+  liveness.
+- Recorded the completed Issue #58 implementation and validation evidence for
+  final repository-owner review.
+
 ### Phase 6 decision-review and audit evaluation
 
 - Added the accepted Phase 6 decision-review/audit evaluation design.
@@ -109,7 +119,6 @@ when the first application release is defined.
 
 * Real-world forecast validation on governed operational data.
 * Probabilistic forecasting, prediction intervals, or trained forecast models.
-* Formal Phase 5 and Phase 6 completion.
 * Calibrated stockout probability or learned stockout model.
 * Supplier, pack-size, safety-stock, service-level, and cost optimization.
 * Purchase-order creation or external ordering integration.
