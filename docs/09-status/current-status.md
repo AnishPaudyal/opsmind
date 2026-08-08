@@ -61,7 +61,7 @@ The foundation includes:
 ADR-0000, ADR-0001, and ADR-0002 record the accepted ADR, Python, and
 quality-toolchain decisions.
 
-Pre-commit remains deferred. The repository owner accepted the Phase 7A 95.00% combined line-and-branch coverage regression gate under Issue #56 on 2026-08-07. PR #57 is approved for finalization and merge preparation; the acceptance/finalization commit must pass the required GitHub CI before merge.
+Pre-commit remains deferred. Phase 7A testing and coverage hardening is complete: the repository owner accepted the 95.00% combined line-and-branch coverage regression gate under Issue #56, PR #57 merged into canonical `main` as `784c9055a393b3febd030ae8d9ce7d82fb110e4a`, and Issue #56 is closed. Issue #58 is the active Phase 7 observability/readiness child on branch `feat/phase-7-observability-readiness`. Its pre-implementation design was accepted by the repository owner on 2026-08-07; governed Issue #58 implementation is authorized but has not yet begun.
 
 ## Phase 2 — Product Data and Transactional Backend
 
