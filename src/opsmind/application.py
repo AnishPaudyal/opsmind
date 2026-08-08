@@ -14,6 +14,7 @@ from opsmind.api.dependencies import (
 from opsmind.api.router import create_api_router
 from opsmind.core.clock import Clock, SystemClock
 from opsmind.core.config import PersistenceBackend, Settings, get_settings
+from opsmind.observability import RequestIDMiddleware, configure_http_logger
 from opsmind.persistence.postgresql.database import (
     create_postgresql_engine,
     create_session_factory,
@@ -102,6 +103,8 @@ def create_app(
         debug=resolved_settings.debug,
         lifespan=lifespan,
     )
+    configure_http_logger()
+    application.add_middleware(RequestIDMiddleware)
     application.dependency_overrides[get_settings] = provide_settings
     application.dependency_overrides[get_product_inventory_repository] = (
         provide_product_inventory_repository
