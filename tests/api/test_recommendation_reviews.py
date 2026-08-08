@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from opsmind.api.dependencies import get_product_inventory_repository
 from opsmind.application import create_app
 from opsmind.core.config import Environment, Settings
+from opsmind.domain.errors import DuplicateRecommendationReviewError
 from opsmind.domain.recommendation_review import ReorderRecommendationReview
 from opsmind.repositories.in_memory_recommendation_workflow import (
     InMemoryRecommendationWorkflowRepository,
@@ -945,3 +946,96 @@ def test_openapi_documents_review_contract_and_bounded_responses() -> None:
         "string",
         "null",
     }
+
+
+def test_duplicate_creation_repository_error_returns_safe_409(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Repository recommendation-ID collisions retain the 409 contract."""
+    product_repository = InMemoryProductInventoryRepository()
+    workflow_repository = InMemoryRecommendationWorkflowRepository()
+
+    application = create_app(
+        make_settings(),
+        product_repository,
+        workflow_repository,
+        FixedClock(),
+    )
+    client = TestClient(application)
+    product_id = prepare_actionable_product(client)
+
+    attempted_ids: list[UUID] = []
+
+    def fail_create(
+        review: ReorderRecommendationReview,
+        *,
+        event_id: UUID,
+    ) -> NoReturn:
+        del event_id
+        attempted_ids.append(review.recommendation_id)
+        raise DuplicateRecommendationReviewError(review.recommendation_id)
+
+    monkeypatch.setattr(
+        workflow_repository,
+        "create_review",
+        fail_create,
+    )
+
+    response = client.post(f"/api/v1/products/{product_id}/reorder-recommendations")
+
+    assert response.status_code == 409
+    assert len(attempted_ids) == 1
+    assert response.json() == {
+        "detail": (f"Reorder recommendation '{attempted_ids[0]}' already exists.")
+    }
+
+
+@pytest.mark.parametrize(
+    ("operation", "payload"),
+    [
+        ("approve", {"decided_by": "Reviewer"}),
+        (
+            "reject",
+            {
+                "decided_by": "Reviewer",
+                "reason": "Do not replenish",
+            },
+        ),
+    ],
+)
+def test_repository_value_error_during_decision_returns_safe_422(
+    monkeypatch: pytest.MonkeyPatch,
+    operation: str,
+    payload: dict[str, object],
+) -> None:
+    """Repository value failures remain bounded as public 422s."""
+    application, _, workflow_repository = make_application()
+    client = TestClient(application)
+
+    product_id = prepare_actionable_product(client)
+    created = create_review(client, product_id)
+    recommendation_id = cast(
+        str,
+        created["recommendation_id"],
+    )
+
+    def fail_decision(
+        *args: object,
+        **kwargs: object,
+    ) -> NoReturn:
+        del args, kwargs
+        raise ValueError("synthetic invalid terminal decision")
+
+    monkeypatch.setattr(
+        workflow_repository,
+        f"{operation}_review",
+        fail_decision,
+    )
+
+    response = client.post(
+        (f"/api/v1/reorder-recommendations/{recommendation_id}/{operation}"),
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": "synthetic invalid terminal decision"}

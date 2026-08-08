@@ -3,6 +3,7 @@
 from dataclasses import FrozenInstanceError, replace
 from datetime import UTC, date, datetime, timedelta, timezone
 from decimal import Decimal
+from typing import cast
 from uuid import UUID
 
 import pytest
@@ -402,3 +403,68 @@ def test_system_clock_returns_an_aware_utc_datetime() -> None:
 
     assert current.tzinfo is UTC
     assert current.utcoffset() == timedelta(0)
+
+
+def test_direct_decision_invalid_type_and_required_fields() -> None:
+    with pytest.raises(ValueError, match="decided_by must not be empty"):
+        RecommendationDecision(
+            decision_id=APPROVAL_ID,
+            decision_type=RecommendationDecisionType.APPROVED,
+            decided_by=" ",
+            decided_at=DECIDED_AT,
+            approved_quantity=19,
+            note=None,
+        )
+
+    with pytest.raises(ValueError, match="supported decision type"):
+        RecommendationDecision(
+            decision_id=APPROVAL_ID,
+            decision_type=cast(RecommendationDecisionType, "unsupported"),
+            decided_by="Reviewer",
+            decided_at=DECIDED_AT,
+            approved_quantity=19,
+            note=None,
+        )
+
+    with pytest.raises(
+        ValueError, match="approved decisions require approved_quantity"
+    ):
+        RecommendationDecision(
+            decision_id=APPROVAL_ID,
+            decision_type=RecommendationDecisionType.APPROVED,
+            decided_by="Reviewer",
+            decided_at=DECIDED_AT,
+            approved_quantity=None,
+            note=None,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="rejected decisions must not have approved_quantity",
+    ):
+        RecommendationDecision(
+            decision_id=APPROVAL_ID,
+            decision_type=RecommendationDecisionType.REJECTED,
+            decided_by="Reviewer",
+            decided_at=DECIDED_AT,
+            approved_quantity=1,
+            note="Do not reorder",
+        )
+
+    with pytest.raises(ValueError, match="rejected decisions require a non-empty note"):
+        RecommendationDecision(
+            decision_id=APPROVAL_ID,
+            decision_type=RecommendationDecisionType.REJECTED,
+            decided_by="Reviewer",
+            decided_at=DECIDED_AT,
+            approved_quantity=None,
+            note=None,
+        )
+
+
+def test_direct_review_construction_rejects_invalid_status_type() -> None:
+    with pytest.raises(ValueError, match="supported review status"):
+        replace(
+            make_pending_review(),
+            review_status=cast(RecommendationReviewStatus, "unsupported"),
+        )

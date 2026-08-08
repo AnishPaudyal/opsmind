@@ -7,32 +7,46 @@ These instructions govern AI-assisted work in the OpsMind repository.
 Phase 7 — testing, security, and observability hardening — is the Current formal
 gate on canonical `main`.
 
-Issue #54 governs Phase 7 scope definition on branch
-`docs/phase-7-hardening-scope`.
+The repository owner accepted the Phase 7 hardening plan under Issue #54.
 
-The repository owner accepted the Phase 7 hardening plan on 2026-08-07 and
-approved opening the governed child workstreams.
+The repository owner accepted the Phase 7A testing and coverage hardening result
+under Issue #56 on 2026-08-07, including the 95.00% combined coverage gate,
+documented residual-risk treatment, and Phase 7 boundaries.
 
-This scope branch is now limited to Issue #54 finalization: documentation
-consistency, validation hygiene, staging, commit, pull-request review, CI, and
-merge preparation.
+PR #57 is approved for finalization and merge preparation.
 
-Do not implement Phase 7 application behavior on this branch.
+The reviewed Phase 7A feature commit
+`2d8425d243e8237046b403b060faa4f8e0cb3b6d` passed both required GitHub-hosted
+pull-request checks before owner acceptance.
 
-After the Issue #54 scope change is merged, Phase 7 child workstreams may begin
-through separate approved issue/task branches in the accepted order:
+This branch is now limited to Issue #56 finalization:
 
-1. testing/coverage baseline and hardening;
-2. observability/readiness design and implementation;
-3. ADR-0006 security-boundary decision;
-4. security implementation only after ADR-0006 owner acceptance;
-5. integrated Phase 7 evaluation and review.
+- durable owner-acceptance documentation;
+- validation and diff hygiene;
+- staging and commit verification;
+- pull-request CI revalidation;
+- merge preparation.
 
-ADR-0006 remains mandatory before trusted-identity/security implementation.
+Any acceptance/finalization commit must pass the required GitHub CI again before
+merge.
 
-AWS, API containerization, cloud deployment, production monitoring/alerting,
-HA/DR, production secret-store integration, external ordering, and
-production-readiness implementation remain outside the current authorization.
+Do not begin on this branch:
+
+- observability/readiness implementation;
+- ADR-0006 or trusted-principal implementation;
+- authentication or authorization behavior;
+- request/correlation-ID middleware;
+- AWS or cloud deployment;
+- production monitoring/alerting;
+- HA/DR;
+- production secret-store integration;
+- external ordering;
+- Phase 8 work.
+
+After PR #57 is revalidated and merged, the accepted Phase 7 sequence continues
+with observability/readiness through a separately governed issue/task branch,
+then ADR-0006, then security implementation only after ADR-0006 repository-owner
+acceptance, and finally the integrated Phase 7 evaluation/review.
 ## Required Context
 
 Before starting work:

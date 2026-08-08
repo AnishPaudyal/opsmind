@@ -855,3 +855,169 @@ def test_concurrent_approval_and_rejection_have_one_winner(
 
     assert decision_count == 1
     assert event_count == 2
+
+
+def test_noncontiguous_persisted_audit_history_is_detected(
+    session_factory: SessionFactory,
+) -> None:
+    """A terminal event without its creation event is rejected on read."""
+    repository = make_repository(session_factory)
+    create_pending_workflow(session_factory, repository)
+
+    repository.approve_review(
+        RECOMMENDATION_ID,
+        decision_id=DECISION_ID,
+        event_id=DECISION_EVENT_ID,
+        decided_by="planner@example.com",
+        decided_at=DECIDED_AT,
+    )
+
+    with session_factory() as session:
+        creation_row = session.get(
+            RecommendationAuditEventRow,
+            CREATION_EVENT_ID,
+        )
+        assert creation_row is not None
+        session.delete(creation_row)
+        session.commit()
+
+    with pytest.raises(
+        RuntimeError,
+        match="audit sequence is not contiguous",
+    ):
+        repository.list_audit_events(RECOMMENDATION_ID)
+
+
+def test_terminal_review_with_incomplete_history_is_detected(
+    session_factory: SessionFactory,
+) -> None:
+    """A terminal review must retain creation and terminal events."""
+    repository = make_repository(session_factory)
+    create_pending_workflow(session_factory, repository)
+
+    repository.approve_review(
+        RECOMMENDATION_ID,
+        decision_id=DECISION_ID,
+        event_id=DECISION_EVENT_ID,
+        decided_by="planner@example.com",
+        decided_at=DECIDED_AT,
+    )
+
+    with session_factory() as session:
+        terminal_row = session.get(
+            RecommendationAuditEventRow,
+            DECISION_EVENT_ID,
+        )
+        assert terminal_row is not None
+        session.delete(terminal_row)
+        session.commit()
+
+    with pytest.raises(
+        RuntimeError,
+        match="Terminal review audit history is inconsistent",
+    ):
+        repository.list_audit_events(RECOMMENDATION_ID)
+
+
+def test_persisted_audit_quantity_must_match_review_snapshot(
+    session_factory: SessionFactory,
+) -> None:
+    """Cross-row quantity drift is rejected on repository reads."""
+    repository = make_repository(session_factory)
+    pending = create_pending_workflow(
+        session_factory,
+        repository,
+    )
+
+    with session_factory() as session:
+        creation_row = session.get(
+            RecommendationAuditEventRow,
+            CREATION_EVENT_ID,
+        )
+        assert creation_row is not None
+        creation_row.recommended_reorder_quantity = (
+            pending.recommendation.recommended_reorder_quantity + 1
+        )
+        session.commit()
+
+    with pytest.raises(
+        RuntimeError,
+        match="audit history does not match its review",
+    ):
+        repository.list_audit_events(RECOMMENDATION_ID)
+
+
+def test_pending_review_with_terminal_audit_event_is_detected(
+    session_factory: SessionFactory,
+) -> None:
+    """A pending review cannot expose a terminal audit event."""
+    repository = make_repository(session_factory)
+    pending = create_pending_workflow(
+        session_factory,
+        repository,
+    )
+
+    approved = approve_recommendation(
+        review=pending,
+        decision_id=DECISION_ID,
+        decided_by="planner@example.com",
+        decided_at=DECIDED_AT,
+        approved_quantity=35,
+        note="Expedite replenishment",
+    )
+    decision = approved.decision
+    assert decision is not None
+
+    decision_event = create_review_decision_audit_event(
+        event_id=DECISION_EVENT_ID,
+        review=approved,
+        sequence_number=2,
+    )
+
+    with session_factory() as session:
+        session.add(
+            recommendation_decision_to_row(
+                RECOMMENDATION_ID,
+                decision,
+            )
+        )
+        session.flush()
+        session.add(recommendation_audit_event_to_row(decision_event))
+        session.commit()
+
+    with pytest.raises(
+        RuntimeError,
+        match="Pending review audit history is inconsistent",
+    ):
+        repository.list_audit_events(RECOMMENDATION_ID)
+
+
+def test_terminal_audit_timestamp_must_match_decision(
+    session_factory: SessionFactory,
+) -> None:
+    """Audit event time cannot silently diverge from its decision."""
+    repository = make_repository(session_factory)
+    create_pending_workflow(session_factory, repository)
+
+    repository.approve_review(
+        RECOMMENDATION_ID,
+        decision_id=DECISION_ID,
+        event_id=DECISION_EVENT_ID,
+        decided_by="planner@example.com",
+        decided_at=DECIDED_AT,
+    )
+
+    with session_factory() as session:
+        terminal_row = session.get(
+            RecommendationAuditEventRow,
+            DECISION_EVENT_ID,
+        )
+        assert terminal_row is not None
+        terminal_row.occurred_at = DECIDED_AT + timedelta(minutes=1)
+        session.commit()
+
+    with pytest.raises(
+        RuntimeError,
+        match="Terminal review and audit event do not match",
+    ):
+        repository.list_audit_events(RECOMMENDATION_ID)

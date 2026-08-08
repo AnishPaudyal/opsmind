@@ -103,8 +103,11 @@ uv run pytest -p no:cacheprovider \
   --cov=opsmind \
   --cov-branch \
   --cov-report=term-missing \
-  --cov-report=xml
+  --cov-report=xml \
+  --cov-fail-under=95
 ```
+
+The Phase 7A quality gate requires at least **95.00% combined coverage**. Because branch coverage is enabled, Coverage.py's combined percentage includes both executable statements and branch destinations. The numerical gate is therefore paired with risk-based tests for critical workflow, audit, API, and PostgreSQL persistence behavior rather than treating raw line coverage as the sole quality signal.
 
 Source-mutating Ruff commands are explicit developer actions:
 
