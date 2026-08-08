@@ -1,6 +1,6 @@
 # Issue #58 — Application Observability and Readiness Design Decision
 
-Status: Accepted design; implementation complete; final owner review pending
+Status: Accepted design; implementation complete and merged
 Governed by: Issue #58
 Owner acceptance: Anish Paudyal, 2026-08-07
 Accepted design candidate SHA-256: `d200954d30b1534820325ab1e5bce5cea36eaf140ac847213bc7adfd7706d92c`
@@ -438,9 +438,9 @@ That handoff records:
 - cloud/Phase 8 boundaries remain unchanged.
 
 The handoff documentation and this design were repository-owner accepted and
-committed before implementation began. The governed implementation is now
-complete on the Issue #58 branch; final implementation acceptance and merge
-remain pending.
+committed before implementation began. The governed implementation was
+squash-merged through PR #59 as
+`f12082db31359a734b012867267de970cabcfa1a`; Issue #58 is closed.
 
 ## Owner Acceptance
 
@@ -483,8 +483,9 @@ The accepted execution sequence was:
     implementation result;
 14. finalize the pull request and rerun hosted CI before merge.
 
-Steps 1 through 12 are complete. Steps 13 and 14 remain pending; this document
-does not claim final owner acceptance or merge completion.
+All steps are complete. PR #59 passed its pull-request checks, was
+repository-owner authorized for merge, and was squash-merged on 2026-08-08.
+Both post-merge `main` workflows passed.
 
 ## Implementation Result
 
@@ -544,8 +545,9 @@ The following are accepted non-blocking boundaries of this implementation:
   HA/DR, production monitoring, or production readiness;
 - security remains blocked pending ADR-0006.
 
-The completed implementation still requires separate repository-owner review,
-hosted pull-request validation, and merge authorization.
+The completed implementation passed repository-owner merge review and hosted
+pull-request validation. Its merge tree exactly matches the reviewed feature
+tree.
 
 ## Explicit Non-Goals
 

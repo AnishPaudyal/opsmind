@@ -7,9 +7,9 @@ earlier states.
 
 - Status date: 2026-08-08
 - Current formal gate: Phase 7 — testing, security, and observability hardening
-- Active workstream: Issue #58 — application observability and readiness
-- Issue #58 result: implementation and local validation complete; final
-  repository-owner review, hosted pull-request validation, and merge pending
+- Active workstream: Issue #60 — ADR-0006 trusted-principal and authorization
+  boundary
+- Issue #58 result: complete; PR #59 merged and Issue #58 closed
 
 ## Canonical Phase Status
 
@@ -22,7 +22,7 @@ earlier states.
 | 4 | Forecasting baseline and evaluation | Complete | Owner-accepted Proceed review under Issue #48 |
 | 5 | Stockout risk and reorder recommendations | Complete | Owner-accepted Proceed review under Issue #50 |
 | 6 | Decision approval, rejection, and audit history | Complete | Owner-accepted Proceed review under Issue #52 |
-| 7 | Testing, security, and observability hardening | Current | Phase 7A complete; Issue #58 awaiting final review and merge |
+| 7 | Testing, security, and observability hardening | Current | Testing/coverage and observability/readiness complete; ADR-0006 Proposed |
 | 8–12 | Cloud, pipelines, MLOps, advanced AI, and production readiness | Planned | Not formally opened |
 
 Implementation delivery and formal phase completion remain separate. Phases 5
@@ -48,8 +48,9 @@ OpsMind currently provides a packaged FastAPI modular monolith with:
   preserving caller ownership for explicit injections;
 - deterministic Phase 4, Phase 5, and Phase 6 evaluation evidence.
 
-ADRs 0000 through 0005 are Accepted. ADR-0006 has not been created or accepted;
-trusted-principal and security implementation therefore remain blocked.
+ADRs 0000 through 0005 are Accepted. ADR-0006 is Proposed under Issue #60;
+trusted-principal and security implementation remain blocked pending explicit
+repository-owner acceptance and separate implementation authorization.
 
 ## Phase 7 Progress
 
@@ -66,10 +67,12 @@ observed Starlette `TestClient` deprecation warning. See
 ### Issue #58 — observability and readiness
 
 The repository owner accepted the Issue #58 pre-implementation design on
-2026-08-07. The implementation is complete on
-`feat/phase-7-observability-readiness`; final owner review, hosted checks, and
-merge remain pending. This is not a claim that Issue #58 is closed or that
-Phase 7 is complete.
+2026-08-07. PR #59 was squash-merged into canonical `main` on 2026-08-08 as
+`f12082db31359a734b012867267de970cabcfa1a`, and Issue #58 closed automatically.
+The merge tree exactly matched the reviewed feature tree. Both post-merge
+Python-quality and repository-governance workflows passed. Issue #58 is
+complete; Phase 7 remains Current because its security and final-review
+workstreams are not complete.
 
 #### HTTP observability checkpoint
 
@@ -172,6 +175,20 @@ No AWS resources or managed production services exist. Tests and evaluations
 use synthetic or controlled data; no production, customer, personal, or
 regulated data is required.
 
+### ADR-0006 security-boundary workstream
+
+Issue #60 governs the Proposed ADR-0006 decision. The proposal recommends a
+provider-agnostic, application-validated bearer principal with three bounded
+permissions: `business:read`, `business:write`, and
+`recommendation:decide`. It proposes deriving terminal decision and audit actor
+identity from the trusted principal rather than caller-supplied `decided_by`,
+while keeping `/health` and `/ready` unauthenticated and bounded.
+
+This is a proposal, not an accepted architecture or implemented capability.
+There is still no authentication, authorization, RBAC, trusted principal, or
+verified audit actor in runtime code. Repository-owner acceptance or revision
+is required before a separate implementation issue may begin.
+
 ## Issue #58 Residual Limitations
 
 These limitations are non-blocking for the accepted Issue #58 scope:
@@ -200,11 +217,11 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The immediate work is final review, hosted validation, and repository-owner
-merge authorization for Issue #58. Do not treat implementation completion as
-owner acceptance or merge completion.
+The immediate work is repository-owner review of Proposed ADR-0006 under Issue
+#60. The owner may accept, revise, or reject the proposed trusted-principal and
+authorization boundary.
 
-After Issue #58 is accepted and merged, synchronize and clean its feature
-branch. Only then may separately governed ADR-0006 security-boundary work be
-prepared. Authentication, authorization, trusted-principal behavior, Phase 8,
-deployment, and production-readiness work remain unauthorized.
+Do not implement authentication, authorization, trusted-principal behavior, or
+actor migration until ADR-0006 is explicitly accepted and a separate
+implementation issue is authorized. Phase 8, deployment, and
+production-readiness work remain unauthorized.
