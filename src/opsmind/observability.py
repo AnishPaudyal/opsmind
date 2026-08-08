@@ -16,6 +16,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 HTTP_LOGGER_NAME = "opsmind.http"
 REQUEST_ID_HEADER = "X-Request-ID"
 REQUEST_ID_STATE_KEY = "request_id"
+ERROR_CATEGORY_STATE_KEY = "http_error_category"
 
 _HTTP_LOG_HANDLER_NAME = "opsmind.http.stderr"
 _REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
@@ -202,7 +203,13 @@ class RequestIDMiddleware:
         else:
             if response_started:
                 assert started_status_code is not None
+                error_category = classify_http_status(started_status_code)
+                state = scope.get("state")
+                if isinstance(state, dict):
+                    category_override = state.get(ERROR_CATEGORY_STATE_KEY)
+                    if isinstance(category_override, ErrorCategory):
+                        error_category = category_override
                 emit_event(
                     started_status_code,
-                    classify_http_status(started_status_code),
+                    error_category,
                 )

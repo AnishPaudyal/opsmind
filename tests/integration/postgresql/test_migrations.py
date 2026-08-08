@@ -9,6 +9,7 @@ from sqlalchemy.engine import URL, Engine
 
 from opsmind.application import create_app
 from opsmind.core.config import Environment, PersistenceBackend, Settings
+from opsmind.readiness import SUPPORTED_DATABASE_REVISION
 
 EXPECTED_TABLES = {
     "products",
@@ -87,8 +88,56 @@ def test_application_startup_does_not_create_missing_tables(
         )
 
         with TestClient(create_app(settings)) as client:
-            assert client.get("/health").status_code == 200
+            health = client.get("/health")
+            readiness = client.get("/ready")
+
+        assert health.status_code == 200
+        assert health.json() == {
+            "status": "ok",
+            "service": "opsmind-api",
+            "environment": "test",
+        }
+        assert readiness.status_code == 503
+        assert readiness.json() == {
+            "status": "not_ready",
+            "service": "opsmind-api",
+            "environment": "test",
+            "backend": "postgresql",
+            "checks": {"persistence": "not_ready"},
+        }
 
         assert EXPECTED_TABLES.isdisjoint(inspect(postgresql_engine).get_table_names())
+    finally:
+        command.upgrade(alembic_config, "head")
+
+
+def test_postgresql_readiness_rejects_reachable_wrong_revision(
+    postgresql_engine: Engine,
+    postgresql_url: URL,
+    alembic_config: Config,
+) -> None:
+    try:
+        command.downgrade(alembic_config, "0005_operational_data")
+        settings = Settings(
+            environment=Environment.TEST,
+            persistence_backend=PersistenceBackend.POSTGRESQL,
+            database_url=SecretStr(
+                postgresql_url.render_as_string(hide_password=False)
+            ),
+        )
+
+        with TestClient(create_app(settings)) as client:
+            response = client.get("/ready")
+
+        assert response.status_code == 503
+        assert response.json() == {
+            "status": "not_ready",
+            "service": "opsmind-api",
+            "environment": "test",
+            "backend": "postgresql",
+            "checks": {"persistence": "not_ready"},
+        }
+        assert "0005_operational_data" not in response.text
+        assert SUPPORTED_DATABASE_REVISION not in response.text
     finally:
         command.upgrade(alembic_config, "head")

@@ -19,6 +19,7 @@ import opsmind.persistence.postgresql.database as postgresql_database
 from opsmind.api.dependencies import (
     get_clock,
     get_product_inventory_repository,
+    get_readiness_probe,
     get_recommendation_workflow_repository,
 )
 from opsmind.application import create_app
@@ -37,6 +38,10 @@ from opsmind.persistence.postgresql.repository import (
 )
 from opsmind.persistence.postgresql.workflow_repository import (
     PostgresRecommendationWorkflowRepository,
+)
+from opsmind.readiness import (
+    MemoryReadinessProbe,
+    PostgreSQLReadinessProbe,
 )
 from opsmind.repositories.in_memory_recommendation_workflow import (
     InMemoryRecommendationWorkflowRepository,
@@ -276,6 +281,7 @@ def test_memory_backend_selects_both_default_repositories() -> None:
     workflow_provider = application.dependency_overrides[
         get_recommendation_workflow_repository
     ]
+    readiness_provider = application.dependency_overrides[get_readiness_probe]
 
     assert isinstance(
         product_provider(),
@@ -285,6 +291,18 @@ def test_memory_backend_selects_both_default_repositories() -> None:
         workflow_provider(),
         InMemoryRecommendationWorkflowRepository,
     )
+    assert isinstance(readiness_provider(), MemoryReadinessProbe)
+
+
+def test_memory_applications_receive_separate_readiness_probes() -> None:
+    settings = Settings(environment=Environment.TEST)
+    first = create_app(settings)
+    second = create_app(settings)
+
+    first_provider = first.dependency_overrides[get_readiness_probe]
+    second_provider = second.dependency_overrides[get_readiness_probe]
+
+    assert first_provider() is not second_provider()
 
 
 def test_create_app_provides_the_supplied_repository_instance() -> None:
@@ -333,6 +351,7 @@ def test_explicit_repositories_precede_postgresql_backend_selection(
         settings,
         product_repository,
         workflow_repository,
+        readiness_probe=MemoryReadinessProbe(),
     )
 
     product_provider = application.dependency_overrides[
@@ -346,6 +365,26 @@ def test_explicit_repositories_precede_postgresql_backend_selection(
         assert client.get("/health").status_code == 200
         assert product_provider() is product_repository
         assert workflow_provider() is workflow_repository
+
+
+def test_explicit_postgresql_repositories_require_explicit_readiness() -> None:
+    settings = Settings(
+        environment=Environment.TEST,
+        persistence_backend=PersistenceBackend.POSTGRESQL,
+        database_url=SecretStr(
+            "postgresql+psycopg://opsmind:secret@127.0.0.1:1/opsmind"
+        ),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"^A readiness probe is required when PostgreSQL repositories ",
+    ):
+        create_app(
+            settings,
+            InMemoryProductInventoryRepository(),
+            InMemoryRecommendationWorkflowRepository(),
+        )
 
 
 def test_postgresql_backend_selects_both_repositories_with_shared_factory(
@@ -363,6 +402,7 @@ def test_postgresql_backend_selects_both_repositories_with_shared_factory(
     product_session_factories: list[SessionFactory] = []
     workflow_session_factories: list[SessionFactory] = []
     disposed_engines: list[Engine] = []
+    readiness_engines: list[Engine] = []
 
     original_create_engine = postgresql_database.create_postgresql_engine
     original_create_session_factory = postgresql_database.create_session_factory
@@ -391,6 +431,10 @@ def test_postgresql_backend_selects_both_repositories_with_shared_factory(
         workflow_session_factories.append(session_factory)
         return PostgresRecommendationWorkflowRepository(session_factory)
 
+    def tracked_readiness_probe(engine: Engine) -> PostgreSQLReadinessProbe:
+        readiness_engines.append(engine)
+        return PostgreSQLReadinessProbe(engine)
+
     monkeypatch.setattr(
         application_module,
         "create_postgresql_engine",
@@ -410,6 +454,11 @@ def test_postgresql_backend_selects_both_repositories_with_shared_factory(
         application_module,
         "PostgresRecommendationWorkflowRepository",
         tracked_workflow_repository,
+    )
+    monkeypatch.setattr(
+        application_module,
+        "PostgreSQLReadinessProbe",
+        tracked_readiness_probe,
     )
     monkeypatch.setattr(
         application_module,
@@ -443,6 +492,9 @@ def test_postgresql_backend_selects_both_repositories_with_shared_factory(
         assert len(created_session_factories) == 1
         assert product_session_factories == created_session_factories
         assert workflow_session_factories == created_session_factories
+        assert readiness_engines == created_engines
+        readiness_provider = application.dependency_overrides[get_readiness_probe]
+        assert isinstance(readiness_provider(), PostgreSQLReadinessProbe)
 
     assert disposed_engines == created_engines
     created_engines[0].dispose()
@@ -619,6 +671,8 @@ def test_unbound_workflow_dependencies_fail_fast() -> None:
         get_recommendation_workflow_repository()
     with pytest.raises(RuntimeError, match=r"^Clock is not configured$"):
         get_clock()
+    with pytest.raises(RuntimeError, match=r"^Readiness probe is not configured$"):
+        get_readiness_probe()
 
 
 def test_main_exposes_the_default_asgi_application(

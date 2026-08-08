@@ -9,6 +9,7 @@ from sqlalchemy.engine import Engine
 from opsmind.api.dependencies import (
     get_clock,
     get_product_inventory_repository,
+    get_readiness_probe,
     get_recommendation_workflow_repository,
 )
 from opsmind.api.router import create_api_router
@@ -26,6 +27,11 @@ from opsmind.persistence.postgresql.repository import (
 from opsmind.persistence.postgresql.workflow_repository import (
     PostgresRecommendationWorkflowRepository,
 )
+from opsmind.readiness import (
+    MemoryReadinessProbe,
+    PostgreSQLReadinessProbe,
+    ReadinessProbe,
+)
 from opsmind.repositories.in_memory_recommendation_workflow import (
     InMemoryRecommendationWorkflowRepository,
 )
@@ -41,12 +47,14 @@ def create_app(
     product_inventory_repository: ProductInventoryRepository | None = None,
     recommendation_workflow_repository: RecommendationWorkflowRepository | None = None,
     clock: Clock | None = None,
+    readiness_probe: ReadinessProbe | None = None,
 ) -> FastAPI:
     """Create an OpsMind application with isolated settings and repositories."""
     resolved_settings = settings if settings is not None else get_settings()
     owned_engine: Engine | None = None
     resolved_repository = product_inventory_repository
     resolved_workflow_repository = recommendation_workflow_repository
+    resolved_readiness_probe = readiness_probe
 
     if resolved_repository is None or resolved_workflow_repository is None:
         if resolved_settings.persistence_backend is PersistenceBackend.MEMORY:
@@ -73,6 +81,16 @@ def create_app(
 
     assert resolved_repository is not None
     assert resolved_workflow_repository is not None
+    if resolved_readiness_probe is None:
+        if resolved_settings.persistence_backend is PersistenceBackend.MEMORY:
+            resolved_readiness_probe = MemoryReadinessProbe()
+        elif owned_engine is not None:
+            resolved_readiness_probe = PostgreSQLReadinessProbe(owned_engine)
+        else:
+            raise RuntimeError(
+                "A readiness probe is required when PostgreSQL repositories "
+                "are explicitly injected."
+            )
     resolved_clock = clock if clock is not None else SystemClock()
 
     def provide_settings() -> Settings:
@@ -88,6 +106,9 @@ def create_app(
 
     def provide_clock() -> Clock:
         return resolved_clock
+
+    def provide_readiness_probe() -> ReadinessProbe:
+        return resolved_readiness_probe
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -113,5 +134,6 @@ def create_app(
         provide_recommendation_workflow_repository
     )
     application.dependency_overrides[get_clock] = provide_clock
+    application.dependency_overrides[get_readiness_probe] = provide_readiness_probe
     application.include_router(create_api_router(resolved_settings.api_v1_prefix))
     return application

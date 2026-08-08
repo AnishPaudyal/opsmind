@@ -2,10 +2,14 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
+from starlette.responses import JSONResponse
 
+from opsmind.api.dependencies import get_readiness_probe
 from opsmind.core.config import Settings, get_settings
-from opsmind.schemas.health import HealthResponse
+from opsmind.observability import ERROR_CATEGORY_STATE_KEY, ErrorCategory
+from opsmind.readiness import ReadinessProbe, ReadinessStatus
+from opsmind.schemas.health import HealthResponse, ReadinessChecks, ReadinessResponse
 
 router = APIRouter(tags=["health"])
 
@@ -23,4 +27,43 @@ def read_health(settings: Annotated[Settings, Depends(get_settings)]) -> HealthR
         status="ok",
         service=settings.service_name,
         environment=settings.environment,
+    )
+
+
+@router.get(
+    "/ready",
+    response_model=ReadinessResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "model": ReadinessResponse,
+            "description": "Configured application dependencies are not ready.",
+        }
+    },
+    summary="Check application readiness",
+    description="Report bounded readiness for configured application dependencies.",
+)
+def read_readiness(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+    readiness_probe: Annotated[ReadinessProbe, Depends(get_readiness_probe)],
+) -> ReadinessResponse | JSONResponse:
+    """Return bounded dependency readiness without exposing internal failures."""
+    result = readiness_probe.check_readiness()
+    response = ReadinessResponse(
+        status=result.status,
+        service=settings.service_name,
+        environment=settings.environment,
+        backend=result.backend,
+        checks=ReadinessChecks(persistence=result.persistence),
+    )
+    if result.status is ReadinessStatus.READY:
+        return response
+
+    request.scope["state"][ERROR_CATEGORY_STATE_KEY] = (
+        ErrorCategory.DEPENDENCY_UNAVAILABLE
+    )
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content=response.model_dump(mode="json"),
     )
