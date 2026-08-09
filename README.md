@@ -11,8 +11,9 @@ coherent product.
 Phases 0 through 6 are complete. Phase 7, testing, security, and observability
 hardening, is the current formal gate. Phase 7A testing/coverage and Issue #58
 observability/readiness are complete. ADR-0006, the trusted-principal and
-authorization boundary, is Accepted; a separately governed Phase 7 security
-implementation is authorized while Phase 8 remains unauthorized.
+authorization boundary, is Accepted. Issue #62 implements that boundary on
+`feat/phase-7-security-boundary`; review and merge remain pending, and Phase 8
+remains unauthorized.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
@@ -24,13 +25,15 @@ Actionable recommendations can be stored as immutable snapshots for approval or
 rejection with ordered audit-event history. Memory mode keeps operational and
 workflow state isolated and restart-volatile. PostgreSQL mode makes both forms
 of state durable across application restart and shared by applications using
-the same database.
+the same database. Protected business routes now require a validated signed
+bearer principal and one bounded action permission; terminal decisions and
+their audit events derive actor identity from that trusted principal.
 
 This repository does not yet contain:
 
 - Real-world forecast validation on governed operational data
 - Probabilistic forecasts, prediction intervals, or trained forecast models
-- Authentication, authorization, or verified reviewer identity
+- Identity-provider provisioning, user administration, or tenant isolation
 - Calibrated stockout probability or a trained stockout model
 - Purchase-order creation or external ordering integration
 - A frontend user interface or containerized API
@@ -59,6 +62,7 @@ The current implemented local stack uses:
 
 - Python and FastAPI
 - PostgreSQL, SQLAlchemy, and Alembic
+- PyJWT with asymmetric cryptographic verification
 - pytest, Ruff, mypy, and PostgreSQL integration tests
 
 Docker Compose is used only to run local PostgreSQL; it does not containerize
@@ -132,25 +136,25 @@ endpoints plus fifteen product, inventory, demand, forecast, exposure,
 recommendation, review, and audit-history operations under the configured
 business prefix:
 
-| Method | Path | Result |
-| --- | --- | --- |
-| `GET` | `/health` | Report process health. |
-| `GET` | `/ready` | Report bounded application and persistence readiness. |
-| `POST` | `/api/v1/products` | Create a normalized product. |
-| `GET` | `/api/v1/products` | List products in normalized-SKU order. |
-| `GET` | `/api/v1/products/{product_id}` | Retrieve one product. |
-| `PUT` | `/api/v1/products/{product_id}/inventory` | Set or replace inventory. |
-| `GET` | `/api/v1/products/{product_id}/inventory` | Retrieve inventory. |
-| `POST` | `/api/v1/products/{product_id}/demand` | Atomically add daily demand. |
-| `GET` | `/api/v1/products/{product_id}/demand` | Retrieve daily demand. |
-| `GET` | `/api/v1/products/{product_id}/forecast` | Calculate a baseline demand forecast. |
-| `GET` | `/api/v1/products/{product_id}/stockout-exposure` | Calculate deterministic lead-time exposure. |
-| `GET` | `/api/v1/products/{product_id}/reorder-recommendation` | Calculate a whole-unit reorder recommendation. |
-| `POST` | `/api/v1/products/{product_id}/reorder-recommendations` | Store one actionable recommendation snapshot for review. |
-| `GET` | `/api/v1/reorder-recommendations/{recommendation_id}` | Retrieve a stored recommendation review. |
-| `POST` | `/api/v1/reorder-recommendations/{recommendation_id}/approve` | Approve a pending recommendation. |
-| `POST` | `/api/v1/reorder-recommendations/{recommendation_id}/reject` | Reject a pending recommendation. |
-| `GET` | `/api/v1/reorder-recommendations/{recommendation_id}/audit-events` | Retrieve ordered workflow history. |
+| Method | Path | Access | Result |
+| --- | --- | --- | --- |
+| `GET` | `/health` | Public | Report process health. |
+| `GET` | `/ready` | Public | Report bounded application and persistence readiness. |
+| `POST` | `/api/v1/products` | `business:write` | Create a normalized product. |
+| `GET` | `/api/v1/products` | `business:read` | List products in normalized-SKU order. |
+| `GET` | `/api/v1/products/{product_id}` | `business:read` | Retrieve one product. |
+| `PUT` | `/api/v1/products/{product_id}/inventory` | `business:write` | Set or replace inventory. |
+| `GET` | `/api/v1/products/{product_id}/inventory` | `business:read` | Retrieve inventory. |
+| `POST` | `/api/v1/products/{product_id}/demand` | `business:write` | Atomically add daily demand. |
+| `GET` | `/api/v1/products/{product_id}/demand` | `business:read` | Retrieve daily demand. |
+| `GET` | `/api/v1/products/{product_id}/forecast` | `business:read` | Calculate a baseline demand forecast. |
+| `GET` | `/api/v1/products/{product_id}/stockout-exposure` | `business:read` | Calculate deterministic lead-time exposure. |
+| `GET` | `/api/v1/products/{product_id}/reorder-recommendation` | `business:read` | Calculate a whole-unit reorder recommendation. |
+| `POST` | `/api/v1/products/{product_id}/reorder-recommendations` | `business:write` | Store one actionable recommendation snapshot for review. |
+| `GET` | `/api/v1/reorder-recommendations/{recommendation_id}` | `business:read` | Retrieve a stored recommendation review. |
+| `POST` | `/api/v1/reorder-recommendations/{recommendation_id}/approve` | `recommendation:decide` | Approve a pending recommendation. |
+| `POST` | `/api/v1/reorder-recommendations/{recommendation_id}/reject` | `recommendation:decide` | Reject a pending recommendation. |
+| `GET` | `/api/v1/reorder-recommendations/{recommendation_id}/audit-events` | `business:read` | Retrieve ordered workflow history. |
 
 Application settings use the `OPSMIND_` environment-variable prefix. Supported
 overrides are:
@@ -162,6 +166,11 @@ overrides are:
 - `OPSMIND_API_V1_PREFIX`
 - `OPSMIND_PERSISTENCE_BACKEND` (`memory` or `postgresql`)
 - `OPSMIND_DATABASE_URL` (required only for `postgresql`)
+- `OPSMIND_AUTH_ISSUER`
+- `OPSMIND_AUTH_AUDIENCE`
+- `OPSMIND_AUTH_PUBLIC_KEY` (PEM-encoded RSA public verification key)
+- `OPSMIND_AUTH_ALGORITHM` (only `RS256` is accepted)
+- `OPSMIND_AUTH_CLOCK_LEEWAY_SECONDS` (0–60; default `0`)
 
 The default service is `opsmind-api`, the default environment is `local`, debug
 mode is disabled, and the default business prefix is `/api/v1`. The application
@@ -173,6 +182,43 @@ readiness: memory mode is immediately ready, while PostgreSQL mode verifies
 connectivity and the supported Alembic revision without migrating or repairing
 the schema. Neither endpoint claims production readiness, HA/DR, monitoring, or
 cloud-deployment readiness.
+
+### Authentication and authorization
+
+All versioned business endpoints fail closed unless the application receives a
+valid `Authorization: Bearer <token>` credential. OpsMind validates the RS256
+signature against one configured PEM public key and requires an exact issuer,
+one exact audience, expiration, and a bounded subject. A present `nbf` claim is
+validated with the configured bounded leeway. The `permissions` claim must be
+a JSON list of strings; only `business:read`, `business:write`, and
+`recommendation:decide` grant access, and unknown values grant nothing.
+
+Configure issuer, audience, and public key together. Omitting all three keeps
+`/health`, `/ready`, OpenAPI, Swagger UI, and ReDoc public while every business
+route returns `401`:
+
+```bash
+export OPSMIND_AUTH_ISSUER='https://identity.example.test/'
+export OPSMIND_AUTH_AUDIENCE='opsmind-api'
+export OPSMIND_AUTH_PUBLIC_KEY="$(< /path/to/issuer-public-key.pem)"
+export OPSMIND_AUTH_ALGORITHM='RS256'
+export OPSMIND_AUTH_CLOCK_LEEWAY_SECONDS='0'
+```
+
+OpsMind does not issue tokens or provision an identity provider. Obtain a
+signed token from the separately managed trusted issuer and keep it in an
+ignored local environment variable for examples:
+
+```bash
+export OPSMIND_ACCESS_TOKEN='<signed bearer token from the trusted issuer>'
+```
+
+Missing, malformed, duplicate, expired, unverifiable, wrong-issuer, or
+wrong-audience credentials return a generic `401` with
+`WWW-Authenticate: Bearer`. A valid principal without the action permission
+receives a generic `403`. Both responses retain `X-Request-ID` and the existing
+single seven-field request event without logging tokens, claims, principal IDs,
+keys, authorization headers, or validation exceptions.
 
 ### Persistence backends
 
@@ -309,6 +355,7 @@ request:
 ```bash
 curl --fail-with-body \
   --request POST \
+  --header "Authorization: Bearer ${OPSMIND_ACCESS_TOKEN}" \
   --header 'Content-Type: application/json' \
   --data '{
     "sku": " sensor-001 ",
@@ -338,6 +385,7 @@ Use the returned UUID to set inventory:
 ```bash
 curl --fail-with-body \
   --request PUT \
+  --header "Authorization: Bearer ${OPSMIND_ACCESS_TOKEN}" \
   --header 'Content-Type: application/json' \
   --data '{"on_hand_quantity": 100, "allocated_quantity": 35}' \
   http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/inventory
@@ -351,8 +399,9 @@ negative value represents a shortage and is not clamped to zero.
 With the default memory backend, products and inventory remain isolated per
 application and are lost on restart. With PostgreSQL explicitly selected and
 migrated, they persist across restarts and are shared by applications using the
-same database. Neither backend adds authentication, stockout probability,
-ordering, frontend, AWS, or deployment capability.
+same database. Authentication and authorization are identical for both
+backends; selecting persistence does not bypass the security boundary or add
+stockout probability, ordering, frontend, AWS, or deployment capability.
 
 ### Demand history
 
@@ -367,6 +416,7 @@ the product was created:
 ```bash
 curl --fail-with-body \
   --request POST \
+  --header "Authorization: Bearer ${OPSMIND_ACCESS_TOKEN}" \
   --header 'Content-Type: application/json' \
   --data '{
     "observations": [
@@ -406,6 +456,7 @@ batch. Retrieve complete history or apply inclusive date bounds:
 
 ```bash
 curl --fail-with-body \
+  --header "Authorization: Bearer ${OPSMIND_ACCESS_TOKEN}" \
   'http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/demand?start_date=2026-07-01&end_date=2026-07-03'
 ```
 
@@ -451,6 +502,7 @@ For the July 1–4 quantities `12, 18, 9, 0`, request a seven-day forecast with:
 
 ```bash
 curl --fail-with-body \
+  --header "Authorization: Bearer ${OPSMIND_ACCESS_TOKEN}" \
   'http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/forecast?lookback_observations=4&horizon_days=7&as_of_date=2026-07-04'
 ```
 
@@ -563,6 +615,7 @@ July 1–4 demand quantities `12, 18, 9, 0`, request:
 
 ```bash
 curl --fail-with-body \
+  --header "Authorization: Bearer ${OPSMIND_ACCESS_TOKEN}" \
   'http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/stockout-exposure?lookback_observations=4&as_of_date=2026-07-04'
 ```
 
@@ -651,6 +704,7 @@ inventory to 40 with 10 allocated produces a public shortage of `18.75`:
 
 ```bash
 curl --fail-with-body \
+  --header "Authorization: Bearer ${OPSMIND_ACCESS_TOKEN}" \
   'http://127.0.0.1:8000/api/v1/products/00000000-0000-0000-0000-000000000001/reorder-recommendation?lookback_observations=4&as_of_date=2026-07-04'
 ```
 
@@ -737,9 +791,9 @@ with:
 ```bash
 curl --fail-with-body \
   --request POST \
+  --header "Authorization: Bearer ${OPSMIND_ACCESS_TOKEN}" \
   --header 'Content-Type: application/json' \
   --data '{
-    "decided_by": "Anish Paudyal",
     "approved_quantity": 24,
     "note": "Physical ordering occurs in case packs of six."
   }' \
@@ -748,17 +802,18 @@ curl --fail-with-body \
 
 `approved_quantity` is optional and defaults to the stored recommended
 quantity. A different positive approved quantity records the human decision
-without changing the original recommendation. `decided_by` is required and
-trimmed; an optional blank note becomes `null`.
+without changing the original recommendation. The decision actor is derived
+exclusively from the authenticated trusted principal; callers cannot supply or
+override `decided_by`. An optional blank note becomes `null`.
 
 Reject a recommendation with:
 
 ```bash
 curl --fail-with-body \
   --request POST \
+  --header "Authorization: Bearer ${OPSMIND_ACCESS_TOKEN}" \
   --header 'Content-Type: application/json' \
   --data '{
-    "decided_by": "Anish Paudyal",
     "reason": "Inbound inventory is already scheduled."
   }' \
   http://127.0.0.1:8000/api/v1/reorder-recommendations/00000000-0000-0000-0000-000000000101/reject
@@ -784,12 +839,13 @@ Retrieval, approval, and rejection read the stored workflow object only; they
 do not recalculate forecast, exposure, or recommendation values and do not
 mutate product, inventory, or demand.
 
-The `decided_by` value is caller supplied and unverified. There is no
-authentication, authorization, role check, or trusted user identity. The stored
-snapshot, current aggregate, and ordered event history are useful workflow
-evidence, but they do not prove who performed an action. Approval does not
-create a purchase order, reserve or change inventory, select a supplier, or
-initiate any external action.
+The persisted `decided_by` value and matching terminal audit-event actor are the
+authenticated principal's stable identifier. The application verifies the
+credential and `recommendation:decide` permission before the repository
+transaction. This strengthens actor attribution but does not provide
+cryptographic tamper evidence, non-repudiation, or a compliance ledger.
+Approval does not create a purchase order, reserve or change inventory, select
+a supplier, or initiate any external action.
 
 ### Recommendation audit history
 
@@ -829,6 +885,7 @@ Retrieve a review's history with:
 
 ```bash
 curl --fail-with-body \
+  --header "Authorization: Bearer ${OPSMIND_ACCESS_TOKEN}" \
   http://127.0.0.1:8000/api/v1/reorder-recommendations/00000000-0000-0000-0000-000000000101/audit-events
 ```
 
@@ -873,10 +930,11 @@ In memory mode, history is lost on restart and is not shared between
 applications. In PostgreSQL mode, history is durable across application restart
 and shared by applications using the same database.
 
-The actor remains caller supplied, unauthenticated, unverified, and potentially
-spoofable. Events are not cryptographically signed, hash chained, tamper
-evident, externally published, or protected from privileged direct storage
-modification. This is not a production compliance ledger.
+The approval or rejection actor is derived from the authenticated trusted
+principal and cannot be selected by the request body. Events are not
+cryptographically signed, hash chained, tamper evident, externally published,
+or protected from privileged direct storage modification. This is not a
+production compliance ledger.
 
 ## Contribution Rule
 
@@ -924,10 +982,12 @@ The governed Phase 6 evidence includes:
 - application resource-ownership/disposal evidence;
 - 499 complete PostgreSQL-backed tests passed with zero skips.
 
-The result is intentionally bounded. OpsMind still does not claim authenticated
-reviewer identity, RBAC authorization, cryptographic tamper evidence, compliance
-certification, external ordering, production-scale concurrency, production
-security, or production readiness.
+That Phase 6 result intentionally did not establish authenticated reviewer
+identity or authorization. The current Phase 7 implementation adds the bounded
+ADR-0006 bearer-principal and action-permission boundary, but still does not
+claim cryptographic tamper evidence, compliance certification, external
+ordering, production-scale concurrency, production security, or production
+readiness.
 
 Phase 6 is Complete and Phase 7 is the current formal gate. See
 [Current Status](docs/09-status/current-status.md) for the active Phase 7

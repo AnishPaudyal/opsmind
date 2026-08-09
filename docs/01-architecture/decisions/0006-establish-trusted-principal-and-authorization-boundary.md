@@ -3,7 +3,7 @@
 - Status: Accepted
 - Date: 2026-08-08
 - Decision owners: Anish Paudyal
-- Related issues: #54, #58, #60
+- Related issues: #54, #58, #60, #62
 - Related pull requests: #61
 - Supersedes: None
 - Superseded by: None
@@ -507,6 +507,25 @@ and `recommendation:decide` permissions, trusted terminal-decision attribution,
 bounded `401`/`403` behavior, unauthenticated operational endpoints, and the
 documented non-goals. The owner also authorized a separately governed Phase 7
 security implementation to proceed.
+
+## Implementation notes
+
+Issue #62 implements the accepted boundary with PyJWT 2.13 and its maintained
+cryptographic backend. The first implementation uses one configured PEM RSA
+public key and an explicit `RS256` allowlist, avoiding a runtime identity-
+provider network dependency while preserving the authenticator seam for a
+separately reviewed JWKS strategy if deployment requirements later need one.
+
+The implementation keeps the `permissions` claim deliberately bounded as a
+JSON list of exact application permission strings. Unknown strings grant
+nothing, malformed claims fail authentication, and the default without a
+complete issuer/audience/public-key configuration denies every protected
+request. No schema migration is required because the existing decision and
+audit actor columns store the bounded trusted principal identifier.
+
+The implementation remains on `feat/phase-7-security-boundary` pending
+repository-owner review and merge. This note does not claim Phase 7 or
+production readiness.
 
 ## References
 
