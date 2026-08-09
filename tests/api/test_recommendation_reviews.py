@@ -10,7 +10,6 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from opsmind.api.dependencies import get_product_inventory_repository
-from opsmind.application import create_app
 from opsmind.core.config import Environment, Settings
 from opsmind.domain.errors import DuplicateRecommendationReviewError
 from opsmind.domain.recommendation_review import ReorderRecommendationReview
@@ -18,6 +17,7 @@ from opsmind.repositories.in_memory_recommendation_workflow import (
     InMemoryRecommendationWorkflowRepository,
 )
 from opsmind.repositories.memory import InMemoryProductInventoryRepository
+from tests.security import authenticated_test_client, create_authenticated_test_app
 
 MISSING_ID = "00000000-0000-0000-0000-000000000099"
 FIXED_TIME = datetime(2026, 8, 1, 17, 30, tzinfo=UTC)
@@ -73,7 +73,7 @@ def make_application(
     """Build an isolated application with explicit repositories and clock."""
     product_repository = InMemoryProductInventoryRepository()
     workflow_repository = InMemoryRecommendationWorkflowRepository()
-    application = create_app(
+    application = create_authenticated_test_app(
         make_settings(api_v1_prefix),
         product_repository,
         workflow_repository,
@@ -85,7 +85,7 @@ def make_application(
 def make_client(api_v1_prefix: str = "/api/v1") -> TestClient:
     """Return a client for one isolated review application."""
     application, _, _ = make_application(api_v1_prefix)
-    return TestClient(application)
+    return authenticated_test_client(application)
 
 
 def create_product(
@@ -269,7 +269,6 @@ def test_approved_history_links_original_snapshot_and_decision() -> None:
     approved = client.post(
         f"/api/v1/reorder-recommendations/{recommendation_id}/approve",
         json={
-            "decided_by": " Reviewer ",
             "approved_quantity": 24,
             "note": " Case pack ",
         },
@@ -300,7 +299,7 @@ def test_rejected_history_links_reason_and_decision() -> None:
     recommendation_id = created["recommendation_id"]
     rejected = client.post(
         f"/api/v1/reorder-recommendations/{recommendation_id}/reject",
-        json={"decided_by": " Reviewer ", "reason": " Inbound scheduled. "},
+        json={"reason": " Inbound scheduled. "},
     ).json()
 
     history = get_audit_history(client, recommendation_id)
@@ -354,7 +353,7 @@ def test_stored_snapshot_does_not_recalculate_after_inventory_change() -> None:
 
 def test_retrieval_uses_only_workflow_repository() -> None:
     application, _, _ = make_application()
-    client = TestClient(application)
+    client = authenticated_test_client(application)
     product_id = prepare_actionable_product(client)
     created = create_review(client, product_id)
 
@@ -387,13 +386,13 @@ def test_multiple_creations_store_separate_snapshots() -> None:
 def test_no_actionable_recommendation_returns_safe_409_and_stores_nothing() -> None:
     product_repository = InMemoryProductInventoryRepository()
     workflow_repository = TrackingWorkflowRepository()
-    application = create_app(
+    application = create_authenticated_test_app(
         make_settings(),
         product_repository,
         workflow_repository,
         FixedClock(),
     )
-    client = TestClient(application)
+    client = authenticated_test_client(application)
     product_id = create_product(client)
     set_inventory(client, product_id, 100, 0)
     add_demand(client, product_id)
@@ -469,14 +468,14 @@ def test_audit_history_returns_safe_404_and_invalid_uuid_returns_422() -> None:
     assert invalid.status_code == 422
 
 
-def test_approval_defaults_quantity_and_normalizes_actor_and_note() -> None:
+def test_approval_defaults_quantity_and_uses_trusted_actor() -> None:
     client = make_client()
     product_id = prepare_actionable_product(client)
     created = create_review(client, product_id)
 
     response = client.post(
         f"/api/v1/reorder-recommendations/{created['recommendation_id']}/approve",
-        json={"decided_by": " Reviewer ", "note": " Approved as recommended. "},
+        json={"note": " Approved as recommended. "},
     )
 
     assert response.status_code == 200
@@ -498,7 +497,6 @@ def test_approval_preserves_distinct_approved_quantity() -> None:
     response = client.post(
         f"/api/v1/reorder-recommendations/{created['recommendation_id']}/approve",
         json={
-            "decided_by": "Reviewer",
             "approved_quantity": 24,
             "note": "Case pack of six",
         },
@@ -517,11 +515,11 @@ def test_identical_approval_retry_preserves_original_decision() -> None:
 
     first = client.post(
         path,
-        json={"decided_by": "Reviewer", "approved_quantity": 19, "note": "Ok"},
+        json={"approved_quantity": 19, "note": "Ok"},
     )
     retry = client.post(
         path,
-        json={"decided_by": " Reviewer ", "note": " Ok "},
+        json={"note": " Ok "},
     )
 
     assert first.status_code == retry.status_code == 200
@@ -542,9 +540,8 @@ def test_identical_approval_retry_preserves_original_decision() -> None:
 @pytest.mark.parametrize(
     "changed_request",
     [
-        {"decided_by": "Other", "approved_quantity": 19, "note": "Ok"},
-        {"decided_by": "Reviewer", "approved_quantity": 20, "note": "Ok"},
-        {"decided_by": "Reviewer", "approved_quantity": 19, "note": "Different"},
+        {"approved_quantity": 20, "note": "Ok"},
+        {"approved_quantity": 19, "note": "Different"},
     ],
 )
 def test_changed_approval_retry_returns_409_and_preserves_state(
@@ -557,7 +554,7 @@ def test_changed_approval_retry_returns_409_and_preserves_state(
     path = f"/api/v1/reorder-recommendations/{recommendation_id}/approve"
     approved = client.post(
         path,
-        json={"decided_by": "Reviewer", "approved_quantity": 19, "note": "Ok"},
+        json={"approved_quantity": 19, "note": "Ok"},
     ).json()
     history_before = get_audit_history(client, recommendation_id)
 
@@ -578,11 +575,11 @@ def test_rejection_records_reason_and_identical_retry_is_stable() -> None:
 
     first = client.post(
         path,
-        json={"decided_by": " Reviewer ", "reason": " Inbound scheduled. "},
+        json={"reason": " Inbound scheduled. "},
     )
     retry = client.post(
         path,
-        json={"decided_by": "Reviewer", "reason": "Inbound scheduled."},
+        json={"reason": "Inbound scheduled."},
     )
 
     assert first.status_code == retry.status_code == 200
@@ -607,11 +604,11 @@ def test_changed_rejection_and_cross_decision_requests_conflict() -> None:
     rejected_id = rejected["recommendation_id"]
     client.post(
         f"/api/v1/reorder-recommendations/{approved_id}/approve",
-        json={"decided_by": "Reviewer"},
+        json={},
     )
     client.post(
         f"/api/v1/reorder-recommendations/{rejected_id}/reject",
-        json={"decided_by": "Reviewer", "reason": "Inbound"},
+        json={"reason": "Inbound"},
     )
     approved_history = get_audit_history(client, approved_id)
     rejected_history = get_audit_history(client, rejected_id)
@@ -619,7 +616,7 @@ def test_changed_rejection_and_cross_decision_requests_conflict() -> None:
     assert (
         client.post(
             f"/api/v1/reorder-recommendations/{approved_id}/reject",
-            json={"decided_by": "Reviewer", "reason": "Inbound"},
+            json={"reason": "Inbound"},
         ).status_code
         == 409
     )
@@ -628,14 +625,14 @@ def test_changed_rejection_and_cross_decision_requests_conflict() -> None:
     assert (
         client.post(
             f"/api/v1/reorder-recommendations/{rejected_id}/approve",
-            json={"decided_by": "Reviewer"},
+            json={},
         ).status_code
         == 409
     )
     assert (
         client.post(
             f"/api/v1/reorder-recommendations/{rejected_id}/reject",
-            json={"decided_by": "Reviewer", "reason": "Different"},
+            json={"reason": "Different"},
         ).status_code
         == 409
     )
@@ -646,12 +643,12 @@ def test_changed_rejection_and_cross_decision_requests_conflict() -> None:
 @pytest.mark.parametrize(
     ("operation", "payload"),
     [
-        ("approve", {"decided_by": " "}),
-        ("approve", {"decided_by": "Reviewer", "approved_quantity": 0}),
-        ("approve", {"decided_by": "Reviewer", "approved_quantity": 1.5}),
-        ("approve", {"decided_by": "Reviewer", "approved_quantity": True}),
-        ("reject", {"decided_by": " ", "reason": "No"}),
-        ("reject", {"decided_by": "Reviewer", "reason": " "}),
+        ("approve", {"decided_by": "caller-controlled"}),
+        ("approve", {"approved_quantity": 0}),
+        ("approve", {"approved_quantity": 1.5}),
+        ("approve", {"approved_quantity": True}),
+        ("reject", {"decided_by": "caller-controlled", "reason": "No"}),
+        ("reject", {"reason": " "}),
     ],
 )
 def test_decision_request_validation_returns_422(
@@ -668,11 +665,7 @@ def test_decision_request_validation_returns_422(
 
 @pytest.mark.parametrize("operation", ["approve", "reject"])
 def test_decision_for_missing_review_returns_404(operation: str) -> None:
-    payload = (
-        {"decided_by": "Reviewer"}
-        if operation == "approve"
-        else {"decided_by": "Reviewer", "reason": "No"}
-    )
+    payload = {} if operation == "approve" else {"reason": "No"}
 
     response = make_client().post(
         f"/api/v1/reorder-recommendations/{MISSING_ID}/{operation}",
@@ -684,7 +677,7 @@ def test_decision_for_missing_review_returns_404(operation: str) -> None:
 
 def test_decisions_use_only_workflow_repository_after_snapshot_creation() -> None:
     application, _, _ = make_application()
-    client = TestClient(application)
+    client = authenticated_test_client(application)
     product_id = prepare_actionable_product(client)
     created = create_review(client, product_id)
 
@@ -697,7 +690,7 @@ def test_decisions_use_only_workflow_repository_after_snapshot_creation() -> Non
 
     response = client.post(
         f"/api/v1/reorder-recommendations/{created['recommendation_id']}/approve",
-        json={"decided_by": "Reviewer"},
+        json={},
     )
 
     assert response.status_code == 200
@@ -706,7 +699,7 @@ def test_decisions_use_only_workflow_repository_after_snapshot_creation() -> Non
 
 def test_audit_retrieval_is_read_only_and_uses_only_workflow_repository() -> None:
     application, _, _ = make_application()
-    client = TestClient(application)
+    client = authenticated_test_client(application)
     product_id = prepare_actionable_product(client)
     created = create_review(client, product_id)
     recommendation_id = created["recommendation_id"]
@@ -769,16 +762,16 @@ def test_default_applications_isolate_workflow_state() -> None:
 def test_shared_workflow_repository_exposes_shared_history_deliberately() -> None:
     shared = InMemoryRecommendationWorkflowRepository()
     first_product_repository = InMemoryProductInventoryRepository()
-    first = TestClient(
-        create_app(
+    first = authenticated_test_client(
+        create_authenticated_test_app(
             make_settings(),
             first_product_repository,
             shared,
             FixedClock(),
         )
     )
-    second = TestClient(
-        create_app(
+    second = authenticated_test_client(
+        create_authenticated_test_app(
             make_settings(),
             InMemoryProductInventoryRepository(),
             shared,
@@ -836,7 +829,7 @@ def test_review_workflow_does_not_create_orders_or_mutate_operational_state() ->
     created = create_review(client, product_id)
     client.post(
         f"/api/v1/reorder-recommendations/{created['recommendation_id']}/approve",
-        json={"decided_by": "Reviewer"},
+        json={},
     )
 
     assert client.get(f"/api/v1/products/{product_id}").json() == product_before
@@ -955,13 +948,13 @@ def test_duplicate_creation_repository_error_returns_safe_409(
     product_repository = InMemoryProductInventoryRepository()
     workflow_repository = InMemoryRecommendationWorkflowRepository()
 
-    application = create_app(
+    application = create_authenticated_test_app(
         make_settings(),
         product_repository,
         workflow_repository,
         FixedClock(),
     )
-    client = TestClient(application)
+    client = authenticated_test_client(application)
     product_id = prepare_actionable_product(client)
 
     attempted_ids: list[UUID] = []
@@ -993,11 +986,10 @@ def test_duplicate_creation_repository_error_returns_safe_409(
 @pytest.mark.parametrize(
     ("operation", "payload"),
     [
-        ("approve", {"decided_by": "Reviewer"}),
+        ("approve", {}),
         (
             "reject",
             {
-                "decided_by": "Reviewer",
                 "reason": "Do not replenish",
             },
         ),
@@ -1010,7 +1002,7 @@ def test_repository_value_error_during_decision_returns_safe_422(
 ) -> None:
     """Repository value failures remain bounded as public 422s."""
     application, _, workflow_repository = make_application()
-    client = TestClient(application)
+    client = authenticated_test_client(application)
 
     product_id = prepare_actionable_product(client)
     created = create_review(client, product_id)

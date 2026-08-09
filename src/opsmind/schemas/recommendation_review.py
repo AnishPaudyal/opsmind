@@ -20,20 +20,17 @@ def _strip_required(value: str) -> str:
 
 
 class ApproveRecommendationRequest(BaseModel):
-    """Caller-supplied approval details."""
+    """Caller-supplied approval details without authoritative actor identity."""
 
     model_config = ConfigDict(
         extra="forbid",
         json_schema_extra={
             "example": {
-                "decided_by": "Anish Paudyal",
                 "approved_quantity": 19,
                 "note": "Approved as recommended.",
             }
         },
     )
-
-    decided_by: str = Field(description="Unverified caller-supplied decision actor.")
     approved_quantity: int | None = Field(
         default=None,
         ge=1,
@@ -45,12 +42,6 @@ class ApproveRecommendationRequest(BaseModel):
         description="Optional decision note; blank input is stored as null.",
     )
 
-    @field_validator("decided_by")
-    @classmethod
-    def validate_decided_by(cls, value: str) -> str:
-        """Trim the actor and reject blank values."""
-        return _strip_required(value)
-
     @field_validator("note")
     @classmethod
     def normalize_note(cls, value: str | None) -> str | None:
@@ -61,22 +52,19 @@ class ApproveRecommendationRequest(BaseModel):
 
 
 class RejectRecommendationRequest(BaseModel):
-    """Caller-supplied rejection details."""
+    """Caller-supplied rejection details without authoritative actor identity."""
 
     model_config = ConfigDict(
         extra="forbid",
         json_schema_extra={
             "example": {
-                "decided_by": "Anish Paudyal",
                 "reason": "Inbound inventory is already scheduled.",
             }
         },
     )
-
-    decided_by: str = Field(description="Unverified caller-supplied decision actor.")
     reason: str = Field(description="Required explanation for rejection.")
 
-    @field_validator("decided_by", "reason")
+    @field_validator("reason")
     @classmethod
     def validate_required_text(cls, value: str) -> str:
         """Trim required text and reject blank values."""
@@ -90,7 +78,7 @@ class RecommendationDecisionResponse(BaseModel):
     decision_type: RecommendationDecisionType = Field(
         description="Terminal approval or rejection type."
     )
-    decided_by: str = Field(description="Trimmed, unverified caller-supplied actor.")
+    decided_by: str = Field(description="Stable trusted-principal identifier.")
     decided_at: datetime = Field(description="Timezone-aware UTC decision time.")
     approved_quantity: int | None = Field(
         description="Approved quantity, or null for a rejection."

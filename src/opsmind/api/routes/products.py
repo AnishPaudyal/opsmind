@@ -5,7 +5,12 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from opsmind.api.dependencies import get_product_inventory_repository
+from opsmind.api.dependencies import (
+    AUTHENTICATION_RESPONSES,
+    BusinessReadPrincipal,
+    BusinessWritePrincipal,
+    get_product_inventory_repository,
+)
 from opsmind.domain.errors import (
     DuplicateSkuError,
     InventoryNotFoundError,
@@ -58,12 +63,14 @@ def _product_not_found(error: ProductNotFoundError) -> HTTPException:
     status_code=status.HTTP_201_CREATED,
     summary="Create a product",
     responses={
+        **AUTHENTICATION_RESPONSES,
         status.HTTP_409_CONFLICT: {"description": "Normalized SKU already exists."},
     },
 )
 def create_product(
     request: ProductCreateRequest,
     repository: RepositoryDependency,
+    _principal: BusinessWritePrincipal,
 ) -> ProductResponse:
     """Create a validated product with a server-generated UUID."""
     try:
@@ -96,8 +103,12 @@ def create_product(
     response_model=list[ProductResponse],
     status_code=status.HTTP_200_OK,
     summary="List products",
+    responses=AUTHENTICATION_RESPONSES,
 )
-def list_products(repository: RepositoryDependency) -> list[ProductResponse]:
+def list_products(
+    repository: RepositoryDependency,
+    _principal: BusinessReadPrincipal,
+) -> list[ProductResponse]:
     """List products in canonical SKU order."""
     return [_product_response(product) for product in repository.list_products()]
 
@@ -107,11 +118,15 @@ def list_products(repository: RepositoryDependency) -> list[ProductResponse]:
     response_model=ProductResponse,
     status_code=status.HTTP_200_OK,
     summary="Get a product",
-    responses={status.HTTP_404_NOT_FOUND: {"description": "Product not found."}},
+    responses={
+        **AUTHENTICATION_RESPONSES,
+        status.HTTP_404_NOT_FOUND: {"description": "Product not found."},
+    },
 )
 def get_product(
     product_id: UUID,
     repository: RepositoryDependency,
+    _principal: BusinessReadPrincipal,
 ) -> ProductResponse:
     """Retrieve a product by UUID."""
     try:
@@ -126,12 +141,16 @@ def get_product(
     response_model=InventoryResponse,
     status_code=status.HTTP_200_OK,
     summary="Set product inventory",
-    responses={status.HTTP_404_NOT_FOUND: {"description": "Product not found."}},
+    responses={
+        **AUTHENTICATION_RESPONSES,
+        status.HTTP_404_NOT_FOUND: {"description": "Product not found."},
+    },
 )
 def set_inventory(
     product_id: UUID,
     request: InventorySetRequest,
     repository: RepositoryDependency,
+    _principal: BusinessWritePrincipal,
 ) -> InventoryResponse:
     """Set or replace authoritative inventory quantities for a product."""
     inventory = InventoryPosition(
@@ -152,6 +171,7 @@ def set_inventory(
     status_code=status.HTTP_200_OK,
     summary="Get product inventory",
     responses={
+        **AUTHENTICATION_RESPONSES,
         status.HTTP_404_NOT_FOUND: {
             "description": "Product or inventory position not found."
         },
@@ -160,6 +180,7 @@ def set_inventory(
 def get_inventory(
     product_id: UUID,
     repository: RepositoryDependency,
+    _principal: BusinessReadPrincipal,
 ) -> InventoryResponse:
     """Retrieve authoritative and calculated inventory quantities."""
     try:

@@ -6,9 +6,9 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 
-from opsmind.application import create_app
 from opsmind.core.config import Environment, Settings
 from opsmind.repositories.memory import InMemoryProductInventoryRepository
+from tests.security import authenticated_test_client, create_authenticated_test_app
 
 MISSING_PRODUCT_ID = "00000000-0000-0000-0000-000000000099"
 
@@ -26,7 +26,9 @@ def make_settings(api_v1_prefix: str = "/api/v1") -> Settings:
 
 def make_client(api_v1_prefix: str = "/api/v1") -> TestClient:
     """Create one isolated test application."""
-    return TestClient(create_app(make_settings(api_v1_prefix)))
+    return authenticated_test_client(
+        create_authenticated_test_app(make_settings(api_v1_prefix))
+    )
 
 
 def create_product(
@@ -351,7 +353,12 @@ def test_separate_applications_do_not_share_forecast_inputs() -> None:
 
 def test_all_business_routes_use_the_injected_repository() -> None:
     repository = InMemoryProductInventoryRepository()
-    client = TestClient(create_app(make_settings(), repository))
+    client = authenticated_test_client(
+        create_authenticated_test_app(
+            make_settings(),
+            product_inventory_repository=repository,
+        )
+    )
     product_id = create_product(client)
     add_demand(client, product_id, ("2026-07-01", 12))
     before = repository.list_demand_observations(UUID(product_id))

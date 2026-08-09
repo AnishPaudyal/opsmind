@@ -6,8 +6,8 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 
-from opsmind.application import create_app
 from opsmind.core.config import Environment, Settings
+from tests.security import authenticated_test_client, create_authenticated_test_app
 
 MISSING_PRODUCT_ID = "00000000-0000-0000-0000-000000000099"
 
@@ -25,7 +25,9 @@ def make_test_settings(api_v1_prefix: str = "/api/v1") -> Settings:
 
 def create_test_client(api_v1_prefix: str = "/api/v1") -> TestClient:
     """Create an isolated application client."""
-    return TestClient(create_app(make_test_settings(api_v1_prefix)))
+    return authenticated_test_client(
+        create_authenticated_test_app(make_test_settings(api_v1_prefix))
+    )
 
 
 def product_payload(sku: str = "SENSOR-001") -> dict[str, object]:

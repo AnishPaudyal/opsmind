@@ -7,6 +7,10 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from opsmind.api.dependencies import (
+    AUTHENTICATION_RESPONSES,
+    BusinessReadPrincipal,
+    BusinessWritePrincipal,
+    RecommendationDecidePrincipal,
     get_clock,
     get_product_inventory_repository,
     get_recommendation_workflow_repository,
@@ -159,6 +163,7 @@ def _review_not_found(error: RecommendationReviewNotFoundError) -> HTTPException
     status_code=status.HTTP_201_CREATED,
     summary="Create a stored reorder recommendation review",
     responses={
+        **AUTHENTICATION_RESPONSES,
         status.HTTP_404_NOT_FOUND: {
             "description": "Product or inventory position not found."
         },
@@ -175,6 +180,7 @@ def create_reorder_recommendation_review(
     product_repository: ProductRepositoryDependency,
     workflow_repository: WorkflowRepositoryDependency,
     clock: ClockDependency,
+    _principal: BusinessWritePrincipal,
     lookback_observations: LookbackQuery = 7,
     as_of_date: AsOfDateQuery = None,
 ) -> ReorderRecommendationReviewResponse:
@@ -237,6 +243,7 @@ def create_reorder_recommendation_review(
     status_code=status.HTTP_200_OK,
     summary="Get a stored reorder recommendation review",
     responses={
+        **AUTHENTICATION_RESPONSES,
         status.HTTP_404_NOT_FOUND: {
             "description": "Stored recommendation review not found."
         },
@@ -248,6 +255,7 @@ def create_reorder_recommendation_review(
 def get_reorder_recommendation_review(
     recommendation_id: UUID,
     workflow_repository: WorkflowRepositoryDependency,
+    _principal: BusinessReadPrincipal,
 ) -> ReorderRecommendationReviewResponse:
     """Retrieve a stored snapshot without recalculating any source data."""
     try:
@@ -263,6 +271,7 @@ def get_reorder_recommendation_review(
     status_code=status.HTTP_200_OK,
     summary="Get recommendation review audit history",
     responses={
+        **AUTHENTICATION_RESPONSES,
         status.HTTP_404_NOT_FOUND: {
             "description": "Stored recommendation review not found."
         },
@@ -274,6 +283,7 @@ def get_reorder_recommendation_review(
 def get_recommendation_audit_history(
     recommendation_id: UUID,
     workflow_repository: WorkflowRepositoryDependency,
+    _principal: BusinessReadPrincipal,
 ) -> RecommendationAuditHistoryResponse:
     """Return stored events without recalculating or mutating workflow state."""
     try:
@@ -292,6 +302,7 @@ def get_recommendation_audit_history(
     status_code=status.HTTP_200_OK,
     summary="Approve a stored reorder recommendation",
     responses={
+        **AUTHENTICATION_RESPONSES,
         status.HTTP_404_NOT_FOUND: {
             "description": "Stored recommendation review not found."
         },
@@ -308,6 +319,7 @@ def approve_reorder_recommendation(
     request: ApproveRecommendationRequest,
     workflow_repository: WorkflowRepositoryDependency,
     clock: ClockDependency,
+    principal: RecommendationDecidePrincipal,
 ) -> ReorderRecommendationReviewResponse:
     """Atomically approve a pending review or retry the same approval."""
     try:
@@ -315,7 +327,7 @@ def approve_reorder_recommendation(
             recommendation_id,
             decision_id=uuid4(),
             event_id=uuid4(),
-            decided_by=request.decided_by,
+            decided_by=principal.principal_id,
             decided_at=clock.now(),
             approved_quantity=request.approved_quantity,
             note=request.note,
@@ -341,6 +353,7 @@ def approve_reorder_recommendation(
     status_code=status.HTTP_200_OK,
     summary="Reject a stored reorder recommendation",
     responses={
+        **AUTHENTICATION_RESPONSES,
         status.HTTP_404_NOT_FOUND: {
             "description": "Stored recommendation review not found."
         },
@@ -357,6 +370,7 @@ def reject_reorder_recommendation(
     request: RejectRecommendationRequest,
     workflow_repository: WorkflowRepositoryDependency,
     clock: ClockDependency,
+    principal: RecommendationDecidePrincipal,
 ) -> ReorderRecommendationReviewResponse:
     """Atomically reject a pending review or retry the same rejection."""
     try:
@@ -364,7 +378,7 @@ def reject_reorder_recommendation(
             recommendation_id,
             decision_id=uuid4(),
             event_id=uuid4(),
-            decided_by=request.decided_by,
+            decided_by=principal.principal_id,
             decided_at=clock.now(),
             reason=request.reason,
         )

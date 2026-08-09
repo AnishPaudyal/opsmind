@@ -6,7 +6,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from opsmind.api.dependencies import get_product_inventory_repository
+from opsmind.api.dependencies import (
+    AUTHENTICATION_RESPONSES,
+    BusinessReadPrincipal,
+    BusinessWritePrincipal,
+    get_product_inventory_repository,
+)
 from opsmind.domain.demand import DemandObservation
 from opsmind.domain.errors import DuplicateDemandDateError, ProductNotFoundError
 from opsmind.repositories.product_inventory import ProductInventoryRepository
@@ -53,6 +58,7 @@ def _product_not_found(error: ProductNotFoundError) -> HTTPException:
     status_code=status.HTTP_201_CREATED,
     summary="Add product demand observations",
     responses={
+        **AUTHENTICATION_RESPONSES,
         status.HTTP_404_NOT_FOUND: {"description": "Product not found."},
         status.HTTP_409_CONFLICT: {
             "description": "Demand already exists for a submitted date."
@@ -63,6 +69,7 @@ def add_demand_observations(
     product_id: UUID,
     request: DemandBatchCreate,
     repository: RepositoryDependency,
+    _principal: BusinessWritePrincipal,
 ) -> list[DemandObservationResponse]:
     """Atomically add one batch and return it chronologically."""
     observations = tuple(
@@ -96,11 +103,15 @@ def add_demand_observations(
     response_model=list[DemandObservationResponse],
     status_code=status.HTTP_200_OK,
     summary="List product demand observations",
-    responses={status.HTTP_404_NOT_FOUND: {"description": "Product not found."}},
+    responses={
+        **AUTHENTICATION_RESPONSES,
+        status.HTTP_404_NOT_FOUND: {"description": "Product not found."},
+    },
 )
 def list_demand_observations(
     product_id: UUID,
     repository: RepositoryDependency,
+    _principal: BusinessReadPrincipal,
     start_date: StartDateQuery = None,
     end_date: EndDateQuery = None,
 ) -> list[DemandObservationResponse]:
