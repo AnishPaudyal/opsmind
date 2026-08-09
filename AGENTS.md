@@ -20,35 +20,28 @@ Phase 7A testing and coverage hardening is complete:
 - the accepted 95.00% combined line-and-branch coverage regression gate remains
   in force.
 
-Issue #58 is the active Phase 7 observability/readiness child workstream on
-branch `feat/phase-7-observability-readiness`. Its in-scope runtime
-implementation and local validation are complete; final repository-owner
-review, hosted validation, and merge remain pending.
+Issue #58 observability/readiness is complete:
 
-The repository owner accepted the Issue #58 pre-implementation design on
-2026-08-07 and authorized the governed implementation to proceed.
+- PR #59 was squash-merged as
+  `f12082db31359a734b012867267de970cabcfa1a`;
+- Issue #58 is closed;
+- the canonical merge tree exactly matches the reviewed feature tree;
+- post-merge Python-quality and repository-governance checks passed.
 
-This branch remains authorized for:
+The repository owner accepted ADR-0006 on 2026-08-08 and authorized the
+separately governed Phase 7 security implementation. PR #61 records the
+acceptance on branch `docs/adr-0006-security-boundary`.
 
-- completion documentation and evidence;
-- local and hosted validation;
-- pull-request preparation within the accepted scope.
+This branch is authorized only for:
 
-The Issue #58 design scope is limited to:
-
-- bounded request-ID propagation;
-- dependency-light structured request logging;
-- safe application error observability;
-- preserving `/health` as process liveness;
-- adding an unversioned readiness contract;
-- memory readiness semantics;
-- PostgreSQL connectivity and schema-revision readiness;
-- focused tests and durable evidence supporting those behaviors.
+- recording the accepted ADR-0006 trusted-principal and authorization decision;
+- minimal governance/current-state documentation;
+- documentation validation and pull-request preparation.
 
 Do not begin on this branch:
 
 - authentication or authorization behavior;
-- ADR-0006 or trusted-principal implementation;
+- trusted-principal or ADR-0006 implementation;
 - security implementation;
 - AWS or cloud deployment;
 - API containerization;
@@ -61,9 +54,9 @@ Do not begin on this branch:
 - Phase 8 work;
 - production-readiness approval.
 
-After Issue #58 is accepted and merged, the accepted Phase 7 sequence continues
-with ADR-0006, then security implementation only after ADR-0006
-repository-owner acceptance, and finally the integrated Phase 7
+Security implementation must not begin on the ADR documentation branch. After
+PR #61 is merged, the accepted Phase 7 sequence continues through a separate
+implementation issue and branch, followed by integrated Phase 7
 evaluation/review.
 ## Required Context
 

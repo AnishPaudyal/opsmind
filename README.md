@@ -9,9 +9,10 @@ coherent product.
 ## Current Status
 
 Phases 0 through 6 are complete. Phase 7, testing, security, and observability
-hardening, is the current formal gate. Phase 7A testing and coverage hardening
-is complete, and the Issue #58 observability/readiness implementation is
-complete on its review branch with final repository-owner review pending.
+hardening, is the current formal gate. Phase 7A testing/coverage and Issue #58
+observability/readiness are complete. ADR-0006, the trusted-principal and
+authorization boundary, is Accepted; a separately governed Phase 7 security
+implementation is authorized while Phase 8 remains unauthorized.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
