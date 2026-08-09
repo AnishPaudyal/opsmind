@@ -7,8 +7,8 @@ earlier states.
 
 - Status date: 2026-08-08
 - Current formal gate: Phase 7 — testing, security, and observability hardening
-- Active workstream: Issue #60 — ADR-0006 trusted-principal and authorization
-  boundary
+- Active workstream: accepted ADR-0006 transition to the separately governed
+  Phase 7 security implementation
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 
 ## Canonical Phase Status
@@ -22,7 +22,7 @@ earlier states.
 | 4 | Forecasting baseline and evaluation | Complete | Owner-accepted Proceed review under Issue #48 |
 | 5 | Stockout risk and reorder recommendations | Complete | Owner-accepted Proceed review under Issue #50 |
 | 6 | Decision approval, rejection, and audit history | Complete | Owner-accepted Proceed review under Issue #52 |
-| 7 | Testing, security, and observability hardening | Current | Testing/coverage and observability/readiness complete; ADR-0006 Proposed |
+| 7 | Testing, security, and observability hardening | Current | Testing/coverage and observability/readiness complete; ADR-0006 Accepted |
 | 8–12 | Cloud, pipelines, MLOps, advanced AI, and production readiness | Planned | Not formally opened |
 
 Implementation delivery and formal phase completion remain separate. Phases 5
@@ -48,9 +48,9 @@ OpsMind currently provides a packaged FastAPI modular monolith with:
   preserving caller ownership for explicit injections;
 - deterministic Phase 4, Phase 5, and Phase 6 evaluation evidence.
 
-ADRs 0000 through 0005 are Accepted. ADR-0006 is Proposed under Issue #60;
-trusted-principal and security implementation remain blocked pending explicit
-repository-owner acceptance and separate implementation authorization.
+ADRs 0000 through 0006 are Accepted. On 2026-08-08, the repository owner
+accepted ADR-0006 and authorized a separately governed Phase 7 security
+implementation.
 
 ## Phase 7 Progress
 
@@ -177,17 +177,17 @@ regulated data is required.
 
 ### ADR-0006 security-boundary workstream
 
-Issue #60 governs the Proposed ADR-0006 decision. The proposal recommends a
+Issue #60 governed the ADR-0006 decision. The accepted decision establishes a
 provider-agnostic, application-validated bearer principal with three bounded
 permissions: `business:read`, `business:write`, and
-`recommendation:decide`. It proposes deriving terminal decision and audit actor
+`recommendation:decide`. It requires deriving terminal decision and audit actor
 identity from the trusted principal rather than caller-supplied `decided_by`,
 while keeping `/health` and `/ready` unauthenticated and bounded.
 
-This is a proposal, not an accepted architecture or implemented capability.
-There is still no authentication, authorization, RBAC, trusted principal, or
-verified audit actor in runtime code. Repository-owner acceptance or revision
-is required before a separate implementation issue may begin.
+This is accepted architecture, not an implemented capability. There is still
+no authentication, authorization, RBAC, trusted principal, or verified audit
+actor in runtime code. The repository owner authorized a separate Phase 7
+implementation issue and branch to implement the accepted boundary.
 
 ## Issue #58 Residual Limitations
 
@@ -201,7 +201,8 @@ These limitations are non-blocking for the accepted Issue #58 scope:
   infrastructure work;
 - readiness proves bounded local application/backend compatibility, not HA/DR,
   monitoring coverage, or production readiness;
-- security remains intentionally blocked pending ADR-0006.
+- security runtime remains absent while the accepted ADR-0006 implementation
+  is prepared on a separately governed issue and branch.
 
 ## Historical Evidence
 
@@ -217,11 +218,9 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The immediate work is repository-owner review of Proposed ADR-0006 under Issue
-#60. The owner may accept, revise, or reject the proposed trusted-principal and
-authorization boundary.
+The immediate work is the separately governed implementation of accepted
+ADR-0006: bearer authentication, trusted principals, action authorization, and
+trusted terminal-decision attribution. Phase 7 remains Current until security
+implementation and integrated review are complete.
 
-Do not implement authentication, authorization, trusted-principal behavior, or
-actor migration until ADR-0006 is explicitly accepted and a separate
-implementation issue is authorized. Phase 8, deployment, and
-production-readiness work remain unauthorized.
+Phase 8, deployment, and production-readiness work remain unauthorized.

@@ -28,12 +28,13 @@ Issue #58 observability/readiness is complete:
 - the canonical merge tree exactly matches the reviewed feature tree;
 - post-merge Python-quality and repository-governance checks passed.
 
-Issue #60 is the active Phase 7 security-boundary investigation on branch
-`docs/adr-0006-security-boundary`.
+The repository owner accepted ADR-0006 on 2026-08-08 and authorized the
+separately governed Phase 7 security implementation. PR #61 records the
+acceptance on branch `docs/adr-0006-security-boundary`.
 
 This branch is authorized only for:
 
-- the Proposed ADR-0006 trusted-principal and authorization decision;
+- recording the accepted ADR-0006 trusted-principal and authorization decision;
 - minimal governance/current-state documentation;
 - documentation validation and pull-request preparation.
 
@@ -53,10 +54,10 @@ Do not begin on this branch:
 - Phase 8 work;
 - production-readiness approval.
 
-Security implementation remains blocked until ADR-0006 is explicitly accepted
-by the repository owner and a separate implementation issue is authorized. The
-accepted Phase 7 sequence then continues with security implementation and the
-integrated Phase 7 evaluation/review.
+Security implementation must not begin on the ADR documentation branch. After
+PR #61 is merged, the accepted Phase 7 sequence continues through a separate
+implementation issue and branch, followed by integrated Phase 7
+evaluation/review.
 ## Required Context
 
 Before starting work:

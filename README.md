@@ -11,8 +11,8 @@ coherent product.
 Phases 0 through 6 are complete. Phase 7, testing, security, and observability
 hardening, is the current formal gate. Phase 7A testing/coverage and Issue #58
 observability/readiness are complete. ADR-0006, the trusted-principal and
-authorization boundary, is Proposed under Issue #60; security implementation
-remains blocked pending explicit repository-owner acceptance.
+authorization boundary, is Accepted; a separately governed Phase 7 security
+implementation is authorized while Phase 8 remains unauthorized.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory

@@ -1,10 +1,10 @@
 # ADR-0006: Establish Trusted Principal and Authorization Boundary
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-08-08
 - Decision owners: Anish Paudyal
 - Related issues: #54, #58, #60
-- Related pull requests: Pending
+- Related pull requests: #61
 - Supersedes: None
 - Superseded by: None
 
@@ -139,7 +139,7 @@ not justified by the API-first vertical slice.
 ## Decision
 
 Adopt **Option C: external identity with an application-validated bearer
-principal**, subject to repository-owner acceptance of this ADR.
+principal**, as accepted by the repository owner.
 
 The first security implementation will:
 
@@ -371,7 +371,7 @@ unresolved.
 
 ## Implementation boundaries
 
-After acceptance, a separate implementation issue may add only the minimum
+A separate implementation issue may add only the minimum
 principal model, authentication adapter/dependency, authorization policy,
 request-schema actor migration, audit attribution, configuration, OpenAPI
 security scheme, and focused tests required by this decision.
@@ -480,7 +480,7 @@ a separately reviewed data-contract and migration decision is required.
 - Deployment architecture provides a separately governed trusted gateway that
   materially changes where token validation should terminate.
 
-## Proposed implementation sequence after acceptance
+## Governed implementation sequence
 
 1. Add the immutable trusted-principal and bounded permission model.
 2. Select and lock a maintained bearer-token validation dependency.
@@ -495,14 +495,18 @@ a separately reviewed data-contract and migration decision is required.
 8. Run complete regression, PostgreSQL, coverage, dependency, and governance
    validation.
 
-This sequence is informational only. It is not implementation authorization.
+This sequence is governed by a separate implementation issue and does not
+authorize work outside the boundaries of this ADR.
 
 ## Owner decision status
 
-ADR-0006 remains **Proposed**. Repository-owner acceptance, rejection, or
-revision is pending. No security runtime implementation may begin until the
-owner explicitly accepts this ADR and authorizes a separate implementation
-issue.
+ADR-0006 is **Accepted**. On 2026-08-08, repository owner Anish Paudyal
+explicitly accepted the provider-agnostic signed bearer-token boundary,
+application-derived trusted principals, the `business:read`, `business:write`,
+and `recommendation:decide` permissions, trusted terminal-decision attribution,
+bounded `401`/`403` behavior, unauthenticated operational endpoints, and the
+documented non-goals. The owner also authorized a separately governed Phase 7
+security implementation to proceed.
 
 ## References
 
