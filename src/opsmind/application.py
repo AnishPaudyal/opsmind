@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from sqlalchemy.engine import Engine
 
 from opsmind.api.dependencies import (
+    get_authenticator,
     get_clock,
     get_product_inventory_repository,
     get_readiness_probe,
@@ -40,6 +41,12 @@ from opsmind.repositories.product_inventory import ProductInventoryRepository
 from opsmind.repositories.recommendation_workflow import (
     RecommendationWorkflowRepository,
 )
+from opsmind.security import (
+    Authenticator,
+    DenyAllAuthenticator,
+    JWTAuthenticationConfig,
+    JWTAuthenticator,
+)
 
 
 def create_app(
@@ -48,6 +55,7 @@ def create_app(
     recommendation_workflow_repository: RecommendationWorkflowRepository | None = None,
     clock: Clock | None = None,
     readiness_probe: ReadinessProbe | None = None,
+    authenticator: Authenticator | None = None,
 ) -> FastAPI:
     """Create an OpsMind application with isolated settings and repositories."""
     resolved_settings = settings if settings is not None else get_settings()
@@ -92,6 +100,23 @@ def create_app(
                 "are explicitly injected."
             )
     resolved_clock = clock if clock is not None else SystemClock()
+    resolved_authenticator = authenticator
+    if resolved_authenticator is None:
+        if resolved_settings.authentication_configured:
+            assert resolved_settings.auth_issuer is not None
+            assert resolved_settings.auth_audience is not None
+            assert resolved_settings.auth_public_key is not None
+            resolved_authenticator = JWTAuthenticator(
+                JWTAuthenticationConfig(
+                    issuer=resolved_settings.auth_issuer,
+                    audience=resolved_settings.auth_audience,
+                    public_key=resolved_settings.auth_public_key.get_secret_value(),
+                    algorithm=resolved_settings.auth_algorithm,
+                    clock_leeway_seconds=(resolved_settings.auth_clock_leeway_seconds),
+                )
+            )
+        else:
+            resolved_authenticator = DenyAllAuthenticator()
 
     def provide_settings() -> Settings:
         return resolved_settings
@@ -109,6 +134,9 @@ def create_app(
 
     def provide_readiness_probe() -> ReadinessProbe:
         return resolved_readiness_probe
+
+    def provide_authenticator() -> Authenticator:
+        return resolved_authenticator
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -135,5 +163,6 @@ def create_app(
     )
     application.dependency_overrides[get_clock] = provide_clock
     application.dependency_overrides[get_readiness_probe] = provide_readiness_probe
+    application.dependency_overrides[get_authenticator] = provide_authenticator
     application.include_router(create_api_router(resolved_settings.api_v1_prefix))
     return application

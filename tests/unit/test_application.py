@@ -17,6 +17,7 @@ from sqlalchemy.engine import Engine
 import opsmind.application as application_module
 import opsmind.persistence.postgresql.database as postgresql_database
 from opsmind.api.dependencies import (
+    get_authenticator,
     get_clock,
     get_product_inventory_repository,
     get_readiness_probe,
@@ -47,6 +48,7 @@ from opsmind.repositories.in_memory_recommendation_workflow import (
     InMemoryRecommendationWorkflowRepository,
 )
 from opsmind.repositories.memory import InMemoryProductInventoryRepository
+from tests.security import authenticated_test_client, create_authenticated_test_app
 
 
 class ApplicationModule(Protocol):
@@ -63,7 +65,7 @@ def create_request_id_test_client() -> TestClient:
         environment=Environment.TEST,
         api_v1_prefix="/api/v1",
     )
-    return TestClient(create_app(settings))
+    return authenticated_test_client(create_authenticated_test_app(settings))
 
 
 def assert_single_uuid4_request_id(response: Response) -> None:
@@ -220,7 +222,12 @@ def test_real_application_unexpected_exception_returns_safe_correlated_500(
 
     monkeypatch.setattr(repository, "get_product", raise_unexpectedly)
     settings = Settings(environment=Environment.TEST, api_v1_prefix="/api/v1")
-    client = TestClient(create_app(settings, product_inventory_repository=repository))
+    client = authenticated_test_client(
+        create_authenticated_test_app(
+            settings,
+            product_inventory_repository=repository,
+        )
+    )
     emitted_messages: list[str] = []
 
     def record_message(message: object, *args: object, **kwargs: object) -> None:
@@ -669,6 +676,11 @@ def test_unbound_workflow_dependencies_fail_fast() -> None:
         match=r"^Recommendation workflow repository is not configured$",
     ):
         get_recommendation_workflow_repository()
+
+
+def test_unbound_authenticator_dependency_fails_fast() -> None:
+    with pytest.raises(RuntimeError, match=r"^Authenticator is not configured$"):
+        get_authenticator()
     with pytest.raises(RuntimeError, match=r"^Clock is not configured$"):
         get_clock()
     with pytest.raises(RuntimeError, match=r"^Readiness probe is not configured$"):

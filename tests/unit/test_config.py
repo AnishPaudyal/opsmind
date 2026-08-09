@@ -33,6 +33,12 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.api_v1_prefix == "/api/v1"
     assert settings.persistence_backend is PersistenceBackend.MEMORY
     assert settings.database_url is None
+    assert settings.auth_issuer is None
+    assert settings.auth_audience is None
+    assert settings.auth_public_key is None
+    assert settings.auth_algorithm == "RS256"
+    assert settings.auth_clock_leeway_seconds == 0
+    assert settings.authentication_configured is False
 
 
 def test_settings_accept_prefixed_environment_overrides(
@@ -52,6 +58,69 @@ def test_settings_accept_prefixed_environment_overrides(
     assert settings.environment is Environment.STAGING
     assert settings.debug is True
     assert settings.api_v1_prefix == "/custom/v1"
+
+
+def test_settings_accept_complete_authentication_configuration() -> None:
+    public_key = "synthetic-public-verification-key"
+    settings = Settings(
+        auth_issuer="https://identity.example.test/",
+        auth_audience="opsmind-api",
+        auth_public_key=SecretStr(public_key),
+        auth_clock_leeway_seconds=5,
+    )
+
+    assert settings.authentication_configured is True
+    assert settings.auth_algorithm == "RS256"
+    assert settings.auth_clock_leeway_seconds == 5
+    assert public_key not in repr(settings)
+    assert public_key not in str(settings.model_dump())
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        {"auth_issuer": "https://identity.example.test/"},
+        {"auth_audience": "opsmind-api"},
+        {"auth_public_key": SecretStr("synthetic-public-key")},
+        {
+            "auth_issuer": "https://identity.example.test/",
+            "auth_audience": "opsmind-api",
+        },
+    ],
+)
+def test_settings_reject_partial_authentication_configuration(
+    values: dict[str, object],
+) -> None:
+    with pytest.raises(ValidationError, match="must be configured together"):
+        Settings(**values)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("auth_issuer", ""),
+        ("auth_issuer", " padded "),
+        ("auth_audience", ""),
+        ("auth_audience", " padded "),
+        ("auth_public_key", SecretStr("   ")),
+        ("auth_algorithm", "HS256"),
+        ("auth_clock_leeway_seconds", -1),
+        ("auth_clock_leeway_seconds", 61),
+    ],
+)
+def test_settings_reject_invalid_authentication_configuration(
+    field: str,
+    value: object,
+) -> None:
+    complete: dict[str, object] = {
+        "auth_issuer": "https://identity.example.test/",
+        "auth_audience": "opsmind-api",
+        "auth_public_key": SecretStr("synthetic-public-key"),
+    }
+    complete[field] = value
+
+    with pytest.raises(ValidationError):
+        Settings(**complete)  # type: ignore[arg-type]
 
 
 def test_settings_reject_an_invalid_environment(
