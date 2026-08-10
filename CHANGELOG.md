@@ -7,6 +7,15 @@ when the first application release is defined.
 
 ## Unreleased
 
+### Phase 8 deployment and product-delivery design
+
+- Proposed ADR-0007 with three current AWS architecture/cost candidates and a
+  cost-aware ECS/Fargate, RDS PostgreSQL, Cognito, React/Vite, CloudFront, and
+  Terraform recommendation.
+- Defined the first integrated dashboard, authenticated full-stack slice,
+  Phase 8A–8D gates, and explicit Phase 9–11 deferrals without implementing or
+  provisioning anything.
+
 ### Phase 7 observability and readiness
 
 - Added bounded request-ID propagation, structured HTTP request events, and a

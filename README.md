@@ -10,8 +10,9 @@ coherent product.
 
 Phases 0 through 7 are complete. The repository owner accepted the integrated
 Phase 7 `Proceed` review under Issue #64 on 2026-08-09. Phase 8 cloud deployment
-and product-delivery design/planning is the next governed gate; implementation
-and AWS resource creation remain unauthorized pending an accepted architecture.
+and product-delivery design/planning is the next governed gate. Issue #66 and
+Proposed ADR-0007 define the architecture for owner review; implementation and
+AWS resource creation remain unauthorized pending acceptance.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory

@@ -7,10 +7,12 @@ earlier states.
 
 - Status date: 2026-08-09
 - Current formal gate: Phase 8 — deployment and product-delivery design/planning
-- Active workstream: establish the owner-authorized Phase 8 design package
+- Active workstream: Issue #66 — Phase 8 AWS/product-delivery architecture
+- Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
 - Issue #62 result: complete; PR #63 merged and Issue #62 closed
+- ADR-0007 result: Proposed; repository-owner acceptance pending
 
 ## Canonical Phase Status
 
@@ -53,9 +55,9 @@ OpsMind currently provides a packaged FastAPI modular monolith with:
 - trusted terminal-decision and audit-event actor attribution;
 - deterministic Phase 4, Phase 5, and Phase 6 evaluation evidence.
 
-ADRs 0000 through 0006 are Accepted. On 2026-08-08, the repository owner
-accepted ADR-0006 and authorized a separately governed Phase 7 security
-implementation.
+ADRs 0000 through 0006 are Accepted. ADR-0007 is Proposed and not yet
+authoritative. On 2026-08-08, the repository owner accepted ADR-0006 and
+authorized a separately governed Phase 7 security implementation.
 
 PR #61 squash-merged the accepted ADR as
 `3e8b0a78344cc0164a35c268fa119d9c5321de50`. Its canonical tree exactly matched
@@ -67,7 +69,8 @@ the reviewed acceptance tree, post-merge workflows passed, and design Issue
 The repository owner accepted the Phase 7 hardening plan under Issue #54. All
 four governed technical workstreams are merged. On 2026-08-09, the owner
 accepted the integrated review under Issue #64 with a formal `Proceed` decision.
-Phase 7 is Complete once that accepted record is merged.
+PR #65 merged the accepted record as
+`984826a9fc1c16c0a7a1a30006cad120f301cd8d`; Phase 7 is Complete.
 
 ### Phase 7A — testing and coverage hardening
 
@@ -218,8 +221,40 @@ The integrated review maps the accepted 20 Phase 7 exit criteria across Phase
 7A testing, Issue #58 observability/readiness, accepted ADR-0006, and Issue #62
 security. Criteria 1–19 pass with canonical evidence. On 2026-08-09, the
 repository owner accepted `Proceed`, satisfying criterion 20 and authorizing
-Phase 8 design/planning after the accepted review merges. The durable review is
+Phase 8 design/planning. PR #65 squash-merged the review on 2026-08-09 as
+`984826a9fc1c16c0a7a1a30006cad120f301cd8d`; Issue #64 closed automatically.
+Its canonical tree `8f8cb3e8da65b9768f26b0e0166a0c9f3d873afa` exactly matches the
+reviewed acceptance tree. Post-merge Repository checks run `31345098172` and
+Python quality run `31345098175` passed. The durable review is
 [Phase 7 Review](../12-phase-reviews/phase-7-review.md).
+
+## Phase 8 Architecture Investigation
+
+Issue #66 is the current design-only workstream. Proposed
+[ADR-0007](../01-architecture/decisions/0007-select-phase-8-aws-deployment-and-product-delivery-architecture.md)
+compares three coherent AWS architectures using current official sources and
+proposes one low-usage `dev`/portfolio environment built around:
+
+- one immutable non-root API image in ECR;
+- ECS on Fargate behind an HTTPS Application Load Balancer;
+- non-public Single-AZ RDS PostgreSQL with external one-off Alembic migration;
+- no NAT Gateway initially, with tightly restricted public-task egress;
+- Secrets Manager, CloudWatch, ACM, and GitHub Actions OIDC;
+- Terraform with versioned S3 state and native state locking;
+- Cognito authorization code plus PKCE and a separately reviewed bounded JWKS
+  and scope-mapping implementation under ADR-0006;
+- a React/TypeScript/Vite dashboard hosted from private S3 through CloudFront;
+- a first authenticated product-to-decision-to-audit browser workflow.
+
+The estimated low-usage baseline is approximately `$50–65/month` in US East
+(N. Virginia), excluding domain registration, taxes, traffic spikes, and
+optional hardening. ALB and public IPv4 charges exceed API compute; avoiding an
+always-on NAT saves roughly `$36.50/month` before data.
+
+ADR-0007 remains Proposed. No Dockerfile, frontend, infrastructure as code,
+deployment workflow, dependency, migration, runtime configuration, or AWS
+resource exists from this investigation. Phase 8 implementation requires owner
+acceptance and separately authorized Phase 8A–8D issues.
 
 ## Issue #58 Residual Limitations
 
@@ -250,10 +285,11 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The immediate work is to merge the owner-accepted integrated Phase 7 review,
-then establish the Phase 8 deployment and product-delivery architecture for
-owner review. Phase 8 design/planning is authorized.
+The immediate work is repository-owner review of Proposed ADR-0007 under Issue
+#66. Phase 8 design/planning is authorized.
 
 Phase 8 implementation, AWS resource creation, frontend implementation,
 deployment, and production-readiness work remain unauthorized pending an
-accepted Phase 8 architecture.
+accepted Phase 8 architecture and separately approved implementation issues.
+Phase 9 data pipelines, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph work
+remain Planned.

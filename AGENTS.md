@@ -5,7 +5,7 @@ These instructions govern AI-assisted work in the OpsMind repository.
 ## Current Phase
 
 Phase 8 — cloud deployment and product delivery — is the Current formal gate
-for design/planning only after the accepted Phase 7 review merges.
+for design/planning only.
 
 The repository owner accepted the Phase 7 hardening plan under Issue #54.
 
@@ -40,15 +40,21 @@ Issue #62 security implementation is complete:
 - the canonical merge tree exactly matches the reviewed feature tree;
 - post-merge Python-quality and repository-governance checks passed.
 
-The repository owner accepted the integrated Phase 7 `Proceed` review under
-Issue #64 on 2026-08-09. The accepted record is being finalized on branch
-`docs/phase-7-integrated-review`.
+The repository owner accepted the integrated Phase 7 `Proceed` review on
+2026-08-09. PR #65 was squash-merged as
+`984826a9fc1c16c0a7a1a30006cad120f301cd8d`, Issue #64 is closed, the canonical
+tree exactly matches the reviewed acceptance tree, and both post-merge
+workflows passed. Phase 7 is Complete.
+
+Issue #66 is the active Phase 8 architecture investigation on branch
+`docs/phase-8-deployment-architecture`. ADR-0007 is Proposed and owner
+acceptance remains pending.
 
 This branch is authorized for:
 
-- the formal integrated Phase 7 evidence review;
-- the owner-accepted `Proceed` decision;
-- minimum current-status, roadmap, review, and governance documentation;
+- AWS and product-delivery architecture research;
+- a Proposed ADR-0007 for repository-owner review;
+- minimum current-status, roadmap, ADR-index, and governance documentation;
 - documentation validation and pull-request preparation.
 
 Do not begin on this branch:
@@ -64,13 +70,16 @@ Do not begin on this branch:
 - backup/restore;
 - production secret-store integration;
 - external ordering;
-- Phase 8 implementation work;
+- Phase 8 infrastructure or frontend implementation work;
+- Dockerfiles, infrastructure as code, deployment workflows, or AWS resources;
+- dependency, migration, or runtime-configuration changes;
+- Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work;
 - production-readiness approval.
 
-Once the accepted review is merged, Phase 7 is Complete and Phase 8
-design/planning may begin as a separately governed workstream. The accepted
-Proceed decision does not authorize implementation, deployment, AWS resources,
-frontend code, or production-readiness claims.
+Phase 8 implementation remains blocked until the repository owner accepts the
+architecture and separately authorizes bounded implementation issues. Design
+work does not authorize deployment, AWS resources, frontend code, or
+production-readiness claims.
 ## Required Context
 
 Before starting work:
