@@ -4,7 +4,7 @@
 - Date: 2026-08-08
 - Decision owners: Anish Paudyal
 - Related issues: #54, #58, #60, #62
-- Related pull requests: #61
+- Related pull requests: #61, #63
 - Supersedes: None
 - Superseded by: None
 
@@ -524,9 +524,11 @@ complete issuer/audience/public-key configuration denies every protected
 request. No schema migration is required because the existing decision and
 audit actor columns store the bounded trusted principal identifier.
 
-The implementation remains on `feat/phase-7-security-boundary` pending
-repository-owner review and merge. This note does not claim Phase 7 or
-production readiness.
+PR #63 was squash-merged as
+`575fd03eab2ebf5dc221ae1d52e44802ddaf7970`; Issue #62 is closed, the canonical
+tree exactly matches the reviewed feature tree, and post-merge checks passed.
+The merged implementation satisfies this ADR's technical boundary but does not
+by itself claim Phase 7 completion or production readiness.
 
 ## References
 

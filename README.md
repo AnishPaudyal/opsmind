@@ -8,12 +8,10 @@ coherent product.
 
 ## Current Status
 
-Phases 0 through 6 are complete. Phase 7, testing, security, and observability
-hardening, is the current formal gate. Phase 7A testing/coverage and Issue #58
-observability/readiness are complete. ADR-0006, the trusted-principal and
-authorization boundary, is Accepted. Issue #62 implements that boundary on
-`feat/phase-7-security-boundary`; review and merge remain pending, and Phase 8
-remains unauthorized.
+Phases 0 through 7 are complete. The repository owner accepted the integrated
+Phase 7 `Proceed` review under Issue #64 on 2026-08-09. Phase 8 cloud deployment
+and product-delivery design/planning is the next governed gate; implementation
+and AWS resource creation remain unauthorized pending an accepted architecture.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
@@ -990,6 +988,6 @@ claim cryptographic tamper evidence, compliance certification, external
 ordering, production-scale concurrency, production security, or production
 readiness.
 
-Phase 6 is Complete and Phase 7 is the current formal gate. See
-[Current Status](docs/09-status/current-status.md) for the active Phase 7
-workstream and its validation evidence.
+Phase 7 is Complete and Phase 8 design/planning is the current formal gate. See
+[Current Status](docs/09-status/current-status.md) for the active workstream and
+its validation evidence.
