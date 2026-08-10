@@ -295,9 +295,13 @@ Silicon, the complete disposable memory/PostgreSQL contract, and the repeat
 memory contract. The runtime image measured 64.90 MiB through Docker. The full
 PostgreSQL-backed Python gate passed 648 tests with zero skips or warnings and
 96.25% combined line-and-branch coverage. Digest-pinned Trivy 0.72.0, using a
-database updated at `2026-08-10T18:43:54Z`, reported zero fixed high or critical
-findings. Hosted pull-request checks remain pending until the branch is pushed
-and its pull request is opened.
+database updated at `2026-08-10T18:43:54Z`, reported 19 High and 4 Critical
+Debian base findings, all without fixed package versions, and zero Python
+package findings. The current official slim-bookworm alternative measured 18
+High and 6 Critical findings, so the latest slim-trixie digest remains the
+lower-risk supported base. CI reports all High/Critical findings and separately
+fails on fixable findings. This residual base-image risk remains explicit and
+must be revisited when upstream fixes or a newer official base are available.
 
 ## Issue #58 Residual Limitations
 

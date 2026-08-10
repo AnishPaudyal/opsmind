@@ -195,9 +195,21 @@ The 2026-08-10 local review found Docker Scout 1.18.3 installed, but Scout
 required a Docker ID login and no credential workflow was introduced. The
 fallback scan used digest-pinned Trivy 0.72.0 in a disposable container. Its
 database was updated at `2026-08-10T18:43:54Z` and downloaded at
-`2026-08-10T20:02:30Z`; it reported zero fixed high or critical findings for
-the Debian 13.6 and Python package surfaces. The cache volume was removed after
-capturing the evidence.
+`2026-08-10T20:21:45Z`. The comprehensive scan reported 23 Debian 13.6 base
+findings: 19 High and 4 Critical. None had a fixed package version, and the
+Python/application package surface reported zero findings. Critical findings
+were confined to inherited `perl-base`; OpsMind does not invoke Perl or process
+untrusted archives through those utilities. Non-root, read-only, capability-
+dropped execution reduces exposure but does not remove the residual base-image
+risk.
+
+The current official Python 3.13 slim-bookworm alternative was also assessed;
+it reported 24 findings, including 6 Critical, so switching to the older base
+would worsen the measured result. The current latest official slim-trixie
+digest is retained pending upstream Debian fixes. CI prints every High/Critical
+finding, then separately fails if any finding with an available fix remains.
+This is explicit risk accounting, not a vulnerability-free claim or blind
+suppression. The local cache volume was removed after capturing the evidence.
 
 ## Compose and CI decisions
 
@@ -207,10 +219,11 @@ resource with a destructive smoke lifecycle, so Phase 8A deliberately leaves it
 unchanged.
 
 The `Container quality` workflow builds `linux/amd64`, runs the full disposable
-contract, runs digest-pinned Trivy against fixed high/critical findings, builds
-a second tag, and runs the memory equivalence check. It has read-only repository
-permission and does not log into a registry, publish an image, deploy, migrate
-any shared database, or use cloud credentials.
+contract, reports all digest-pinned Trivy High/Critical findings, fails on any
+finding that has an available fix, builds a second tag, and runs the memory
+equivalence check. It has read-only repository permission and does not log into
+a registry, publish an image, deploy, migrate any shared database, or use cloud
+credentials.
 
 ## Limitations and deferred work
 
