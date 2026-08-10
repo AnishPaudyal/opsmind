@@ -6,7 +6,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from opsmind.api.dependencies import get_product_inventory_repository
+from opsmind.api.dependencies import (
+    AUTHENTICATION_RESPONSES,
+    BusinessReadPrincipal,
+    get_product_inventory_repository,
+)
 from opsmind.domain.errors import (
     InsufficientDemandHistoryError,
     ProductNotFoundError,
@@ -64,6 +68,7 @@ def _forecast_response(forecast: BaselineForecast) -> ForecastResponse:
     status_code=status.HTTP_200_OK,
     summary="Calculate a baseline demand forecast",
     responses={
+        **AUTHENTICATION_RESPONSES,
         status.HTTP_404_NOT_FOUND: {"description": "Product not found."},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "description": "Invalid parameters or insufficient demand history."
@@ -73,6 +78,7 @@ def _forecast_response(forecast: BaselineForecast) -> ForecastResponse:
 def get_baseline_demand_forecast(
     product_id: UUID,
     repository: RepositoryDependency,
+    _principal: BusinessReadPrincipal,
     lookback_observations: LookbackQuery = 7,
     horizon_days: HorizonQuery = 7,
     as_of_date: AsOfDateQuery = None,

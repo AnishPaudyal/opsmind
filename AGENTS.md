@@ -28,21 +28,24 @@ Issue #58 observability/readiness is complete:
 - the canonical merge tree exactly matches the reviewed feature tree;
 - post-merge Python-quality and repository-governance checks passed.
 
-The repository owner accepted ADR-0006 on 2026-08-08 and authorized the
-separately governed Phase 7 security implementation. PR #61 records the
-acceptance on branch `docs/adr-0006-security-boundary`.
+The repository owner accepted ADR-0006 on 2026-08-08. PR #61 was squash-merged
+as `3e8b0a78344cc0164a35c268fa119d9c5321de50`, Issue #60 is closed, and the
+accepted tree exactly matches the reviewed ADR branch tree.
 
-This branch is authorized only for:
+Issue #62 is the active Phase 7 security implementation workstream on branch
+`feat/phase-7-security-boundary`.
 
-- recording the accepted ADR-0006 trusted-principal and authorization decision;
-- minimal governance/current-state documentation;
-- documentation validation and pull-request preparation.
+This branch is authorized for:
+
+- the accepted ADR-0006 trusted-principal and authorization implementation;
+- one reviewed bearer-token validation dependency;
+- focused security, API, and PostgreSQL tests;
+- supporting documentation, validation, and pull-request preparation.
 
 Do not begin on this branch:
 
-- authentication or authorization behavior;
-- trusted-principal or ADR-0006 implementation;
-- security implementation;
+- identity-provider provisioning;
+- application-managed users, sessions, organizations, or tenants;
 - AWS or cloud deployment;
 - API containerization;
 - production monitoring/alerting infrastructure;
@@ -54,10 +57,9 @@ Do not begin on this branch:
 - Phase 8 work;
 - production-readiness approval.
 
-Security implementation must not begin on the ADR documentation branch. After
-PR #61 is merged, the accepted Phase 7 sequence continues through a separate
-implementation issue and branch, followed by integrated Phase 7
-evaluation/review.
+After Issue #62 is reviewed and merged, the accepted Phase 7 sequence continues
+with integrated security/observability/testing evaluation and repository-owner
+review. Phase 8 remains unauthorized.
 ## Required Context
 
 Before starting work:

@@ -6,7 +6,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from opsmind.api.dependencies import get_product_inventory_repository
+from opsmind.api.dependencies import (
+    AUTHENTICATION_RESPONSES,
+    BusinessReadPrincipal,
+    get_product_inventory_repository,
+)
 from opsmind.domain.errors import (
     InsufficientDemandHistoryError,
     InventoryNotFoundError,
@@ -66,6 +70,7 @@ def _stockout_response(exposure: StockoutExposure) -> StockoutExposureResponse:
     status_code=status.HTTP_200_OK,
     summary="Calculate deterministic stockout exposure",
     responses={
+        **AUTHENTICATION_RESPONSES,
         status.HTTP_404_NOT_FOUND: {
             "description": "Product or inventory position not found."
         },
@@ -77,6 +82,7 @@ def _stockout_response(exposure: StockoutExposure) -> StockoutExposureResponse:
 def get_stockout_exposure(
     product_id: UUID,
     repository: RepositoryDependency,
+    _principal: BusinessReadPrincipal,
     lookback_observations: LookbackQuery = 7,
     as_of_date: AsOfDateQuery = None,
 ) -> StockoutExposureResponse:

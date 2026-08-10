@@ -8,7 +8,6 @@ from pydantic import SecretStr
 from sqlalchemy import func, select
 from sqlalchemy.engine import URL
 
-from opsmind.application import create_app
 from opsmind.core.config import Environment, PersistenceBackend, Settings
 from opsmind.persistence.postgresql.database import SessionFactory
 from opsmind.persistence.postgresql.models import (
@@ -16,12 +15,15 @@ from opsmind.persistence.postgresql.models import (
     RecommendationDecisionRow,
     RecommendationReviewRow,
 )
+from tests.security import authenticated_test_client, create_authenticated_test_app
 
 
 def test_postgresql_readiness_succeeds_at_current_migration_head(
     postgresql_url: URL,
 ) -> None:
-    with TestClient(create_app(postgresql_settings(postgresql_url))) as client:
+    with authenticated_test_client(
+        create_authenticated_test_app(postgresql_settings(postgresql_url))
+    ) as client:
         response = client.get("/ready", headers={"X-Request-ID": "postgres-ready"})
 
     assert response.status_code == 200
@@ -180,7 +182,9 @@ def test_shared_operational_and_approved_workflow_state_survive_restarts(
 ) -> None:
     settings = postgresql_settings(postgresql_url)
 
-    with TestClient(create_app(settings)) as first_client:
+    with authenticated_test_client(
+        create_authenticated_test_app(settings)
+    ) as first_client:
         product_id = create_product(first_client)
         seed_operational_flow(first_client, product_id)
         assert_analytical_flow(first_client, product_id)
@@ -201,7 +205,9 @@ def test_shared_operational_and_approved_workflow_state_survive_restarts(
         assert [event["sequence_number"] for event in pending_events] == [1]
         assert [event["event_type"] for event in pending_events] == ["review_created"]
 
-        with TestClient(create_app(settings)) as second_client:
+        with authenticated_test_client(
+            create_authenticated_test_app(settings)
+        ) as second_client:
             assert (
                 second_client.get(f"/api/v1/products/{product_id}").status_code == 200
             )
@@ -242,12 +248,13 @@ def test_shared_operational_and_approved_workflow_state_survive_restarts(
 
     approval_path = f"/api/v1/reorder-recommendations/{recommendation_id}/approve"
     approval_request = {
-        "decided_by": "Reviewer",
         "approved_quantity": 19,
         "note": "Ok",
     }
 
-    with TestClient(create_app(settings)) as restarted_client:
+    with authenticated_test_client(
+        create_authenticated_test_app(settings)
+    ) as restarted_client:
         assert restarted_client.get(f"/api/v1/products/{product_id}").status_code == 200
         assert (
             len(restarted_client.get(f"/api/v1/products/{product_id}/demand").json())
@@ -303,14 +310,15 @@ def test_shared_operational_and_approved_workflow_state_survive_restarts(
         events=2,
     )
 
-    with TestClient(create_app(settings)) as final_client:
+    with authenticated_test_client(
+        create_authenticated_test_app(settings)
+    ) as final_client:
         assert get_workflow_review(final_client, recommendation_id) == approved
         assert get_workflow_history(final_client, recommendation_id) == approved_history
 
         retry = final_client.post(
             approval_path,
             json={
-                "decided_by": " Reviewer ",
                 "note": " Ok ",
             },
         )
@@ -321,7 +329,6 @@ def test_shared_operational_and_approved_workflow_state_survive_restarts(
         changed = final_client.post(
             approval_path,
             json={
-                "decided_by": "Reviewer",
                 "approved_quantity": 20,
                 "note": "Ok",
             },
@@ -329,7 +336,6 @@ def test_shared_operational_and_approved_workflow_state_survive_restarts(
         opposite = final_client.post(
             f"/api/v1/reorder-recommendations/{recommendation_id}/reject",
             json={
-                "decided_by": "Reviewer",
                 "reason": "Inbound",
             },
         )
@@ -358,7 +364,9 @@ def test_rejected_workflow_survives_restart_and_retries_idempotently(
 ) -> None:
     settings = postgresql_settings(postgresql_url)
 
-    with TestClient(create_app(settings)) as creation_client:
+    with authenticated_test_client(
+        create_authenticated_test_app(settings)
+    ) as creation_client:
         product_id = create_product(creation_client)
         seed_operational_flow(creation_client, product_id)
         created = create_workflow_review(
@@ -369,7 +377,9 @@ def test_rejected_workflow_survives_restart_and_retries_idempotently(
 
     rejection_path = f"/api/v1/reorder-recommendations/{recommendation_id}/reject"
 
-    with TestClient(create_app(settings)) as decision_client:
+    with authenticated_test_client(
+        create_authenticated_test_app(settings)
+    ) as decision_client:
         assert (
             get_workflow_review(
                 decision_client,
@@ -381,7 +391,6 @@ def test_rejected_workflow_survives_restart_and_retries_idempotently(
         response = decision_client.post(
             rejection_path,
             json={
-                "decided_by": " Reviewer ",
                 "reason": " Inbound scheduled. ",
             },
         )
@@ -418,7 +427,9 @@ def test_rejected_workflow_survives_restart_and_retries_idempotently(
         events=2,
     )
 
-    with TestClient(create_app(settings)) as restarted_client:
+    with authenticated_test_client(
+        create_authenticated_test_app(settings)
+    ) as restarted_client:
         assert (
             get_workflow_review(
                 restarted_client,
@@ -437,20 +448,18 @@ def test_rejected_workflow_survives_restart_and_retries_idempotently(
         retry = restarted_client.post(
             rejection_path,
             json={
-                "decided_by": "Reviewer",
                 "reason": "Inbound scheduled.",
             },
         )
         changed = restarted_client.post(
             rejection_path,
             json={
-                "decided_by": "Reviewer",
                 "reason": "Different",
             },
         )
         opposite = restarted_client.post(
             f"/api/v1/reorder-recommendations/{recommendation_id}/approve",
-            json={"decided_by": "Reviewer"},
+            json={},
         )
 
         assert retry.status_code == 200
@@ -484,7 +493,9 @@ def test_postgresql_api_preserves_safe_conflicts_and_batch_atomicity(
     postgresql_url: URL,
     clean_postgresql: None,
 ) -> None:
-    with TestClient(create_app(postgresql_settings(postgresql_url))) as client:
+    with authenticated_test_client(
+        create_authenticated_test_app(postgresql_settings(postgresql_url))
+    ) as client:
         product_id = create_product(client)
         duplicate = client.post(
             "/api/v1/products",
@@ -531,8 +542,10 @@ def test_custom_prefix_and_health_remain_unchanged_with_postgresql(
     clean_postgresql: None,
 ) -> None:
     prefix = "/custom/v1"
-    with TestClient(
-        create_app(postgresql_settings(postgresql_url, api_v1_prefix=prefix))
+    with authenticated_test_client(
+        create_authenticated_test_app(
+            postgresql_settings(postgresql_url, api_v1_prefix=prefix)
+        )
     ) as client:
         product_id = create_product(client, prefix=prefix)
 
@@ -548,8 +561,12 @@ def test_custom_prefix_and_health_remain_unchanged_with_postgresql(
 def test_memory_applications_remain_isolated() -> None:
     settings = Settings(environment=Environment.TEST)
     with (
-        TestClient(create_app(settings)) as first_client,
-        TestClient(create_app(settings)) as second_client,
+        authenticated_test_client(
+            create_authenticated_test_app(settings)
+        ) as first_client,
+        authenticated_test_client(
+            create_authenticated_test_app(settings)
+        ) as second_client,
     ):
         product_id = create_product(first_client)
         seed_operational_flow(first_client, product_id)

@@ -1,6 +1,6 @@
 # Risk, Cost, Security, and Responsible-AI Baseline
 
-Last updated: 2026-07-30
+Last updated: 2026-08-08
 
 ## Security Baseline
 
@@ -9,6 +9,12 @@ Last updated: 2026-07-30
 - Use synthetic or explicitly approved sample data.
 - Validate input at trust boundaries.
 - Preserve authorization and audit evidence for decisions.
+- Validate signed bearer credentials against one trusted issuer, audience,
+  asymmetric algorithm, required expiration, and bounded principal identity.
+- Derive terminal-decision attribution from the authenticated principal and
+  enforce separate read, write, and decision permissions.
+- Keep health, readiness, and API-description endpoints public only while their
+  payloads remain intentionally bounded.
 - Review dependencies and container images before release.
 - Do not expose cloud resources publicly without a documented requirement and
   review.

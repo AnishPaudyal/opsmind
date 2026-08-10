@@ -17,6 +17,18 @@ when the first application release is defined.
 - Recorded the completed Issue #58 implementation and validation evidence for
   final repository-owner review.
 
+### Phase 7 trusted-principal security
+
+- Added fail-closed signed bearer authentication with a bounded trusted
+  principal and explicit business-read, business-write, and
+  recommendation-decision permissions.
+- Protected business routes while preserving unauthenticated health,
+  readiness, and API-documentation surfaces.
+- Replaced caller-controlled recommendation decision attribution with the
+  authenticated principal identifier for both decisions and audit events.
+- Added bounded 401/403 contracts and OpenAPI bearer-security documentation
+  without expanding the governed HTTP event fields.
+
 ### Phase 6 decision-review and audit evaluation
 
 - Added the accepted Phase 6 decision-review/audit evaluation design.
