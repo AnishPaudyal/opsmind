@@ -25,7 +25,7 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 4     | Forecasting baseline and evaluation                   | Complete      | Owner-accepted Phase 4 review under Issue #48                       |
 | 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
 | 6     | Decision approval, rejection, and audit history       | Complete      | Owner-accepted Phase 6 review under Issue #52                       |
-| 7     | Testing, security, and observability hardening        | Current       | Earlier hardening complete; ADR-0006 implementation under Issue #62 |
+| 7     | Testing, security, and observability hardening        | Current       | Implementation complete; integrated review under Issue #64 awaits owner decision |
 | 8     | AWS foundation and first cloud deployment             | Planned       | No API container or AWS deployment exists                           |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
 | 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
@@ -187,12 +187,12 @@ production readiness beyond the evidence actually reviewed.
 
 **Phase 7 — Testing, security, and observability hardening** is Current.
 
-Phase 7A testing and coverage hardening is complete. Issue #58
-observability/readiness is complete and merged through PR #59. ADR-0006 now
-governs the accepted trusted-principal and authorization boundary. Issue #62
-implements that boundary on its dedicated review branch. Phase 8, API
-containerization, AWS, deployment, and production-readiness approval remain
-outside the current authorization.
+Phase 7A testing and coverage hardening, Issue #58 observability/readiness, and
+the accepted ADR-0006 security implementation are complete and merged. Issue
+#64 performs the integrated Phase 7 review and proposes `Proceed`; the owner
+decision remains pending. Phase 8 remains Planned. API containerization, AWS,
+deployment, and production-readiness approval remain outside the current
+authorization.
 
 Detailed current evidence and next-work boundaries live in
 [Current Status](docs/09-status/current-status.md).

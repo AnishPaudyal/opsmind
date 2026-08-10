@@ -32,18 +32,28 @@ The repository owner accepted ADR-0006 on 2026-08-08. PR #61 was squash-merged
 as `3e8b0a78344cc0164a35c268fa119d9c5321de50`, Issue #60 is closed, and the
 accepted tree exactly matches the reviewed ADR branch tree.
 
-Issue #62 is the active Phase 7 security implementation workstream on branch
-`feat/phase-7-security-boundary`.
+Issue #62 security implementation is complete:
+
+- PR #63 was squash-merged as
+  `575fd03eab2ebf5dc221ae1d52e44802ddaf7970`;
+- Issue #62 is closed;
+- the canonical merge tree exactly matches the reviewed feature tree;
+- post-merge Python-quality and repository-governance checks passed.
+
+Issue #64 is the active integrated Phase 7 review workstream on branch
+`docs/phase-7-integrated-review`.
 
 This branch is authorized for:
 
-- the accepted ADR-0006 trusted-principal and authorization implementation;
-- one reviewed bearer-token validation dependency;
-- focused security, API, and PostgreSQL tests;
-- supporting documentation, validation, and pull-request preparation.
+- the formal integrated Phase 7 evidence review;
+- a proposed Proceed, Revise, or Stop recommendation for repository-owner
+  review;
+- minimum current-status, roadmap, review, and governance documentation;
+- documentation validation and pull-request preparation.
 
 Do not begin on this branch:
 
+- application, test, dependency, migration, or workflow changes;
 - identity-provider provisioning;
 - application-managed users, sessions, organizations, or tenants;
 - AWS or cloud deployment;
@@ -57,9 +67,10 @@ Do not begin on this branch:
 - Phase 8 work;
 - production-readiness approval.
 
-After Issue #62 is reviewed and merged, the accepted Phase 7 sequence continues
-with integrated security/observability/testing evaluation and repository-owner
-review. Phase 8 remains unauthorized.
+Phase 7 remains Current until the repository owner accepts the integrated
+review and the accepted record is merged. Phase 8 remains Planned and
+unauthorized; an accepted Proceed decision may open Phase 8 design/planning but
+does not authorize implementation or deployment.
 ## Required Context
 
 Before starting work:

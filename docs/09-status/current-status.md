@@ -5,12 +5,12 @@ This document is the detailed authority for the current project state. The
 phase-review documents preserve the decisions and evidence that established
 earlier states.
 
-- Status date: 2026-08-08
+- Status date: 2026-08-09
 - Current formal gate: Phase 7 — testing, security, and observability hardening
-- Active workstream: Issue #62 — Phase 7 trusted-principal authentication and
-  authorization implementation
+- Active workstream: Issue #64 — integrated Phase 7 review
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
+- Issue #62 result: complete; PR #63 merged and Issue #62 closed
 
 ## Canonical Phase Status
 
@@ -23,7 +23,7 @@ earlier states.
 | 4 | Forecasting baseline and evaluation | Complete | Owner-accepted Proceed review under Issue #48 |
 | 5 | Stockout risk and reorder recommendations | Complete | Owner-accepted Proceed review under Issue #50 |
 | 6 | Decision approval, rejection, and audit history | Complete | Owner-accepted Proceed review under Issue #52 |
-| 7 | Testing, security, and observability hardening | Current | Earlier hardening complete; ADR-0006 implementation under Issue #62 |
+| 7 | Testing, security, and observability hardening | Current | Technical criteria pass; integrated review proposes Proceed and awaits owner acceptance |
 | 8–12 | Cloud, pipelines, MLOps, advanced AI, and production readiness | Planned | Not formally opened |
 
 Implementation delivery and formal phase completion remain separate. Phases 5
@@ -63,7 +63,10 @@ the reviewed acceptance tree, post-merge workflows passed, and design Issue
 
 ## Phase 7 Progress
 
-The repository owner accepted the Phase 7 hardening plan under Issue #54.
+The repository owner accepted the Phase 7 hardening plan under Issue #54. All
+four governed technical workstreams are merged. Phase 7 remains Current because
+the integrated review under Issue #64 still requires an explicit owner
+Proceed, Revise, or Stop decision.
 
 ### Phase 7A — testing and coverage hardening
 
@@ -80,8 +83,8 @@ The repository owner accepted the Issue #58 pre-implementation design on
 `f12082db31359a734b012867267de970cabcfa1a`, and Issue #58 closed automatically.
 The merge tree exactly matched the reviewed feature tree. Both post-merge
 Python-quality and repository-governance workflows passed. Issue #58 is
-complete; Phase 7 remains Current because its security and final-review
-workstreams are not complete.
+complete; Phase 7 remains Current only because the integrated owner-review gate
+is pending.
 
 #### HTTP observability checkpoint
 
@@ -202,10 +205,25 @@ public key with an enforced 2,048-bit RSA minimum. It validates one issuer, one
 strict audience, required expiration, optional `nbf`, a bounded stable subject,
 and a strict list-valued permissions claim. Missing configuration denies every
 protected request. Public probes and API-description endpoints remain public.
-Local implementation and regression testing are complete: the canonical
-PostgreSQL-backed gate passed 648 tests
+PR #63 was squash-merged on 2026-08-09 as
+`575fd03eab2ebf5dc221ae1d52e44802ddaf7970`; Issue #62 closed automatically.
+The canonical merge tree exactly matches the reviewed feature tree, and both
+post-merge workflows passed. Final PostgreSQL-backed validation passed 648 tests
 with zero skips or warnings, 97.65% statement coverage, 88.72% branch coverage,
-and 96.25% combined coverage. Implementation review and merge remain pending.
+and 96.25% combined coverage.
+
+### Issue #64 — integrated Phase 7 review
+
+The integrated review maps the accepted 20 Phase 7 exit criteria across Phase
+7A testing, Issue #58 observability/readiness, accepted ADR-0006, and Issue #62
+security. Criteria 1–19 pass with canonical evidence. The review proposes
+`Proceed` because no technical blocker remains within the accepted hardening
+scope.
+
+Criterion 20 remains pending: the repository owner must explicitly accept a
+`Proceed`, `Revise`, or `Stop` decision before Phase 7 can be marked Complete.
+The durable proposed review is
+[Phase 7 Review](../12-phase-reviews/phase-7-review.md).
 
 ## Issue #58 Residual Limitations
 
@@ -236,8 +254,10 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The immediate work is repository-owner review of the Issue #62 security
-implementation. Phase 7 remains Current until that implementation is merged and
-the integrated Phase 7 evaluation/review is complete.
+The immediate work is repository-owner review of the proposed integrated Phase
+7 `Proceed` decision under Issue #64. After explicit acceptance and merge of
+the accepted review, repository status may mark Phase 7 Complete and make Phase
+8 design/planning the next governed gate.
 
-Phase 8, deployment, and production-readiness work remain unauthorized.
+Phase 8 implementation, deployment, and production-readiness work remain
+unauthorized.
