@@ -4,8 +4,7 @@ These instructions govern AI-assisted work in the OpsMind repository.
 
 ## Current Phase
 
-Phase 8 — cloud deployment and product delivery — is the Current formal gate
-for design/planning only.
+Phase 8 — cloud deployment and product delivery — is the Current formal gate.
 
 The repository owner accepted the Phase 7 hardening plan under Issue #54.
 
@@ -46,19 +45,20 @@ The repository owner accepted the integrated Phase 7 `Proceed` review on
 tree exactly matches the reviewed acceptance tree, and both post-merge
 workflows passed. Phase 7 is Complete.
 
-The repository owner accepted ADR-0007 on 2026-08-10 and authorized Phase 8A
-containerization and delivery-foundation implementation. Issue #66 and branch
-`docs/phase-8-deployment-architecture` contain the accepted architecture record
-pending merge. A separate Phase 8A implementation issue and branch must be
-created from synchronized canonical `main` after that merge.
+The repository owner accepted ADR-0007 on 2026-08-10. PR #67 was squash-merged
+as `733f405ef89c38a2b09b95587bdbd77b938ee853`, Issue #66 is closed, and the
+canonical tree exactly matches the accepted design tree.
 
-The design branch is authorized for:
+Issue #68 is the active Phase 8A containerization and delivery-foundation
+implementation on branch `feat/phase-8a-containerization`.
 
-- zero-cost cloud and product-delivery architecture research;
-- AWS reference/translation and LocalStack Hobby skills-track research;
-- recording the owner-accepted ADR-0007 decision;
-- minimum current-status, roadmap, ADR-index, and governance documentation;
-- documentation validation and pull-request preparation.
+This branch is authorized for:
+
+- a locked, non-root production-oriented API image;
+- local disposable memory and PostgreSQL container validation;
+- image build and smoke-test CI without publishing or deployment;
+- minimum current-status, roadmap, operations, and governance documentation;
+- validation and pull-request preparation.
 
 Do not begin on this branch:
 
@@ -66,7 +66,6 @@ Do not begin on this branch:
 - identity-provider provisioning;
 - application-managed users, sessions, organizations, or tenants;
 - AWS or other cloud deployment;
-- API containerization;
 - production monitoring/alerting infrastructure;
 - external metrics or tracing backends;
 - HA/DR;
@@ -74,16 +73,15 @@ Do not begin on this branch:
 - production secret-store integration;
 - external ordering;
 - Phase 8 infrastructure or frontend implementation work;
-- Dockerfiles, infrastructure as code, deployment workflows, cloud resources,
-  or LocalStack exercises;
-- dependency, migration, or runtime-configuration changes;
+- infrastructure as code, deployment workflows, cloud resources, registry
+  publication, or LocalStack exercises;
+- application dependency, migration, or settings-model changes;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work;
 - production-readiness approval.
 
-Phase 8A implementation is authorized only after the accepted design PR is
-merged and a bounded implementation issue/branch is established. Phase 8B–8E,
-cloud deployment/resources, identity-provider provisioning, frontend work,
-LocalStack exercises, and production-readiness claims remain unauthorized.
+Phase 8B–8E, cloud deployment/resources, identity-provider provisioning,
+frontend work, LocalStack exercises, and production-readiness claims remain
+unauthorized.
 ## Required Context
 
 Before starting work:

@@ -1,0 +1,83 @@
+name: Container quality
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  container:
+    name: Container build and smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      IMAGE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build linux/amd64 image
+        run: >-
+          docker build
+          --pull
+          --platform linux/amd64
+          --build-arg VCS_REF="${IMAGE_REVISION}"
+          --tag opsmind-api:ci
+          .
+
+      - name: Validate full container contract
+        run: python3 scripts/validate_container.py --image opsmind-api:ci
+
+      - name: Report all high and critical vulnerabilities
+        run: >-
+          docker run --rm
+          --volume /var/run/docker.sock:/var/run/docker.sock
+          --volume opsmind-trivy-cache:/root/.cache/trivy
+          aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f
+          image
+          --scanners vuln
+          --severity CRITICAL,HIGH
+          --exit-code 0
+          --skip-version-check
+          opsmind-api:ci
+
+      - name: Fail on fixable high and critical vulnerabilities
+        run: >-
+          docker run --rm
+          --volume /var/run/docker.sock:/var/run/docker.sock
+          --volume opsmind-trivy-cache:/root/.cache/trivy
+          aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f
+          image
+          --scanners vuln
+          --severity CRITICAL,HIGH
+          --ignore-unfixed
+          --exit-code 1
+          --skip-version-check
+          opsmind-api:ci
+
+      - name: Remove vulnerability database cache
+        if: always()
+        run: docker volume rm --force opsmind-trivy-cache
+
+      - name: Repeat build
+        run: >-
+          docker build
+          --platform linux/amd64
+          --build-arg VCS_REF="${IMAGE_REVISION}"
+          --tag opsmind-api:ci-repeat
+          .
+
+      - name: Validate repeat-build functional equivalence
+        run: >-
+          python3 scripts/validate_container.py
+          --image opsmind-api:ci-repeat
+          --mode memory
