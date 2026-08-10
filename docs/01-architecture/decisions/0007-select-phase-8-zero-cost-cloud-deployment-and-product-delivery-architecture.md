@@ -97,6 +97,18 @@ charge.
 Payment methods are not used as permission to overrun. Where a platform can
 bill supplementary usage, configure a zero/minimum spend guardrail if available,
 monitor its dashboard, and prefer suspension over automatic paid continuation.
+The environment's operational rule is:
+
+```text
+free-tier exhaustion
+-> suspension or degraded portfolio availability
+-> owner review
+NOT
+-> automatic paid scaling or supplementary charging
+```
+
+No component may require adding a payment method merely to keep this portfolio
+environment running. Zero surprise cost has priority over availability.
 
 ## Candidate architectures
 
@@ -118,9 +130,9 @@ and a Terraform provider on its Free plan.
 Constraints: Render can take roughly a minute to wake after 15 idle minutes,
 has ephemeral storage and no Free pre-deploy command or one-off job. Neon also
 sleeps. Render Free cannot currently be represented by the official Terraform
-web-service resource, and Neon lacks a first-party Terraform provider. Those
-resources therefore require documented bootstrap. Free-tier policy is an
-external risk.
+web-service resource, but Render Blueprints can declare an image-backed Free
+web service. Neon lacks a first-party Terraform provider and remains a bounded
+bootstrap exception. Free-tier policy is an external risk.
 
 ### Candidate B — Cloudflare Pages, Koyeb, Neon, and ZITADEL
 
@@ -194,9 +206,9 @@ is not an architecture-preserving deployment.
 ```
 
 Terraform manages Cloudflare and ZITADEL configuration where supported and
-uses HCP Terraform Free for state and locking. Render Free and the initial Neon
-project are bounded documented bootstrap exceptions. This is a real
-multi-provider cloud deployment; it is not AWS.
+uses HCP Terraform Free for state and locking. A Render Blueprint manages the
+Free API service. The initial Neon project is a bounded documented bootstrap
+exception. This is a real multi-provider cloud deployment; it is not AWS.
 
 ## Container and backend runtime
 
@@ -233,6 +245,42 @@ Render Free limitations are architectural facts:
 
 Application startup must not migrate. Runtime health uses `/health`; platform
 readiness and post-deploy verification use `/ready`.
+
+### Render Blueprint ownership
+
+The official Render Terraform provider remains unsuitable for this service
+because its current web-service resource does not expose the Free plan. Phase
+8B therefore uses Render's native Blueprint infrastructure as code. A reviewed
+root `render.yaml`, added only by a separately authorized implementation issue,
+will declaratively own:
+
+- one `type: web` service with `runtime: image` and `plan: free`;
+- the stable service name and supported region;
+- a public, fully qualified GHCR `image.url` pinned to a reviewed immutable Git
+  SHA tag for the declared baseline release;
+- `healthCheckPath: /health`;
+- the required non-secret environment values, including environment, issuer,
+  audience, trusted JWKS URI, exact CORS origins, and allowed algorithm;
+- secret environment variable names with `sync: false`, never secret values;
+- any other supported service setting that implementation evidence shows is
+  required.
+
+Blueprint validation is part of CI. The Blueprint does not manage Neon, HCP
+Terraform state, Cloudflare Pages, or ZITADEL resources.
+
+The Blueprint's initial `image.url` references an image already published by
+Phase 8A. Image promotion is an operational release action, not an implicit
+mutable-tag update: every deployment passes the exact immutable tag/digest to
+the deploy hook. Before a later Blueprint sync, its declared `image.url` must be
+reconciled through review to the currently intended immutable release so a
+configuration sync cannot select a stale baseline.
+
+One-time Render bootstrap is limited to creating/connecting the Render account
+and Blueprint, granting repository access needed to sync `render.yaml`, entering
+initial `sync: false` secrets, and obtaining the secret deploy hook. Later new
+secret values must be added through Render's secret configuration because
+Blueprint sync ignores newly introduced `sync: false` values on an existing
+service. The Free service configuration itself is not described as manual.
 
 ## Cold-start and frontend behavior
 
@@ -308,30 +356,103 @@ allowance is ample for the portfolio. Self-managed identity is rejected because
 password storage, recovery, abuse controls, mail delivery, patching, and
 availability would materially expand risk and scope.
 
-The Phase 8B adaptation preserves ADR-0006:
+The Phase 8B adaptation preserves ADR-0006 and fixes the following contract.
 
-1. The SPA uses authorization code plus PKCE as a public client with no client
-   secret.
-2. The API accepts an **access token**, never an ID token.
-3. It validates the exact configured issuer, API/project audience, expiration,
-   stable bounded `sub`, and an allowed asymmetric signing algorithm.
-4. It resolves `kid` only through the configured trusted issuer JWKS URI.
-5. JWKS keys use a bounded cache TTL and one bounded refresh on an unknown
-   `kid`, preserving fail-closed behavior through rotation and outage.
-6. ZITADEL project-role keys from the documented roles claim are allowlisted
-   exactly: `business:read`, `business:write`, and
-   `recommendation:decide` map to the same internal `Permission` values.
-7. Missing, duplicate, malformed, or unknown roles grant nothing.
-8. Provider payloads, token values, raw claims, JWKS bodies, and validation
-   exceptions remain absent from client errors and governed logs.
-9. `TrustedPrincipal` remains provider-neutral; domain and repository layers
-   receive no ZITADEL types.
+### Token and algorithm configuration
+
+The public SPA OIDC application uses authorization code plus PKCE with no
+client secret. ZITADEL's default access-token form is opaque, which cannot be
+verified through the selected local JWKS model. The future OIDC application
+must therefore configure the official values:
+
+```text
+access_token_type = OIDC_TOKEN_TYPE_JWT
+access_token_role_assertion = true
+id_token_role_assertion = false
+```
+
+Protected OpsMind business requests carry the ZITADEL **JWT access token** as
+the bearer credential. The backend never accepts an ID token as API
+authorization. ID-token information may later support appropriate frontend
+identity display or session UI, but the frontend is not an authorization
+authority and its ID token cannot satisfy the backend bearer contract.
+
+ZITADEL's default RS256 web-key path is selected because ADR-0006 already
+allowlists RS256 and ZITADEL documents RS256 as its interoperable default. The
+future verifier's algorithm allowlist contains exactly `RS256`; it never derives
+an accepted algorithm from the token's untrusted `alg` header. Provisioning
+must stop for design review if the selected ZITADEL environment cannot maintain
+an RS256 signing key compatible with the current 2,048-bit RSA minimum.
+
+### Audience and role assertion
+
+The SPA authorization request includes the exact reserved audience scope:
+
+```text
+urn:zitadel:iam:org:project:id:{OPSMIND_PROJECT_ID}:aud
+```
+
+`{OPSMIND_PROJECT_ID}` is the immutable ZITADEL project ID for the OpsMind
+backend resource boundary. The verifier requires that exact project ID in the
+JWT access token `aud` claim. Missing, malformed, or wrong audience fails
+authentication. Audience proves intended recipient, not authorization; a token
+with this audience still needs an allowlisted role.
+
+With access-token role assertion enabled, OpsMind reads only the current
+project-specific claim:
+
+```text
+urn:zitadel:iam:org:project:{OPSMIND_PROJECT_ID}:roles
+```
+
+The backward-compatible unscoped role aliases are not authentication inputs.
+The claim must be an object whose keys are role keys and whose values have the
+documented ZITADEL organization-assignment shape. The only accepted role keys
+and mappings are:
+
+| ZITADEL project role key | OpsMind `Permission` |
+| --- | --- |
+| `opsmind.business.read` | `business:read` |
+| `opsmind.business.write` | `business:write` |
+| `opsmind.recommendation.decide` | `recommendation:decide` |
+
+The mapping is an exact allowlist. Unknown roles grant nothing. A missing or
+malformed project-specific role claim fails safely and grants no protected
+access. There are no wildcards, prefix matches, implicit hierarchy, or
+permission inheritance: `opsmind.business.write` does not imply
+`opsmind.recommendation.decide`.
+
+### JWKS verification contract
+
+The future backend verifier must:
+
+1. trust only the configured ZITADEL issuer and its configured/discovered JWKS
+   endpoint;
+2. require a signed JWT access token and reject opaque tokens and ID tokens;
+3. verify the signature with the explicit `RS256` allowlist;
+4. require the exact OpsMind project audience, expiration, and stable bounded
+   subject;
+5. parse only the exact project-specific role claim and apply the three-entry
+   role allowlist;
+6. resolve `kid` only from the trusted JWKS, using a bounded cache and one
+   bounded refresh for an unknown rotated `kid`;
+7. fail closed on missing configuration, discovery/JWKS failure, rotation
+   failure, malformed claims, unknown key, or validation error;
+8. bound token and subject values and never follow an attacker-controlled JWKS
+   URL; and
+9. keep token values, raw claims, keys, provider bodies, and provider exceptions
+   out of client errors and governed logs.
+
+`TrustedPrincipal` remains provider-neutral; domain and repository layers
+receive no ZITADEL types.
 
 Tenant/project bootstrap is manual because an account must exist. Terraform
 can then manage project/application/API-role configuration as far as the
 official provider supports it, using a narrowly scoped management credential.
-Exact claim shape, audience settings, logout/redirect URIs, rotation tests, and
-provider outage behavior require implementation evidence before deployment.
+Logout/redirect URIs, key rotation, malformed-token cases, outage behavior, and
+the exact configured claim shape require implementation evidence before
+deployment, but the token type, audience, role claim, role keys, permission
+mapping, algorithm, and JWKS trust boundary are fixed by this proposal.
 
 ## Frontend and first dashboard
 
@@ -381,12 +502,21 @@ pull request
 -> publish public GHCR full-SHA image
 -> one concurrency-controlled Alembic migration from GitHub Actions
 -> stop on migration failure
--> deploy exact image identity to Render through a secret deploy hook
+-> trigger Render through a secret deploy hook with the exact image identity
 -> wait for /ready
 -> authenticated API smoke test
 -> deploy immutable frontend assets to Cloudflare Pages
 -> browser/full-stack smoke test
 ```
+
+Image-backed Render services do not redeploy merely because a registry tag was
+updated. After the immutable image is published and migration succeeds, CI must
+deliberately invoke the secret deploy hook with an `imgURL` identifying the
+intended public GHCR full-SHA tag or digest. All image URL components other than
+the tag/digest match the Blueprint's default image URL. `latest` is prohibited.
+The returned Render deploy ID, Git SHA, and image digest form the release
+evidence. Rollback selects a still-available previous digest; Render does not
+retain registry images on OpsMind's behalf.
 
 GitHub Actions is selected for migrations because Render Free has no pre-deploy
 command or one-off job. The migration job uses a protected GitHub environment,
@@ -403,7 +533,7 @@ and a rollback-safe release sequence.
 
 | Classification | Values | Location and rule |
 | --- | --- | --- |
-| Runtime secret | Neon pooled database URL | Render secret environment value; never browser, Git, log, or image |
+| Runtime secret | Neon pooled database URL | Render secret environment value bootstrapped for a Blueprint `sync: false` key; never browser, Git, log, image, or Blueprint value |
 | Migration secret | Neon direct database URL | Protected GitHub environment secret; not passed to frontend or Terraform state |
 | Deployment secret | Render deploy hook/API token | Protected GitHub environment secret with minimum scope; hook URL is secret |
 | IaC secret | Cloudflare, ZITADEL, and HCP tokens | HCP sensitive workspace variables or protected Actions secrets; least privilege and rotation recorded |
@@ -431,15 +561,24 @@ Proposed IaC layout, only after authorization:
   supported;
 - official Render provider monitored, but **not** used to claim Free web-service
   creation while its web-service schema excludes the Free plan;
+- Render-native `render.yaml` Blueprint for the complete supported Free
+  image-backed service declaration;
 - no unofficial Neon provider without a separate supply-chain review;
 - one HCP Terraform Free workspace/environment with reviewed plans.
 
 The success criterion is not “everything automated.” Normal repeatable
-configuration is codified as far as supported. Bounded bootstrap comprises the
-Cloudflare/ZITADEL/Render/Neon accounts, Neon Free project and credentials,
-Render Free image-backed service and deploy hook, and HCP organization/workspace
-credentials. A versioned, secret-free checklist records resource identifiers,
-imports where possible, validation, and teardown; no values are copied into it.
+configuration is codified as far as supported. Terraform owns supported
+Cloudflare and ZITADEL resources; HCP Terraform owns their remote state and run
+history; Render Blueprint owns the Free API service; Alembic owns application
+schema; and GitHub Actions owns image, migration, and deploy orchestration.
+HCP Terraform does not claim ownership of Blueprint-managed Render configuration
+or manually bootstrapped Neon resources.
+
+Bounded bootstrap comprises the provider accounts, HCP organization/workspace
+credentials, initial Render Blueprint connection and secret values, and Neon
+Free project, role, and direct/pooled credentials. A versioned, secret-free
+checklist records resource identifiers, validation, and teardown; no secret
+values are copied into it.
 
 HCP Terraform Free is selected over committed or CI-local state. It provides
 encrypted remote state, locking/serialized runs, VCS/run history, and recovery
@@ -565,7 +704,8 @@ Gate: separately approved issue, full local/CI checks, image review, owner merge
 ### Phase 8B — zero-cost cloud backend
 
 - Bootstrap Neon, Render, ZITADEL, and HCP accounts/resources only as approved.
-- Add supported Terraform configuration and explicit bootstrap documentation.
+- Add supported Terraform configuration, the Render Blueprint, and explicit
+  Neon/account/secret bootstrap documentation.
 - Adapt ADR-0006 to ZITADEL access tokens/JWKS/roles with focused security tests.
 - Add exact CORS/configuration, GitHub migration gate, deployment, readiness,
   authenticated smoke, and secret handling.
@@ -613,8 +753,8 @@ Completion must prove, not merely propose:
 - durable managed PostgreSQL with controlled external migration;
 - OIDC PKCE login, access-token/JWKS validation, exact authorization, and
   trusted decision attribution;
-- multi-provider Terraform coverage with explicit bootstrap exceptions and
-  remote locked state;
+- multi-provider Terraform coverage, Render Blueprint coverage, explicit
+  bootstrap exceptions, and remote locked state;
 - GitHub Actions test/build/publish/migrate/deploy/smoke evidence;
 - secret/configuration separation and no leaked credentials;
 - liveness, readiness, structured logs, request correlation, deploy evidence,
@@ -640,7 +780,8 @@ Completion must prove, not merely propose:
 - Free-tier sleep can make the first API request take roughly a minute.
 - The service is single-instance, constrained, and not highly available.
 - Free logs and restore history are short.
-- Render and Neon introduce manual bootstrap/IaC drift risk.
+- The Terraform/Blueprint ownership boundary and Neon bootstrap introduce
+  reconciliation and drift risk.
 - Four hosted providers plus GitHub/HCP create more account and credential
   surfaces than one paid platform.
 - Free plans can change, throttle, suspend, or require redesign.
@@ -671,8 +812,8 @@ Before acceptance, the owner should confirm:
 
 - cold-start UX is acceptable for the public portfolio;
 - ZITADEL is preferred over Auth0 given current Free role-management evidence;
-- Render/Neon manual bootstrap is acceptable despite incomplete Terraform
-  coverage;
+- Render Blueprint ownership plus minimal Render secret/account bootstrap and
+  Neon manual bootstrap are acceptable despite incomplete Terraform coverage;
 - public GHCR image/source exposure is acceptable;
 - HCP Terraform is acceptable for state;
 - the LocalStack Hobby license fits the intended personal/non-commercial lab;
@@ -704,6 +845,10 @@ Render:
 - [Rollbacks](https://render.com/docs/rollbacks)
 - [Health checks](https://render.com/docs/health-checks)
 - [Logging](https://render.com/docs/logging)
+- [Blueprint infrastructure as code](https://render.com/docs/infrastructure-as-code)
+- [Blueprint YAML reference](https://render.com/docs/blueprint-spec)
+- [Prebuilt image deployment](https://render.com/docs/deploying-an-image)
+- [Deploy hooks](https://render.com/docs/deploy-hooks)
 - [Terraform provider](https://render.com/docs/terraform-provider)
 - [Terraform web-service resource](https://registry.terraform.io/providers/render-oss/render/latest/docs/resources/web_service)
 
@@ -732,8 +877,13 @@ Identity:
 - [ZITADEL pricing](https://zitadel.com/pricing)
 - [ZITADEL recommended OAuth flows](https://zitadel.com/docs/guides/integrate/login/oidc/oauth-recommended-flows)
 - [ZITADEL OIDC endpoints and JWKS](https://zitadel.com/docs/apis/openidoauth/endpoints)
+- [ZITADEL web keys and signing algorithms](https://zitadel.com/docs/guides/integrate/login/oidc/webkeys)
+- [ZITADEL opaque and JWT access tokens](https://zitadel.com/docs/concepts/knowledge/opaque-tokens)
+- [ZITADEL audience and project-role claims](https://zitadel.com/docs/guides/integrate/retrieve-user-roles)
 - [ZITADEL role scopes](https://zitadel.com/docs/apis/openidoauth/scopes)
 - [ZITADEL Terraform provider](https://registry.terraform.io/providers/zitadel/zitadel/latest)
+- [ZITADEL OIDC application resource](https://registry.terraform.io/providers/zitadel/zitadel/latest/docs/resources/application_oidc)
+- [ZITADEL project-role resource](https://registry.terraform.io/providers/zitadel/zitadel/latest/docs/resources/project_role)
 - [Auth0 pricing](https://auth0.com/pricing)
 - [Auth0 SPA SDK and PKCE](https://auth0.com/docs/libraries/auth0-single-page-app-sdk)
 - [Auth0 access tokens](https://auth0.com/docs/secure/tokens/access-tokens)

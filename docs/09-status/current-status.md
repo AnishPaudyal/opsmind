@@ -238,17 +238,19 @@ usage:
 
 - a reproducible non-root API image built by GitHub Actions, scanned, and
   published to public GHCR with an immutable Git identity;
-- a Render Free image-backed FastAPI service with managed HTTPS, explicit
-  cold-start UX, health/readiness checks, and bounded rollback;
+- a Render Blueprint-managed Free image-backed FastAPI service with managed
+  HTTPS, explicit cold-start UX, health/readiness checks, deliberate immutable
+  image deploys, and bounded rollback;
 - Neon Free PostgreSQL with pooled application traffic, direct controlled
   Alembic migration, scale-to-zero, SSL, bounded restore, and a future pgvector
   path;
-- ZITADEL Free authorization code plus PKCE, access-token/JWKS validation, and
-  exact role-to-permission mapping under ADR-0006;
+- ZITADEL Free authorization code plus PKCE, RS256 JWT access tokens, exact
+  OpsMind audience and project-role claims, bounded JWKS validation, and exact
+  role-to-permission mapping under ADR-0006;
 - a React/TypeScript/Vite dashboard hosted on Cloudflare Pages Free;
 - Terraform for supported Cloudflare and ZITADEL resources, HCP Terraform Free
-  state, and explicit Render/Neon bootstrap exceptions where official provider
-  support does not cover the selected free resources;
+  state, Render-native Blueprint IaC for the Free API service, and an explicit
+  Neon bootstrap exception where no first-party Terraform provider exists;
 - existing structured application logs plus Render deploy/log evidence and
   request-ID troubleshooting;
 - a separate LocalStack Hobby AWS skills track and an honest AWS translation
