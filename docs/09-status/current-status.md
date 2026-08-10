@@ -6,16 +6,18 @@ phase-review documents preserve the decisions and evidence that established
 earlier states.
 
 - Status date: 2026-08-10
-- Current formal gate: Phase 8 — containerization and delivery foundation
-- Active workstream: Issue #68 Phase 8A containerization implementation review
+- Current formal gate: Phase 8 — Phase 8B owner implementation decision
+- Active workstream: blocked Issue #70 Phase 8B cloud-backend implementation
+  gate
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
 - Issue #62 result: complete; PR #63 merged and Issue #62 closed
 - ADR-0007 result: Accepted by the repository owner on 2026-08-10
 - Issue #66 result: complete; PR #67 merged and Issue #66 closed
-- Issue #68 result: implementation prepared on its bounded branch; owner review
-  and merge pending
+- Issue #68 result: complete; PR #69 merged and Issue #68 closed
+- Issue #70 result: owner implementation gate prepared; implementation blocked
+  pending a separate repository-owner decision
 
 ## Canonical Phase Status
 
@@ -29,7 +31,7 @@ earlier states.
 | 5 | Stockout risk and reorder recommendations | Complete | Owner-accepted Proceed review under Issue #50 |
 | 6 | Decision approval, rejection, and audit history | Complete | Owner-accepted Proceed review under Issue #52 |
 | 7 | Testing, security, and observability hardening | Complete | Owner accepted Proceed under Issue #64 on 2026-08-09 |
-| 8 | Cloud deployment and product delivery | Current | ADR-0007 Accepted; Phase 8A implementation under Issue #68 |
+| 8 | Cloud deployment and product delivery | Current | Phase 8A Complete; Phase 8B owner implementation gate prepared under Issue #70 |
 | 9–12 | Data pipelines, MLOps, advanced AI, and production readiness | Planned | Not formally opened |
 
 Implementation delivery and formal phase completion remain separate. Phases 5
@@ -269,7 +271,7 @@ accepted record as `733f405ef89c38a2b09b95587bdbd77b938ee853`, its canonical
 tree exactly matched the accepted design tree, both post-merge workflows
 passed, and Issue #66 closed.
 
-Issue #68 is the bounded Phase 8A implementation. Its review branch adds:
+Issue #68 was the bounded Phase 8A implementation. Its merged result adds:
 
 - a digest-pinned official Python 3.13 slim multi-stage image built with pinned
   `uv` and the committed lockfile;
@@ -303,6 +305,27 @@ lower-risk supported base. CI reports all High/Critical findings and separately
 fails on fixable findings. This residual base-image risk remains explicit and
 must be revisited when upstream fixes or a newer official base are available.
 
+The repository owner authorized the final Phase 8A merge boundary after
+reviewing that residual. PR #69 squash-merged on 2026-08-10 as
+`631b8a2d1c9696b374f2b96b0295190bbca4a3bf`. Its canonical tree
+`95792e75a596465ff6701aedd8f7e2ae05bcce4d` exactly matches the reviewed
+feature tree, Issue #68 closed, and Repository checks, Python quality, and
+Container quality all passed on canonical `main`. Phase 8A is Complete.
+
+## Phase 8B Owner Implementation Gate
+
+[Issue #70](https://github.com/AnishPaudyal/opsmind/issues/70) and the
+[Phase 8B gate](../01-architecture/phase-8b-cloud-backend-gate.md) define the
+exact zero-cost backend implementation package, account/bootstrap order,
+secret ownership, ZITADEL/JWKS contract, Neon pooled/direct connections,
+Render cold-start and immutable-release behavior, GHCR identity, IaC ownership,
+current free-tier evidence, acceptance criteria, and required owner actions.
+
+This is planning/governance only. No Render, Neon, ZITADEL, HCP Terraform,
+GHCR package, Render Blueprint, Terraform, deployment, credential, Cloudflare,
+frontend, or LocalStack resource exists. Issue #70 remains blocked until the
+repository owner separately authorizes its bounded implementation.
+
 ## Issue #58 Residual Limitations
 
 These limitations are non-blocking for the accepted Issue #58 scope:
@@ -332,13 +355,13 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The immediate permitted work is repository-owner review of Issue #68 and its
-Phase 8A pull request. Phase 8A remains incomplete until that pull request is
-accepted and merged.
+The immediate permitted work is repository-owner review of the Issue #70
+Phase 8B implementation gate. Phase 8B implementation requires a separate,
+explicit owner authorization after that review.
 
-Phase 8B–8E, cloud resource creation, frontend implementation, deployment,
-identity-provider configuration, Terraform/HCP Terraform, Render Blueprint,
-LocalStack, and production-readiness work remain unauthorized pending their
-documented gates.
+Phase 8B–8E implementation, cloud resource creation, frontend implementation,
+deployment, identity-provider configuration, Terraform/HCP Terraform, Render
+Blueprint, GHCR publication, LocalStack, and production-readiness work remain
+unauthorized pending their documented gates.
 Phase 9 data pipelines, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph work
 remain Planned.
