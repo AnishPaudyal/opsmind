@@ -12,9 +12,10 @@ Phases 0 through 7 are complete. The repository owner accepted the integrated
 Phase 7 `Proceed` review under Issue #64 on 2026-08-09. On 2026-08-10, the
 repository owner accepted ADR-0007's genuine `$0` recurring Phase 8 portfolio
 architecture and authorized Phase 8A containerization and delivery-foundation
-implementation. Phase 8B–8E, cloud resource creation, deployment, identity
-provisioning, frontend implementation, and the separate LocalStack skills track
-remain subject to their documented gates.
+implementation. Issue #68 contains the locked, non-root API container
+foundation for review. Phase 8B–8E, cloud resource creation, deployment,
+identity provisioning, frontend implementation, and the separate LocalStack
+skills track remain subject to their documented gates.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
@@ -37,7 +38,7 @@ This repository does not yet contain:
 - Identity-provider provisioning, user administration, or tenant isolation
 - Calibrated stockout probability or a trained stockout model
 - Purchase-order creation or external ordering integration
-- A frontend user interface or containerized API
+- A frontend user interface
 - Cloud infrastructure or deployment
 - A production database, production data, or production-readiness approval
 
@@ -64,11 +65,13 @@ The current implemented local stack uses:
 - Python and FastAPI
 - PostgreSQL, SQLAlchemy, and Alembic
 - PyJWT with asymmetric cryptographic verification
+- A production-oriented non-root Docker image with disposable smoke validation
 - pytest, Ruff, mypy, and PostgreSQL integration tests
 
-Docker Compose is used only to run local PostgreSQL; it does not containerize
-the OpsMind API. Next.js and TypeScript remain a later product direction, and no
-frontend is currently implemented.
+Docker Compose remains scoped to the normal local PostgreSQL service. The API
+image and its isolated validation harness do not reuse or destroy that service
+or its named data volume. Next.js and TypeScript remain a later product
+direction, and no frontend is currently implemented.
 
 Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each
@@ -268,9 +271,35 @@ read-only calculations and are not persisted. PostgreSQL stores their
 operational inputs and the stored review workflow, including decisions and
 audit events. PostgreSQL selection does not provide production readiness.
 
+### Container delivery foundation
+
+The Phase 8A image installs the locked production dependency set and OpsMind
+package into a multi-stage Python 3.13 slim image. It runs one Uvicorn process
+as numeric user/group `10001:10001`, accepts a runtime `PORT` (default `8000`),
+and uses `/health` for Docker liveness. Database readiness remains `/ready`, and
+application startup never applies migrations.
+
+Build and validate the explicit `linux/amd64` delivery target with a full Git
+revision:
+
+```bash
+docker build --pull --platform linux/amd64 \
+  --build-arg "VCS_REF=$(git rev-parse HEAD)" \
+  --tag opsmind-api:phase8a .
+python3 scripts/validate_container.py --image opsmind-api:phase8a
+```
+
+The validator creates uniquely named disposable containers and a disposable
+network. It verifies memory and PostgreSQL startup, exact health/readiness,
+external migration, authentication, non-root/read-only execution, and graceful
+shutdown, then removes only the resources it created. See the
+[Phase 8A container-delivery guide](docs/01-architecture/phase-8a-container-delivery.md)
+for the runtime contract and operational limitations.
+
 #### Start and migrate local PostgreSQL
 
-The Compose file runs PostgreSQL 17 only; it does not containerize OpsMind:
+The existing Compose file continues to run the normal local PostgreSQL 17
+service only:
 
 ```bash
 docker compose -f compose.postgresql.yml up -d --wait
@@ -991,6 +1020,6 @@ claim cryptographic tamper evidence, compliance certification, external
 ordering, production-scale concurrency, production security, or production
 readiness.
 
-Phase 7 is Complete and Phase 8 design/planning is the current formal gate. See
-[Current Status](docs/09-status/current-status.md) for the active workstream and
-its validation evidence.
+Phase 7 is Complete and Phase 8A containerization is the current implementation
+gate under Issue #68. See [Current Status](docs/09-status/current-status.md) for
+the active workstream and its validation evidence.

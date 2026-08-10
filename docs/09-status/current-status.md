@@ -7,12 +7,15 @@ earlier states.
 
 - Status date: 2026-08-10
 - Current formal gate: Phase 8 — containerization and delivery foundation
-- Active workstream: accepted ADR-0007; Phase 8A implementation authorized
+- Active workstream: Issue #68 Phase 8A containerization implementation review
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
 - Issue #62 result: complete; PR #63 merged and Issue #62 closed
 - ADR-0007 result: Accepted by the repository owner on 2026-08-10
+- Issue #66 result: complete; PR #67 merged and Issue #66 closed
+- Issue #68 result: implementation prepared on its bounded branch; owner review
+  and merge pending
 
 ## Canonical Phase Status
 
@@ -26,7 +29,7 @@ earlier states.
 | 5 | Stockout risk and reorder recommendations | Complete | Owner-accepted Proceed review under Issue #50 |
 | 6 | Decision approval, rejection, and audit history | Complete | Owner-accepted Proceed review under Issue #52 |
 | 7 | Testing, security, and observability hardening | Complete | Owner accepted Proceed under Issue #64 on 2026-08-09 |
-| 8 | Cloud deployment and product delivery | Current | ADR-0007 Accepted; Phase 8A implementation authorized |
+| 8 | Cloud deployment and product delivery | Current | ADR-0007 Accepted; Phase 8A implementation under Issue #68 |
 | 9–12 | Data pipelines, MLOps, advanced AI, and production readiness | Planned | Not formally opened |
 
 Implementation delivery and formal phase completion remain separate. Phases 5
@@ -227,11 +230,11 @@ reviewed acceptance tree. Post-merge Repository checks run `31345098172` and
 Python quality run `31345098175` passed. The durable review is
 [Phase 7 Review](../12-phase-reviews/phase-7-review.md).
 
-## Phase 8 Architecture Investigation
+## Phase 8 Architecture and Phase 8A Delivery Foundation
 
-Issue #66 is the current design-only workstream. Proposed
+Issue #66 established the accepted
 [ADR-0007](../01-architecture/decisions/0007-select-phase-8-zero-cost-cloud-deployment-and-product-delivery-architecture.md)
-compares three current architectures using official sources and proposes a real
+after comparing three current architectures using official sources. It defines a real
 portfolio environment targeting `$0` recurring infrastructure cost at bounded
 usage:
 
@@ -261,12 +264,40 @@ technically credible paid AWS reference and future migration option. It is not
 the active implementation target because it violates the owner’s `$0`
 recurring-cost requirement.
 
-The repository owner accepted ADR-0007 on 2026-08-10 and authorized Phase 8A
-containerization and delivery-foundation implementation. No Dockerfile,
-frontend, infrastructure as code, deployment workflow, dependency, migration,
-runtime configuration, cloud resource, or LocalStack lab exists from the
-architecture investigation. Phase 8B–8E remain unauthorized pending their
-documented gates.
+The repository owner accepted ADR-0007 on 2026-08-10. PR #67 squash-merged the
+accepted record as `733f405ef89c38a2b09b95587bdbd77b938ee853`, its canonical
+tree exactly matched the accepted design tree, both post-merge workflows
+passed, and Issue #66 closed.
+
+Issue #68 is the bounded Phase 8A implementation. Its review branch adds:
+
+- a digest-pinned official Python 3.13 slim multi-stage image built with pinned
+  `uv` and the committed lockfile;
+- a non-editable installed OpsMind package with production dependencies only;
+- numeric non-root execution, a read-only-compatible runtime, no additional
+  Linux capabilities, and one signal-aware Uvicorn worker;
+- runtime `PORT` selection, `/health` Docker liveness, and unchanged `/ready`
+  dependency semantics;
+- explicit external Alembic migration support without startup migration or
+  schema creation;
+- disposable memory and PostgreSQL 17 container validation covering migration,
+  readiness, authentication, image contents, metadata, and graceful shutdown;
+- build-only `linux/amd64` container CI with a repeat-build functional check.
+
+The existing PostgreSQL-only developer Compose definition and its normal data
+volume remain unchanged. The Phase 8A validator uses separate, uniquely named,
+disposable resources. Phase 8A does not publish an image or introduce a cloud
+service, deployment, secret, dependency, migration, application behavior,
+frontend, infrastructure as code, or production-readiness claim.
+
+Local Phase 8A evidence passed two explicit `linux/amd64` builds on Apple
+Silicon, the complete disposable memory/PostgreSQL contract, and the repeat
+memory contract. The runtime image measured 64.90 MiB through Docker. The full
+PostgreSQL-backed Python gate passed 648 tests with zero skips or warnings and
+96.25% combined line-and-branch coverage. Digest-pinned Trivy 0.72.0, using a
+database updated at `2026-08-10T18:43:54Z`, reported zero fixed high or critical
+findings. Hosted pull-request checks remain pending until the branch is pushed
+and its pull request is opened.
 
 ## Issue #58 Residual Limitations
 
@@ -297,9 +328,9 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The immediate permitted work is a separately scoped Phase 8A containerization
-and delivery-foundation implementation from canonical `main` after the accepted
-architecture PR merges.
+The immediate permitted work is repository-owner review of Issue #68 and its
+Phase 8A pull request. Phase 8A remains incomplete until that pull request is
+accepted and merged.
 
 Phase 8B–8E, cloud resource creation, frontend implementation, deployment,
 identity-provider configuration, Terraform/HCP Terraform, Render Blueprint,

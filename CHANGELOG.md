@@ -9,6 +9,11 @@ when the first application release is defined.
 
 ### Phase 8 deployment and product-delivery design
 
+- Added the Phase 8A locked, non-root API image, disposable memory/PostgreSQL
+  smoke validation, and build-only container CI for Issue #68.
+- Preserved external Alembic migrations, `/health` liveness, `/ready`
+  dependency readiness, fail-closed authentication, and the existing
+  PostgreSQL 17 development Compose boundary.
 - Recorded repository-owner acceptance of ADR-0007 and authorization for the
   separately governed Phase 8A containerization and delivery foundation.
 - Proposed ADR-0007 with three current zero-cost architecture candidates and a

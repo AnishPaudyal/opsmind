@@ -187,7 +187,8 @@ production readiness beyond the evidence actually reviewed.
 ## Current Direction
 
 **Phase 8 — Cloud deployment and product delivery** is Current. Phase 8A
-containerization and delivery-foundation implementation is authorized.
+containerization and delivery-foundation implementation is active under Issue
+#68 and remains subject to repository-owner review and merge.
 
 Phase 7A testing and coverage hardening, Issue #58 observability/readiness, and
 the accepted ADR-0006 security implementation are complete and merged. Issue
@@ -198,7 +199,7 @@ The repository owner accepted ADR-0007 on 2026-08-10. It defines a genuine
 zero-recurring-cost portfolio deployment and first integrated frontend
 architecture. AWS remains a reference translation and separate LocalStack
 skills track, not a deployment claim. Phase 8A API containerization is
-authorized through a separate bounded implementation issue. Frontend,
+implemented for review on its separate bounded issue branch. Frontend,
 infrastructure as code, cloud resources, deployment, Phase 8B–8E, and
 production-readiness approval remain blocked pending their documented gates.
 Phase 9 data, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain Planned.
