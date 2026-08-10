@@ -6,7 +6,7 @@ from enum import StrEnum
 from typing import Any, Protocol
 
 import jwt
-from jwt import InvalidTokenError
+from jwt import PyJWTError
 
 MAX_BEARER_TOKEN_LENGTH = 8192
 MAX_PRINCIPAL_ID_LENGTH = 128
@@ -125,7 +125,7 @@ class JWTAuthenticator:
                 principal_id=principal_id,
                 permissions=permissions,
             )
-        except (InvalidTokenError, KeyError, TypeError, ValueError):
+        except (PyJWTError, KeyError, TypeError, ValueError):
             raise AuthenticationError from None
 
 

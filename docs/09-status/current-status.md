@@ -198,11 +198,12 @@ identity from the trusted principal rather than caller-supplied `decided_by`,
 while keeping `/health` and `/ready` unauthenticated and bounded.
 
 The implementation uses PyJWT with the `crypto` extra and one configured RS256
-public key. It validates one issuer, one strict audience, required expiration,
-optional `nbf`, a bounded stable subject, and a strict list-valued permissions
-claim. Missing configuration denies every protected request. Public probes and
-API-description endpoints remain public. Local implementation and regression
-testing are complete: the canonical PostgreSQL-backed gate passed 647 tests
+public key with an enforced 2,048-bit RSA minimum. It validates one issuer, one
+strict audience, required expiration, optional `nbf`, a bounded stable subject,
+and a strict list-valued permissions claim. Missing configuration denies every
+protected request. Public probes and API-description endpoints remain public.
+Local implementation and regression testing are complete: the canonical
+PostgreSQL-backed gate passed 648 tests
 with zero skips or warnings, 97.65% statement coverage, 88.72% branch coverage,
 and 96.25% combined coverage. Implementation review and merge remain pending.
 

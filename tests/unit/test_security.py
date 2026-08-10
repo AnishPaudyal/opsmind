@@ -7,6 +7,7 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from jwt.warnings import InsecureKeyLengthWarning
 
 from opsmind.security import (
     MAX_BEARER_TOKEN_LENGTH,
@@ -211,6 +212,28 @@ def test_jwt_authenticator_rejects_invalid_signature(
         jwt_authenticator(trusted_public_key).authenticate(
             encode_token(attacker_private_pem)
         )
+
+
+def test_jwt_authenticator_rejects_undersized_rsa_verification_key() -> None:
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=1024)
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode("ascii")
+    public_pem = (
+        private_key.public_key()
+        .public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        .decode("ascii")
+    )
+    with pytest.warns(InsecureKeyLengthWarning):
+        token = encode_token(private_pem)
+
+    with pytest.raises(AuthenticationError):
+        jwt_authenticator(public_pem).authenticate(token)
 
 
 def test_jwt_authenticator_rejects_disallowed_and_unsigned_algorithms(

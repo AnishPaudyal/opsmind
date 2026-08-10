@@ -187,11 +187,12 @@ cloud-deployment readiness.
 
 All versioned business endpoints fail closed unless the application receives a
 valid `Authorization: Bearer <token>` credential. OpsMind validates the RS256
-signature against one configured PEM public key and requires an exact issuer,
-one exact audience, expiration, and a bounded subject. A present `nbf` claim is
-validated with the configured bounded leeway. The `permissions` claim must be
-a JSON list of strings; only `business:read`, `business:write`, and
-`recommendation:decide` grant access, and unknown values grant nothing.
+signature against one configured PEM RSA public key of at least 2,048 bits and
+requires an exact issuer, one exact audience, expiration, and a bounded
+subject. A present `nbf` claim is validated with the configured bounded leeway.
+The `permissions` claim must be a JSON list of strings; only `business:read`,
+`business:write`, and `recommendation:decide` grant access, and unknown values
+grant nothing.
 
 Configure issuer, audience, and public key together. Omitting all three keeps
 `/health`, `/ready`, OpenAPI, Swagger UI, and ReDoc public while every business

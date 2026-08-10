@@ -512,9 +512,10 @@ security implementation to proceed.
 
 Issue #62 implements the accepted boundary with PyJWT 2.13 and its maintained
 cryptographic backend. The first implementation uses one configured PEM RSA
-public key and an explicit `RS256` allowlist, avoiding a runtime identity-
-provider network dependency while preserving the authenticator seam for a
-separately reviewed JWKS strategy if deployment requirements later need one.
+public key, an explicit `RS256` allowlist, and PyJWT's enforced 2,048-bit RSA
+minimum, avoiding a runtime identity-provider network dependency while
+preserving the authenticator seam for a separately reviewed JWKS strategy if
+deployment requirements later need one.
 
 The implementation keeps the `permissions` claim deliberately bounded as a
 JSON list of exact application permission strings. Unknown strings grant
