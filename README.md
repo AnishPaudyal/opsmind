@@ -9,12 +9,12 @@ coherent product.
 ## Current Status
 
 Phases 0 through 7 are complete. The repository owner accepted the integrated
-Phase 7 `Proceed` review under Issue #64 on 2026-08-09. Phase 8 cloud deployment
-and product-delivery design/planning is the next governed gate. Issue #66 and
-Proposed ADR-0007 define the architecture for owner review; implementation and
-cloud resource creation remain unauthorized pending acceptance. The proposal
-targets a genuine `$0` recurring portfolio deployment while retaining AWS as a
-reference architecture and separate LocalStack skills track.
+Phase 7 `Proceed` review under Issue #64 on 2026-08-09. On 2026-08-10, the
+repository owner accepted ADR-0007's genuine `$0` recurring Phase 8 portfolio
+architecture and authorized Phase 8A containerization and delivery-foundation
+implementation. Phase 8B–8E, cloud resource creation, deployment, identity
+provisioning, frontend implementation, and the separate LocalStack skills track
+remain subject to their documented gates.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory

@@ -6,13 +6,13 @@ phase-review documents preserve the decisions and evidence that established
 earlier states.
 
 - Status date: 2026-08-10
-- Current formal gate: Phase 8 — deployment and product-delivery design/planning
-- Active workstream: Issue #66 — Phase 8 zero-cost cloud/product-delivery architecture
+- Current formal gate: Phase 8 — containerization and delivery foundation
+- Active workstream: accepted ADR-0007; Phase 8A implementation authorized
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
 - Issue #62 result: complete; PR #63 merged and Issue #62 closed
-- ADR-0007 result: Proposed; repository-owner acceptance pending
+- ADR-0007 result: Accepted by the repository owner on 2026-08-10
 
 ## Canonical Phase Status
 
@@ -26,7 +26,7 @@ earlier states.
 | 5 | Stockout risk and reorder recommendations | Complete | Owner-accepted Proceed review under Issue #50 |
 | 6 | Decision approval, rejection, and audit history | Complete | Owner-accepted Proceed review under Issue #52 |
 | 7 | Testing, security, and observability hardening | Complete | Owner accepted Proceed under Issue #64 on 2026-08-09 |
-| 8 | Cloud deployment and product delivery | Current | Design/planning authorized; implementation awaits an accepted architecture |
+| 8 | Cloud deployment and product delivery | Current | ADR-0007 Accepted; Phase 8A implementation authorized |
 | 9–12 | Data pipelines, MLOps, advanced AI, and production readiness | Planned | Not formally opened |
 
 Implementation delivery and formal phase completion remain separate. Phases 5
@@ -55,8 +55,7 @@ OpsMind currently provides a packaged FastAPI modular monolith with:
 - trusted terminal-decision and audit-event actor attribution;
 - deterministic Phase 4, Phase 5, and Phase 6 evaluation evidence.
 
-ADRs 0000 through 0006 are Accepted. ADR-0007 is Proposed and not yet
-authoritative. On 2026-08-08, the repository owner accepted ADR-0006 and
+ADRs 0000 through 0007 are Accepted. On 2026-08-08, the repository owner accepted ADR-0006 and
 authorized a separately governed Phase 7 security implementation.
 
 PR #61 squash-merged the accepted ADR as
@@ -262,11 +261,12 @@ technically credible paid AWS reference and future migration option. It is not
 the active implementation target because it violates the owner’s `$0`
 recurring-cost requirement.
 
-ADR-0007 remains Proposed. No Dockerfile, frontend, infrastructure as code,
-deployment workflow, dependency, migration, runtime configuration, cloud
-resource, or LocalStack lab exists from this investigation. Phase 8
-implementation requires owner acceptance and separately authorized Phase
-8A–8E issues.
+The repository owner accepted ADR-0007 on 2026-08-10 and authorized Phase 8A
+containerization and delivery-foundation implementation. No Dockerfile,
+frontend, infrastructure as code, deployment workflow, dependency, migration,
+runtime configuration, cloud resource, or LocalStack lab exists from the
+architecture investigation. Phase 8B–8E remain unauthorized pending their
+documented gates.
 
 ## Issue #58 Residual Limitations
 
@@ -297,11 +297,13 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The immediate work is repository-owner review of Proposed ADR-0007 under Issue
-#66. Phase 8 design/planning is authorized.
+The immediate permitted work is a separately scoped Phase 8A containerization
+and delivery-foundation implementation from canonical `main` after the accepted
+architecture PR merges.
 
-Phase 8 implementation, cloud resource creation, frontend implementation,
-deployment, and production-readiness work remain unauthorized pending an
-accepted Phase 8 architecture and separately approved implementation issues.
+Phase 8B–8E, cloud resource creation, frontend implementation, deployment,
+identity-provider configuration, Terraform/HCP Terraform, Render Blueprint,
+LocalStack, and production-readiness work remain unauthorized pending their
+documented gates.
 Phase 9 data pipelines, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph work
 remain Planned.

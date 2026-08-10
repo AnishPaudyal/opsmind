@@ -9,6 +9,8 @@ when the first application release is defined.
 
 ### Phase 8 deployment and product-delivery design
 
+- Recorded repository-owner acceptance of ADR-0007 and authorization for the
+  separately governed Phase 8A containerization and delivery foundation.
 - Proposed ADR-0007 with three current zero-cost architecture candidates and a
   Cloudflare Pages, Render, Neon, ZITADEL, GitHub, and Terraform recommendation.
 - Retained the former ECS/Fargate, RDS PostgreSQL, Cognito, CloudFront, and

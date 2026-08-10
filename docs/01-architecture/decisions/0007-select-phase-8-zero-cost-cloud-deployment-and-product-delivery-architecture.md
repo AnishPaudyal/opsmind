@@ -1,18 +1,34 @@
 # ADR-0007: Select Phase 8 Zero-Cost Cloud Deployment and Product-Delivery Architecture
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-08-10
 - Decision owners: Repository owner
 - Related issue: #66
 
 ## Status and authority
 
-Repository-owner acceptance is pending. This proposal authorizes no cloud
-resource, identity tenant, Dockerfile, frontend, infrastructure-as-code,
-workflow, dependency, migration, or runtime change. Each implementation stage
-requires a separately approved issue after this ADR is accepted.
+The repository owner accepted this decision on 2026-08-10 and authorized Phase
+8A containerization and delivery-foundation implementation. The exact owner
+acceptance is:
 
-The repository owner redirected the proposal before acceptance: the Phase 8
+> I accept ADR-0007 establishing the Phase 8 zero-cost cloud deployment and
+> product-delivery architecture, including Cloudflare Pages for the
+> React/TypeScript frontend, Render Free for the containerized FastAPI API,
+> Neon Free PostgreSQL, ZITADEL OIDC using JWT access tokens and trusted
+> project-role authorization, GitHub Actions and GHCR for CI/CD and immutable
+> container delivery, Terraform/HCP Terraform plus Render Blueprints for
+> infrastructure-as-code, controlled external Alembic migrations, the
+> zero-surprise-cost policy, the Phase 8C integrated dashboard, and the separate
+> LocalStack AWS-skills track. I authorize ADR-0007 to be recorded as Accepted
+> and authorize Phase 8A containerization and delivery-foundation implementation
+> to proceed. Phase 8B–8E remain subject to their documented implementation
+> gates.
+
+Acceptance authorizes only Phase 8A. It does not authorize Render, Neon,
+ZITADEL, Cloudflare, Terraform/HCP Terraform, Render Blueprint, frontend,
+LocalStack, Phase 8B–8E, Phase 9, MLOps, LLM, RAG, or LangGraph implementation.
+
+Before acceptance, the repository owner redirected the proposal: the Phase 8
 portfolio environment must target genuine `$0` recurring infrastructure cost
 under normal low-volume demonstration use. The former approximately
 `$50–65/month` AWS runtime remains useful reference analysis, but is not the

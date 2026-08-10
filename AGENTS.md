@@ -46,15 +46,17 @@ The repository owner accepted the integrated Phase 7 `Proceed` review on
 tree exactly matches the reviewed acceptance tree, and both post-merge
 workflows passed. Phase 7 is Complete.
 
-Issue #66 is the active Phase 8 architecture investigation on branch
-`docs/phase-8-deployment-architecture`. ADR-0007 is Proposed and owner
-acceptance remains pending.
+The repository owner accepted ADR-0007 on 2026-08-10 and authorized Phase 8A
+containerization and delivery-foundation implementation. Issue #66 and branch
+`docs/phase-8-deployment-architecture` contain the accepted architecture record
+pending merge. A separate Phase 8A implementation issue and branch must be
+created from synchronized canonical `main` after that merge.
 
-This branch is authorized for:
+The design branch is authorized for:
 
 - zero-cost cloud and product-delivery architecture research;
 - AWS reference/translation and LocalStack Hobby skills-track research;
-- a Proposed ADR-0007 for repository-owner review;
+- recording the owner-accepted ADR-0007 decision;
 - minimum current-status, roadmap, ADR-index, and governance documentation;
 - documentation validation and pull-request preparation.
 
@@ -78,10 +80,10 @@ Do not begin on this branch:
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work;
 - production-readiness approval.
 
-Phase 8 implementation remains blocked until the repository owner accepts the
-architecture and separately authorizes bounded implementation issues. Design
-work does not authorize deployment, cloud resources, frontend code, or
-production-readiness claims.
+Phase 8A implementation is authorized only after the accepted design PR is
+merged and a bounded implementation issue/branch is established. Phase 8B–8E,
+cloud deployment/resources, identity-provider provisioning, frontend work,
+LocalStack exercises, and production-readiness claims remain unauthorized.
 ## Required Context
 
 Before starting work:
