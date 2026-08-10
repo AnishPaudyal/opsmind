@@ -185,14 +185,17 @@ production readiness beyond the evidence actually reviewed.
 
 ## Current Direction
 
-**Phase 7 — Testing, security, and observability hardening** is Current.
+**Phase 8 — Cloud deployment and product delivery** is Current for
+design/planning only.
 
 Phase 7A testing and coverage hardening, Issue #58 observability/readiness, and
 the accepted ADR-0006 security implementation are complete and merged. Issue
-#64 performs the integrated Phase 7 review and proposes `Proceed`; the owner
-decision remains pending. Phase 8 remains Planned. API containerization, AWS,
-deployment, and production-readiness approval remain outside the current
-authorization.
+#64 integrates that evidence, and the repository owner accepted its `Proceed`
+decision on 2026-08-09. Phase 7 is Complete once the accepted review merges.
+Phase 8 deployment and product-delivery design/planning is authorized, but API
+containerization, frontend implementation, AWS resources, deployment, and
+production-readiness approval remain blocked pending an accepted Phase 8
+architecture.
 
 Detailed current evidence and next-work boundaries live in
 [Current Status](docs/09-status/current-status.md).

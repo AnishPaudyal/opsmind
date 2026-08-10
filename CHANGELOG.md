@@ -33,8 +33,8 @@ when the first application release is defined.
 
 - Recorded the complete testing, observability, readiness, security, and
   architecture evidence against all 20 accepted Phase 7 exit criteria.
-- Proposed `Proceed` with explicit infrastructure, product, security, and
-  production limitations; repository-owner acceptance remains pending.
+- Recorded the repository-owner-accepted `Proceed` decision with explicit
+  infrastructure, product, security, and production limitations.
 
 ### Phase 6 decision-review and audit evaluation
 

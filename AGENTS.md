@@ -4,8 +4,8 @@ These instructions govern AI-assisted work in the OpsMind repository.
 
 ## Current Phase
 
-Phase 7 — testing, security, and observability hardening — is the Current formal
-gate on canonical `main`.
+Phase 8 — cloud deployment and product delivery — is the Current formal gate
+for design/planning only after the accepted Phase 7 review merges.
 
 The repository owner accepted the Phase 7 hardening plan under Issue #54.
 
@@ -40,14 +40,14 @@ Issue #62 security implementation is complete:
 - the canonical merge tree exactly matches the reviewed feature tree;
 - post-merge Python-quality and repository-governance checks passed.
 
-Issue #64 is the active integrated Phase 7 review workstream on branch
+The repository owner accepted the integrated Phase 7 `Proceed` review under
+Issue #64 on 2026-08-09. The accepted record is being finalized on branch
 `docs/phase-7-integrated-review`.
 
 This branch is authorized for:
 
 - the formal integrated Phase 7 evidence review;
-- a proposed Proceed, Revise, or Stop recommendation for repository-owner
-  review;
+- the owner-accepted `Proceed` decision;
 - minimum current-status, roadmap, review, and governance documentation;
 - documentation validation and pull-request preparation.
 
@@ -64,13 +64,13 @@ Do not begin on this branch:
 - backup/restore;
 - production secret-store integration;
 - external ordering;
-- Phase 8 work;
+- Phase 8 implementation work;
 - production-readiness approval.
 
-Phase 7 remains Current until the repository owner accepts the integrated
-review and the accepted record is merged. Phase 8 remains Planned and
-unauthorized; an accepted Proceed decision may open Phase 8 design/planning but
-does not authorize implementation or deployment.
+Once the accepted review is merged, Phase 7 is Complete and Phase 8
+design/planning may begin as a separately governed workstream. The accepted
+Proceed decision does not authorize implementation, deployment, AWS resources,
+frontend code, or production-readiness claims.
 ## Required Context
 
 Before starting work:

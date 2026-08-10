@@ -1,12 +1,12 @@
 # Phase 7 Review — Testing, Security, and Observability Hardening
 
-Status: Owner review pending
+Status: Accepted
 Review date: 2026-08-09
 Governed by: Issue #64
 Technical result: Passed
 Proposed decision: Proceed
-Formal decision: Pending repository-owner acceptance
-Owner acceptance: Pending
+Formal decision: Proceed
+Owner acceptance: Accepted on 2026-08-09
 
 ## Review Scope
 
@@ -80,7 +80,7 @@ Both post-security-merge workflows on canonical `main` passed:
 | 17 | Important observability/readiness failure paths tested | Passed | Safe pre-start 500, post-start streaming error, unavailable database, and missing/wrong/multiple revision states are covered. |
 | 18 | No unsupported production/cloud/security claims | Passed | Documentation preserves the bounded application-level evidence and explicitly denies production-readiness and compliance claims. |
 | 19 | Phase 8/infrastructure exclusions preserved | Passed | No AWS, deployment, API containerization, HA/DR, production monitoring, secret store, external ordering, or production-readiness capability was introduced. |
-| 20 | Owner-accepted Proceed, Revise, or Stop review | Pending owner decision | This document records the evidence-backed proposed `Proceed`; Phase 7 remains Current until the repository owner explicitly accepts a decision and the review is merged. |
+| 20 | Owner-accepted Proceed, Revise, or Stop review | Passed | The repository owner explicitly accepted `Proceed` on 2026-08-09, authorizing Phase 8 design/planning after this review merges. |
 
 ## Testing and Quality Assessment
 
@@ -204,7 +204,7 @@ this review neither implements nor dismisses them.
 These limitations are explicit and align with Phase 8, later product work, or
 production-readiness governance. None contradicts a Phase 7 exit criterion.
 
-## Proposed Decision
+## Decision
 
 **Proceed**
 
@@ -219,21 +219,22 @@ Technical rationale:
 - residual infrastructure, product, and production limitations remain
   explicit.
 
-The proposed Proceed decision means Phase 8 design/planning may become the next
-governed gate after owner acceptance and review merge. It does not authorize
-Phase 8 implementation, deployment, AWS resources, or production-readiness
-claims.
+The accepted Proceed decision makes Phase 8 design/planning the next governed
+gate after this review merges. It does not authorize Phase 8 implementation,
+deployment, AWS resources, or production-readiness claims.
 
 ## Owner Decision
 
-**Pending repository-owner acceptance**
+**Accepted — Proceed — 2026-08-09**
 
-Requested acceptance statement:
+The repository owner recorded this authoritative acceptance:
 
 `I accept the Phase 7 integrated review, including the documented testing,
 observability, readiness, security, architecture, product-scope, and residual
 infrastructure limitations, and approve the Proceed decision to Phase 8
 design/planning.`
 
-Until the repository owner explicitly accepts Proceed, Revise, or Stop and the
-accepted review is merged, Phase 7 remains Current and Phase 8 remains Planned.
+This acceptance completes the owner-decision criterion. Once this accepted
+review is merged, Phase 7 is Complete and Phase 8 design/planning is authorized;
+Phase 8 implementation remains blocked pending separate owner acceptance of its
+architecture.
