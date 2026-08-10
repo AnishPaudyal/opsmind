@@ -4,7 +4,7 @@
 - Date: 2026-08-09
 - Decision owners: Anish Paudyal
 - Related issues: #64, #66
-- Related pull requests: Pending
+- Related pull requests: #67
 - Supersedes: None
 - Superseded by: None
 
