@@ -70,6 +70,75 @@ Unconfigured authentication remains fail-closed for every business route.
 `/health`, `/ready`, and API-description endpoints retain their accepted public
 behavior.
 
+## Direct local runs
+
+The disposable validator is the canonical test path. These commands are for
+manual inspection and use only synthetic/local configuration. Export auth
+values from a secure local source; the commands pass variable names to Docker
+without placing their values in image layers or the command line:
+
+```bash
+export OPSMIND_AUTH_ISSUER='https://local-issuer.invalid'
+export OPSMIND_AUTH_AUDIENCE='opsmind-api'
+export OPSMIND_AUTH_PUBLIC_KEY='<synthetic-local-public-key>'
+
+docker run --detach --name opsmind-api-memory \
+  --publish 127.0.0.1:8000:8000 \
+  --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m \
+  --cap-drop ALL --security-opt no-new-privileges:true \
+  --env OPSMIND_ENVIRONMENT=local \
+  --env OPSMIND_AUTH_ISSUER \
+  --env OPSMIND_AUTH_AUDIENCE \
+  --env OPSMIND_AUTH_PUBLIC_KEY \
+  opsmind-api:phase8a
+```
+
+Probe liveness and readiness without adding a client to the image:
+
+```bash
+python3 -c 'import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8000/health").read().decode())'
+python3 -c 'import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8000/ready").read().decode())'
+```
+
+Stop and remove that one disposable API container:
+
+```bash
+docker stop --time 10 opsmind-api-memory
+docker rm opsmind-api-memory
+```
+
+For a manual PostgreSQL-backed run, reuse the established PostgreSQL-only
+Compose project rather than creating a second topology. The example value is
+the repository's synthetic local-development credential, not a deployable
+secret:
+
+```bash
+docker compose -f compose.postgresql.yml up -d --wait
+export OPSMIND_DATABASE_URL='postgresql+psycopg://opsmind:opsmind-development-only@postgresql:5432/opsmind'
+
+docker run --rm --network opsmind_default \
+  --env OPSMIND_DATABASE_URL \
+  opsmind-api:phase8a \
+  alembic upgrade head
+
+docker run --detach --name opsmind-api-postgresql \
+  --network opsmind_default \
+  --publish 127.0.0.1:8000:8000 \
+  --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m \
+  --cap-drop ALL --security-opt no-new-privileges:true \
+  --env OPSMIND_ENVIRONMENT=local \
+  --env OPSMIND_PERSISTENCE_BACKEND=postgresql \
+  --env OPSMIND_DATABASE_URL \
+  --env OPSMIND_AUTH_ISSUER \
+  --env OPSMIND_AUTH_AUDIENCE \
+  --env OPSMIND_AUTH_PUBLIC_KEY \
+  opsmind-api:phase8a
+```
+
+Use the same `/health` and `/ready` probes, then stop and remove only the API
+container. `docker compose -f compose.postgresql.yml down` stops the normal
+developer database while preserving its named volume.
+
 ## Database migration boundary
 
 Application startup never migrates. Run Alembic as a separate, controlled job
