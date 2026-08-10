@@ -112,3 +112,4 @@ when an ADR is required.
 | [ADR-0004](0004-co-locate-recommendation-workflow-state-and-audit-events.md) | Co-locate Recommendation Workflow State and Audit Events | Accepted | 2026-08-01 | #28, #30 |
 | [ADR-0005](0005-use-sqlalchemy-and-alembic-for-postgresql-persistence.md) | Use SQLAlchemy and Alembic for PostgreSQL Persistence | Accepted | 2026-08-02 | #32 |
 | [ADR-0006](0006-establish-trusted-principal-and-authorization-boundary.md) | Establish Trusted Principal and Authorization Boundary | Accepted | 2026-08-08 | #60 |
+| [ADR-0007](0007-select-phase-8-zero-cost-cloud-deployment-and-product-delivery-architecture.md) | Select Phase 8 Zero-Cost Cloud Deployment and Product-Delivery Architecture | Accepted | 2026-08-10 | #66 |

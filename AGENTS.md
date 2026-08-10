@@ -5,7 +5,7 @@ These instructions govern AI-assisted work in the OpsMind repository.
 ## Current Phase
 
 Phase 8 — cloud deployment and product delivery — is the Current formal gate
-for design/planning only after the accepted Phase 7 review merges.
+for design/planning only.
 
 The repository owner accepted the Phase 7 hardening plan under Issue #54.
 
@@ -40,15 +40,24 @@ Issue #62 security implementation is complete:
 - the canonical merge tree exactly matches the reviewed feature tree;
 - post-merge Python-quality and repository-governance checks passed.
 
-The repository owner accepted the integrated Phase 7 `Proceed` review under
-Issue #64 on 2026-08-09. The accepted record is being finalized on branch
-`docs/phase-7-integrated-review`.
+The repository owner accepted the integrated Phase 7 `Proceed` review on
+2026-08-09. PR #65 was squash-merged as
+`984826a9fc1c16c0a7a1a30006cad120f301cd8d`, Issue #64 is closed, the canonical
+tree exactly matches the reviewed acceptance tree, and both post-merge
+workflows passed. Phase 7 is Complete.
 
-This branch is authorized for:
+The repository owner accepted ADR-0007 on 2026-08-10 and authorized Phase 8A
+containerization and delivery-foundation implementation. Issue #66 and branch
+`docs/phase-8-deployment-architecture` contain the accepted architecture record
+pending merge. A separate Phase 8A implementation issue and branch must be
+created from synchronized canonical `main` after that merge.
 
-- the formal integrated Phase 7 evidence review;
-- the owner-accepted `Proceed` decision;
-- minimum current-status, roadmap, review, and governance documentation;
+The design branch is authorized for:
+
+- zero-cost cloud and product-delivery architecture research;
+- AWS reference/translation and LocalStack Hobby skills-track research;
+- recording the owner-accepted ADR-0007 decision;
+- minimum current-status, roadmap, ADR-index, and governance documentation;
 - documentation validation and pull-request preparation.
 
 Do not begin on this branch:
@@ -56,7 +65,7 @@ Do not begin on this branch:
 - application, test, dependency, migration, or workflow changes;
 - identity-provider provisioning;
 - application-managed users, sessions, organizations, or tenants;
-- AWS or cloud deployment;
+- AWS or other cloud deployment;
 - API containerization;
 - production monitoring/alerting infrastructure;
 - external metrics or tracing backends;
@@ -64,13 +73,17 @@ Do not begin on this branch:
 - backup/restore;
 - production secret-store integration;
 - external ordering;
-- Phase 8 implementation work;
+- Phase 8 infrastructure or frontend implementation work;
+- Dockerfiles, infrastructure as code, deployment workflows, cloud resources,
+  or LocalStack exercises;
+- dependency, migration, or runtime-configuration changes;
+- Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work;
 - production-readiness approval.
 
-Once the accepted review is merged, Phase 7 is Complete and Phase 8
-design/planning may begin as a separately governed workstream. The accepted
-Proceed decision does not authorize implementation, deployment, AWS resources,
-frontend code, or production-readiness claims.
+Phase 8A implementation is authorized only after the accepted design PR is
+merged and a bounded implementation issue/branch is established. Phase 8B–8E,
+cloud deployment/resources, identity-provider provisioning, frontend work,
+LocalStack exercises, and production-readiness claims remain unauthorized.
 ## Required Context
 
 Before starting work:

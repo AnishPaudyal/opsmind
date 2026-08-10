@@ -7,6 +7,19 @@ when the first application release is defined.
 
 ## Unreleased
 
+### Phase 8 deployment and product-delivery design
+
+- Recorded repository-owner acceptance of ADR-0007 and authorization for the
+  separately governed Phase 8A containerization and delivery foundation.
+- Proposed ADR-0007 with three current zero-cost architecture candidates and a
+  Cloudflare Pages, Render, Neon, ZITADEL, GitHub, and Terraform recommendation.
+- Retained the former ECS/Fargate, RDS PostgreSQL, Cognito, CloudFront, and
+  Terraform analysis as a paid AWS translation rather than the deployment
+  target, with a separate LocalStack Hobby learning track.
+- Defined the first integrated dashboard, authenticated full-stack slice,
+  Phase 8A–8E gates, explicit free-tier limitations, and Phase 9–11 deferrals
+  without implementing or provisioning anything.
+
 ### Phase 7 observability and readiness
 
 - Added bounded request-ID propagation, structured HTTP request events, and a
