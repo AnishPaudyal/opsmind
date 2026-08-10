@@ -5,9 +5,9 @@ This document is the detailed authority for the current project state. The
 phase-review documents preserve the decisions and evidence that established
 earlier states.
 
-- Status date: 2026-08-09
+- Status date: 2026-08-10
 - Current formal gate: Phase 8 — deployment and product-delivery design/planning
-- Active workstream: Issue #66 — Phase 8 AWS/product-delivery architecture
+- Active workstream: Issue #66 — Phase 8 zero-cost cloud/product-delivery architecture
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -231,30 +231,40 @@ Python quality run `31345098175` passed. The durable review is
 ## Phase 8 Architecture Investigation
 
 Issue #66 is the current design-only workstream. Proposed
-[ADR-0007](../01-architecture/decisions/0007-select-phase-8-aws-deployment-and-product-delivery-architecture.md)
-compares three coherent AWS architectures using current official sources and
-proposes one low-usage `dev`/portfolio environment built around:
+[ADR-0007](../01-architecture/decisions/0007-select-phase-8-zero-cost-cloud-deployment-and-product-delivery-architecture.md)
+compares three current architectures using official sources and proposes a real
+portfolio environment targeting `$0` recurring infrastructure cost at bounded
+usage:
 
-- one immutable non-root API image in ECR;
-- ECS on Fargate behind an HTTPS Application Load Balancer;
-- non-public Single-AZ RDS PostgreSQL with external one-off Alembic migration;
-- no NAT Gateway initially, with tightly restricted public-task egress;
-- Secrets Manager, CloudWatch, ACM, and GitHub Actions OIDC;
-- Terraform with versioned S3 state and native state locking;
-- Cognito authorization code plus PKCE and a separately reviewed bounded JWKS
-  and scope-mapping implementation under ADR-0006;
-- a React/TypeScript/Vite dashboard hosted from private S3 through CloudFront;
-- a first authenticated product-to-decision-to-audit browser workflow.
+- a reproducible non-root API image built by GitHub Actions, scanned, and
+  published to public GHCR with an immutable Git identity;
+- a Render Free image-backed FastAPI service with managed HTTPS, explicit
+  cold-start UX, health/readiness checks, and bounded rollback;
+- Neon Free PostgreSQL with pooled application traffic, direct controlled
+  Alembic migration, scale-to-zero, SSL, bounded restore, and a future pgvector
+  path;
+- ZITADEL Free authorization code plus PKCE, access-token/JWKS validation, and
+  exact role-to-permission mapping under ADR-0006;
+- a React/TypeScript/Vite dashboard hosted on Cloudflare Pages Free;
+- Terraform for supported Cloudflare and ZITADEL resources, HCP Terraform Free
+  state, and explicit Render/Neon bootstrap exceptions where official provider
+  support does not cover the selected free resources;
+- existing structured application logs plus Render deploy/log evidence and
+  request-ID troubleshooting;
+- a separate LocalStack Hobby AWS skills track and an honest AWS translation
+  architecture, neither represented as actual AWS deployment.
 
-The estimated low-usage baseline is approximately `$50–65/month` in US East
-(N. Virginia), excluding domain registration, taxes, traffic spikes, and
-optional hardening. ALB and public IPv4 charges exceed API compute; avoiding an
-always-on NAT saves roughly `$36.50/month` before data.
+The former approximately `$50–65/month` ECS/Fargate, ALB, RDS PostgreSQL,
+Cognito, ECR, S3/CloudFront, and CloudWatch proposal remains preserved as a
+technically credible paid AWS reference and future migration option. It is not
+the active implementation target because it violates the owner’s `$0`
+recurring-cost requirement.
 
 ADR-0007 remains Proposed. No Dockerfile, frontend, infrastructure as code,
-deployment workflow, dependency, migration, runtime configuration, or AWS
-resource exists from this investigation. Phase 8 implementation requires owner
-acceptance and separately authorized Phase 8A–8D issues.
+deployment workflow, dependency, migration, runtime configuration, cloud
+resource, or LocalStack lab exists from this investigation. Phase 8
+implementation requires owner acceptance and separately authorized Phase
+8A–8E issues.
 
 ## Issue #58 Residual Limitations
 
@@ -288,7 +298,7 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 The immediate work is repository-owner review of Proposed ADR-0007 under Issue
 #66. Phase 8 design/planning is authorized.
 
-Phase 8 implementation, AWS resource creation, frontend implementation,
+Phase 8 implementation, cloud resource creation, frontend implementation,
 deployment, and production-readiness work remain unauthorized pending an
 accepted Phase 8 architecture and separately approved implementation issues.
 Phase 9 data pipelines, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph work

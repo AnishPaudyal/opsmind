@@ -52,7 +52,8 @@ acceptance remains pending.
 
 This branch is authorized for:
 
-- AWS and product-delivery architecture research;
+- zero-cost cloud and product-delivery architecture research;
+- AWS reference/translation and LocalStack Hobby skills-track research;
 - a Proposed ADR-0007 for repository-owner review;
 - minimum current-status, roadmap, ADR-index, and governance documentation;
 - documentation validation and pull-request preparation.
@@ -62,7 +63,7 @@ Do not begin on this branch:
 - application, test, dependency, migration, or workflow changes;
 - identity-provider provisioning;
 - application-managed users, sessions, organizations, or tenants;
-- AWS or cloud deployment;
+- AWS or other cloud deployment;
 - API containerization;
 - production monitoring/alerting infrastructure;
 - external metrics or tracing backends;
@@ -71,14 +72,15 @@ Do not begin on this branch:
 - production secret-store integration;
 - external ordering;
 - Phase 8 infrastructure or frontend implementation work;
-- Dockerfiles, infrastructure as code, deployment workflows, or AWS resources;
+- Dockerfiles, infrastructure as code, deployment workflows, cloud resources,
+  or LocalStack exercises;
 - dependency, migration, or runtime-configuration changes;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work;
 - production-readiness approval.
 
 Phase 8 implementation remains blocked until the repository owner accepts the
 architecture and separately authorizes bounded implementation issues. Design
-work does not authorize deployment, AWS resources, frontend code, or
+work does not authorize deployment, cloud resources, frontend code, or
 production-readiness claims.
 ## Required Context
 

@@ -12,7 +12,9 @@ Phases 0 through 7 are complete. The repository owner accepted the integrated
 Phase 7 `Proceed` review under Issue #64 on 2026-08-09. Phase 8 cloud deployment
 and product-delivery design/planning is the next governed gate. Issue #66 and
 Proposed ADR-0007 define the architecture for owner review; implementation and
-AWS resource creation remain unauthorized pending acceptance.
+cloud resource creation remain unauthorized pending acceptance. The proposal
+targets a genuine `$0` recurring portfolio deployment while retaining AWS as a
+reference architecture and separate LocalStack skills track.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
@@ -36,7 +38,7 @@ This repository does not yet contain:
 - Calibrated stockout probability or a trained stockout model
 - Purchase-order creation or external ordering integration
 - A frontend user interface or containerized API
-- AWS infrastructure or cloud deployment
+- Cloud infrastructure or deployment
 - A production database, production data, or production-readiness approval
 
 Those capabilities require reviewed issues and their applicable phase gates.
@@ -68,7 +70,7 @@ Docker Compose is used only to run local PostgreSQL; it does not containerize
 the OpsMind API. Next.js and TypeScript remain a later product direction, and no
 frontend is currently implemented.
 
-Later phases may introduce AWS services, infrastructure as code, event
+Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each
 addition must be justified by a concrete product or learning requirement.
 

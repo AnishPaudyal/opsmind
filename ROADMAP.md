@@ -26,7 +26,7 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
 | 6     | Decision approval, rejection, and audit history       | Complete      | Owner-accepted Phase 6 review under Issue #52                       |
 | 7     | Testing, security, and observability hardening        | Complete      | Owner-accepted Phase 7 review merged through PR #65                 |
-| 8     | AWS foundation and first cloud/product delivery       | Current       | Issue #66 / Proposed ADR-0007; implementation remains blocked       |
+| 8     | Cloud deployment and first product delivery            | Current       | Issue #66 / Proposed ADR-0007; implementation remains blocked       |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
 | 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
 | 11    | Advanced AI, retrieval, and event-driven capabilities | Planned       | LLM, RAG, tool calling, and LangGraph not started                   |
@@ -194,12 +194,14 @@ the accepted ADR-0006 security implementation are complete and merged. Issue
 #64 integrates that evidence, and the repository owner accepted its `Proceed`
 decision on 2026-08-09. PR #65 merged the accepted review, completing Phase 7.
 
-Issue #66 and Proposed ADR-0007 define the Phase 8 AWS deployment and first
-integrated frontend architecture. API containerization, frontend
-implementation, infrastructure as code, AWS resources, deployment, and
-production-readiness approval remain blocked pending repository-owner
-acceptance and separately authorized implementation issues. Phase 9 data,
-Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph work remain Planned.
+Issue #66 and Proposed ADR-0007 define a genuine zero-recurring-cost portfolio
+deployment and first integrated frontend architecture. The proposed real
+deployment uses free cloud services; AWS remains a reference translation and a
+separate LocalStack skills track, not a deployment claim. API containerization,
+frontend implementation, infrastructure as code, cloud resources, deployment,
+and production-readiness approval remain blocked pending repository-owner
+acceptance and separately authorized Phase 8A–8E issues. Phase 9 data, Phase 10
+MLOps, and Phase 11 LLM/RAG/LangGraph work remain Planned.
 
 Detailed current evidence and next-work boundaries live in
 [Current Status](docs/09-status/current-status.md).
