@@ -11,11 +11,12 @@ coherent product.
 Phases 0 through 7 are complete. The repository owner accepted the integrated
 Phase 7 `Proceed` review under Issue #64 on 2026-08-09. On 2026-08-10, the
 repository owner accepted ADR-0007's genuine `$0` recurring Phase 8 portfolio
-architecture and authorized Phase 8A containerization and delivery-foundation
-implementation. Issue #68 contains the locked, non-root API container
-foundation for review. Phase 8B–8E, cloud resource creation, deployment,
-identity provisioning, frontend implementation, and the separate LocalStack
-skills track remain subject to their documented gates.
+architecture. Phase 8A completed through PR #69 with its locked, non-root API
+container, disposable smoke validation, and container CI. Issue #70 and the
+[Phase 8B implementation gate](docs/01-architecture/phase-8b-cloud-backend-gate.md)
+prepare the next zero-cost backend decision, but implementation, cloud resource
+creation, deployment, identity provisioning, frontend work, and the separate
+LocalStack skills track remain unauthorized.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
@@ -1020,6 +1021,7 @@ claim cryptographic tamper evidence, compliance certification, external
 ordering, production-scale concurrency, production security, or production
 readiness.
 
-Phase 7 is Complete and Phase 8A containerization is the current implementation
-gate under Issue #68. See [Current Status](docs/09-status/current-status.md) for
-the active workstream and its validation evidence.
+Phase 7 and Phase 8A are complete. Phase 8B is prepared under blocked Issue #70
+for a separate repository-owner implementation decision. See
+[Current Status](docs/09-status/current-status.md) for the active gate and its
+validation evidence.

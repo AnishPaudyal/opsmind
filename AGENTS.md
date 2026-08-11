@@ -49,39 +49,35 @@ The repository owner accepted ADR-0007 on 2026-08-10. PR #67 was squash-merged
 as `733f405ef89c38a2b09b95587bdbd77b938ee853`, Issue #66 is closed, and the
 canonical tree exactly matches the accepted design tree.
 
-Issue #68 is the active Phase 8A containerization and delivery-foundation
-implementation on branch `feat/phase-8a-containerization`.
+Issue #68 Phase 8A containerization is complete. PR #69 was squash-merged as
+`631b8a2d1c9696b374f2b96b0295190bbca4a3bf`, Issue #68 is closed, the
+canonical tree exactly matches the reviewed feature tree, and all three
+post-merge workflows passed.
 
-This branch is authorized for:
+Issue #70 is the blocked Phase 8B zero-cost cloud-backend implementation
+workstream. The current branch may prepare only its owner implementation gate:
 
-- a locked, non-root production-oriented API image;
-- local disposable memory and PostgreSQL container validation;
-- image build and smoke-test CI without publishing or deployment;
-- minimum current-status, roadmap, operations, and governance documentation;
-- validation and pull-request preparation.
+- exact implementation scope and measurable acceptance criteria;
+- human account/bootstrap and secret inventories;
+- ZITADEL/JWKS, Neon, Render, GHCR, migration, and IaC ownership contracts;
+- current official free-tier evidence, risks, and required owner interactions;
+- minimum current-status, roadmap, and governance documentation;
+- documentation validation and pull-request preparation.
 
 Do not begin on this branch:
 
-- application, test, dependency, migration, or workflow changes;
-- identity-provider provisioning;
+- application, test, dependency, migration, settings, or workflow changes;
+- Terraform files, `render.yaml`, registry publication, or deployment code;
+- Render, Neon, ZITADEL, HCP Terraform, GHCR, Cloudflare, AWS, or other cloud
+  resource creation/configuration;
+- credentials, account connections, identity-provider provisioning, or secret
+  storage;
 - application-managed users, sessions, organizations, or tenants;
-- AWS or other cloud deployment;
-- production monitoring/alerting infrastructure;
-- external metrics or tracing backends;
-- HA/DR;
-- backup/restore;
-- production secret-store integration;
-- external ordering;
-- Phase 8 infrastructure or frontend implementation work;
-- infrastructure as code, deployment workflows, cloud resources, registry
-  publication, or LocalStack exercises;
-- application dependency, migration, or settings-model changes;
-- Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work;
-- production-readiness approval.
+- frontend, LocalStack, Phase 8C–8E, or production-readiness work;
+- Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
-Phase 8B–8E, cloud deployment/resources, identity-provider provisioning,
-frontend work, LocalStack exercises, and production-readiness claims remain
-unauthorized.
+Issue #70 implementation remains blocked until the repository owner reviews
+the Phase 8B gate and separately authorizes the bounded implementation.
 ## Required Context
 
 Before starting work:

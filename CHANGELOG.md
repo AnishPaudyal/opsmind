@@ -11,6 +11,13 @@ when the first application release is defined.
 
 - Added the Phase 8A locked, non-root API image, disposable memory/PostgreSQL
   smoke validation, and build-only container CI for Issue #68.
+- Recorded the owner-approved PR #69 squash merge, exact reviewed-tree
+  equivalence, Issue #68 closure, green canonical workflows, and Phase 8A
+  completion.
+- Prepared the blocked Issue #70 Phase 8B owner implementation gate with exact
+  account bootstrap, secret, identity/JWKS, database, release, ownership,
+  zero-cost, acceptance, and human-interaction contracts without creating
+  cloud resources or implementation files.
 - Preserved external Alembic migrations, `/health` liveness, `/ready`
   dependency readiness, fail-closed authentication, and the existing
   PostgreSQL 17 development Compose boundary.
