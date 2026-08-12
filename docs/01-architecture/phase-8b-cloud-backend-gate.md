@@ -10,22 +10,26 @@ Python quality, and Container quality all passed on `main`.
 [Issue #70](https://github.com/AnishPaudyal/opsmind/issues/70) is the bounded
 Phase 8B implementation workstream governed by accepted
 [ADR-0007](decisions/0007-select-phase-8-zero-cost-cloud-deployment-and-product-delivery-architecture.md).
-Its status is **blocked pending explicit repository-owner implementation
-authorization**. This document prepares that decision; it does not authorize or
-perform account bootstrap, resource creation, credential handling,
-infrastructure code, image publication, or deployment.
+The repository owner subsequently authorized the bounded Phase 8B
+implementation. Repository implementation is now in progress under that
+authority.
 
-## Decision requested from the repository owner
+This document remains the governing scope, ownership, cost, secret, and stop
+contract. Authorization does not extend to Phase 8C frontend/Cloudflare work,
+Phase 8D hardening, Phase 8E LocalStack, production-readiness claims, or later
+phases.
 
-The next owner decision is whether to authorize Issue #70 to implement the
-bounded Phase 8B backend package described here. Approval would authorize the
-minimum repository and service work needed to establish the real zero-cost
-backend. It would not authorize Phase 8C frontend/Cloudflare work, Phase 8D
-hardening, Phase 8E LocalStack, production-readiness claims, or later phases.
+## Current authorization boundary
 
-Until that explicit decision, the state is:
+The authorized Phase 8B repository work may implement the bounded package
+defined below. Owner-controlled account signup, credential creation, HCP
+Terraform apply approval, Render authorization, protected-environment approval,
+GHCR visibility changes, and live deployment remain explicit human actions
+performed only at their documented point in the bootstrap sequence.
 
-`OWNER IMPLEMENTATION DECISION READY — IMPLEMENTATION NOT STARTED`
+The current state is:
+
+`IMPLEMENTATION AUTHORIZED — REPOSITORY WORK IN PROGRESS — LIVE CLOUD BOOTSTRAP NOT STARTED`
 
 ## Bounded implementation scope after approval
 
@@ -55,9 +59,11 @@ Phase 9 data work, MLOps, LLM, RAG, or LangGraph capability.
 
 ## Ordered human and account bootstrap inventory
 
-Do not perform these steps until Issue #70 receives owner authorization. The
-order prevents credentials or resources from being created before their
-consumer and authority are known.
+Issue #70 has owner authorization for the bounded Phase 8B implementation.
+Perform these owner-controlled steps only in the documented order and only
+after the corresponding repository prerequisite exists. The order prevents
+credentials or resources from being created before their consumer and
+authority are known.
 
 1. **GitHub owner controls**
    - Confirm the repository remains public and Actions is enabled.
@@ -439,8 +445,15 @@ secret entry, and any cloud apply/deploy.
 - [GitHub-hosted public runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
 - [GitHub deployment environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
 
-## Explicit stop
+## Current stop boundary
 
-No Phase 8B runtime, dependency, migration, workflow, Terraform, Blueprint,
-cloud resource, registry package, credential, or deployment exists. The owner
-must explicitly authorize Issue #70 implementation after reviewing this gate.
+Phase 8B repository implementation now exists under Issue #70, including the
+backend trust adaptation, cloud connection hardening, immutable release
+workflow source, ZITADEL Terraform source, Terraform quality validation, and
+bootstrap documentation.
+
+No live Neon, Render, ZITADEL, or HCP Terraform Phase 8B resource, GHCR package,
+Render Blueprint, cloud credential, or deployment is claimed by this
+repository state. Do not claim Phase 8B complete until the measurable
+completion criteria above are evidenced. Phase 8C–8E and later-phase work
+remain outside this authorization.

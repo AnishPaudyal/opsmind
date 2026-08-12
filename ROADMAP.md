@@ -26,7 +26,7 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
 | 6     | Decision approval, rejection, and audit history       | Complete      | Owner-accepted Phase 6 review under Issue #52                       |
 | 7     | Testing, security, and observability hardening        | Complete      | Owner-accepted Phase 7 review merged through PR #65                 |
-| 8     | Cloud deployment and first product delivery            | Current       | Phase 8A Complete; Phase 8B owner implementation gate prepared       |
+| 8     | Cloud deployment and first product delivery             | Current       | Phase 8A Complete; Phase 8B repository implementation in progress    |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
 | 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
 | 11    | Advanced AI, retrieval, and event-driven capabilities | Planned       | LLM, RAG, tool calling, and LangGraph not started                   |
@@ -188,8 +188,8 @@ production readiness beyond the evidence actually reviewed.
 
 **Phase 8 — Cloud deployment and product delivery** is Current. Phase 8A
 containerization and delivery foundation completed through PR #69. Phase 8B
-zero-cost cloud-backend implementation is prepared under blocked Issue #70 and
-requires a separate repository-owner implementation decision.
+zero-cost cloud-backend implementation is authorized under Issue #70 and the
+repository portion is in progress.
 
 Phase 7A testing and coverage hardening, Issue #58 observability/readiness, and
 the accepted ADR-0006 security implementation are complete and merged. Issue
@@ -200,10 +200,14 @@ The repository owner accepted ADR-0007 on 2026-08-10. It defines a genuine
 zero-recurring-cost portfolio deployment and first integrated frontend
 architecture. AWS remains a reference translation and separate LocalStack
 skills track, not a deployment claim. Phase 8A API containerization is merged.
-The Phase 8B gate defines, but does not implement, the backend account,
-identity, database, registry, deployment, secret, and IaC boundaries. Frontend,
-cloud resources, deployment, Phase 8B–8E implementation, and
-production-readiness approval remain blocked pending their documented gates.
+The Phase 8B gate defines the backend account, identity, database, registry,
+deployment, secret, and IaC boundaries. Authorized repository implementation
+now covers the backend trust adaptation, PostgreSQL cloud hardening, immutable
+release workflow source, ZITADEL Terraform source, Terraform CI, and bootstrap
+governance. Live cloud resources and deployment are not yet claimed, and the
+Render Blueprint remains deferred until the first immutable GHCR digest exists.
+Frontend, Phase 8C–8E work, and production-readiness approval remain subject to
+their documented gates.
 Phase 9 data, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain Planned.
 
 Detailed current evidence and next-work boundaries live in
