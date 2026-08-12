@@ -1,7 +1,10 @@
 """Unit tests for secret-safe PostgreSQL construction and test safety."""
 
+from typing import cast
+
 import pytest
 from pydantic import SecretStr
+from sqlalchemy.engine import URL, Engine
 
 from opsmind.persistence.postgresql.database import (
     create_postgresql_engine,
@@ -23,6 +26,41 @@ def test_engine_construction_is_lazy_and_hides_password() -> None:
         assert engine.hide_parameters is True
     finally:
         dispose_engine(engine)
+
+
+def test_engine_uses_bounded_timeout_and_preserves_url_options(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_urls: list[URL] = []
+    captured_kwargs: list[dict[str, object]] = []
+    sentinel = cast(Engine, object())
+
+    def fake_create_engine(url: URL, **kwargs: object) -> Engine:
+        captured_urls.append(url)
+        captured_kwargs.append(kwargs)
+        return sentinel
+
+    monkeypatch.setattr(
+        "opsmind.persistence.postgresql.database.create_engine",
+        fake_create_engine,
+    )
+
+    engine = create_postgresql_engine(
+        "postgresql+psycopg://opsmind:secret@database.example/opsmind"
+        "?sslmode=require&channel_binding=require"
+    )
+
+    assert engine is sentinel
+    assert len(captured_urls) == 1
+    assert captured_urls[0].query["sslmode"] == "require"
+    assert captured_urls[0].query["channel_binding"] == "require"
+    assert captured_kwargs == [
+        {
+            "hide_parameters": True,
+            "pool_pre_ping": True,
+            "connect_args": {"connect_timeout": 10},
+        }
+    ]
 
 
 def test_session_factory_uses_required_lifecycle_settings() -> None:

@@ -24,11 +24,18 @@ class Base(DeclarativeBase):
 
 SessionFactory = sessionmaker[Session]
 
+POSTGRESQL_CONNECT_TIMEOUT_SECONDS = 10
+
 
 def create_postgresql_engine(database_url: SecretStr | str | URL) -> Engine:
     """Create a synchronous engine without connecting or exposing credentials."""
     url = parse_postgresql_database_url(database_url)
-    return create_engine(url, hide_parameters=True, pool_pre_ping=True)
+    return create_engine(
+        url,
+        hide_parameters=True,
+        pool_pre_ping=True,
+        connect_args={"connect_timeout": POSTGRESQL_CONNECT_TIMEOUT_SECONDS},
+    )
 
 
 def create_session_factory(engine: Engine) -> SessionFactory:
