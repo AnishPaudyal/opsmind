@@ -1,0 +1,861 @@
+name: Cloud release
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: phase-8b-cloud-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build, validate, scan, and publish
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_repository: ${{ steps.identity.outputs.image_repository }}
+      image_digest: ${{ steps.digest.outputs.image_digest }}
+      image_identity: ${{ steps.digest.outputs.image_identity }}
+
+    steps:
+      - name: Check out exact release revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Validate release source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test "${#GITHUB_SHA}" -eq 40
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test "${GITHUB_REF}" = "refs/heads/main"
+
+      - name: Require green quality checks for release revision
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_runs="$(
+            curl \
+              --fail-with-body \
+              --silent \
+              --show-error \
+              --location \
+              --header "Accept: application/vnd.github+json" \
+              --header "X-GitHub-Api-Version: 2026-03-10" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs?filter=latest&per_page=100"
+          )"
+
+          required_checks=(
+            "Container build and smoke"
+            "Python quality"
+            "Terraform quality"
+            "governance"
+          )
+
+          for check_name in "${required_checks[@]}"; do
+            conclusion="$(
+              jq -r \
+                --arg check_name "${check_name}" \
+                '
+                  [
+                    .check_runs[]
+                    | select(.name == $check_name)
+                  ]
+                  | if length == 1
+                    then .[0].conclusion // ""
+                    else ""
+                    end
+                ' <<<"${check_runs}"
+            )"
+
+            if [[ "${conclusion}" != "success" ]]; then
+              echo "Required quality check is not green: ${check_name}" >&2
+              exit 1
+            fi
+
+            echo "quality_check_passed=${check_name}"
+          done
+
+      - name: Resolve immutable image names
+        id: identity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          image_repository="ghcr.io/${GITHUB_REPOSITORY,,}"
+          image_ref="${image_repository}:${GITHUB_SHA}"
+
+          echo "image_repository=${image_repository}" >> "${GITHUB_OUTPUT}"
+          echo "image_ref=${image_ref}" >> "${GITHUB_OUTPUT}"
+
+          echo "IMAGE_REPOSITORY=${image_repository}" >> "${GITHUB_ENV}"
+          echo "IMAGE_REF=${image_ref}" >> "${GITHUB_ENV}"
+
+      - name: Build linux/amd64 release image once
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker build \
+            --pull \
+            --platform linux/amd64 \
+            --build-arg "VCS_REF=${GITHUB_SHA}" \
+            --tag "${IMAGE_REF}" \
+            .
+
+      - name: Validate release container contract
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 scripts/validate_container.py --image "${IMAGE_REF}"
+
+      - name: Report all high and critical vulnerabilities
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker run --rm \
+            --volume /var/run/docker.sock:/var/run/docker.sock \
+            --volume opsmind-release-trivy-cache:/root/.cache/trivy \
+            aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f \
+            image \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --exit-code 0 \
+            --skip-version-check \
+            "${IMAGE_REF}"
+
+      - name: Fail on fixable high and critical vulnerabilities
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker run --rm \
+            --volume /var/run/docker.sock:/var/run/docker.sock \
+            --volume opsmind-release-trivy-cache:/root/.cache/trivy \
+            aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f \
+            image \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --exit-code 1 \
+            --skip-version-check \
+            "${IMAGE_REF}"
+
+      - name: Remove vulnerability database cache
+        if: always()
+        shell: bash
+        run: docker volume rm --force opsmind-release-trivy-cache || true
+
+      - name: Authenticate to GHCR
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          printf '%s' "${GHCR_TOKEN}" |
+            docker login ghcr.io \
+              --username "${GITHUB_ACTOR}" \
+              --password-stdin
+
+      - name: Publish full-SHA image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker push "${IMAGE_REF}"
+
+      - name: Resolve published registry digest
+        id: digest
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          manifest_json="$(
+            docker buildx imagetools inspect \
+              "${IMAGE_REF}" \
+              --format '{{json .Manifest}}'
+          )"
+
+          image_digest="$(
+            jq -r '.digest // empty' <<<"${manifest_json}"
+          )"
+
+          if [[ ! "${image_digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Published image did not resolve to one SHA-256 manifest digest." >&2
+            exit 1
+          fi
+
+          image_identity="${IMAGE_REPOSITORY}@${image_digest}"
+
+          echo "image_digest=${image_digest}" >> "${GITHUB_OUTPUT}"
+          echo "image_identity=${image_identity}" >> "${GITHUB_OUTPUT}"
+
+          {
+            echo "### Phase 8B published image"
+            echo
+            echo "- Git revision: \`${GITHUB_SHA}\`"
+            echo "- SHA tag: \`${IMAGE_REF}\`"
+            echo "- Immutable identity: \`${image_identity}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Verify immutable registry image identity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          image_identity="${IMAGE_REPOSITORY}@${{ steps.digest.outputs.image_digest }}"
+
+          registry_revision="$(
+            docker buildx imagetools inspect \
+              "${image_identity}" \
+              --format '{{json .Image}}' |
+            jq -r '.config.Labels["org.opencontainers.image.revision"] // empty'
+          )"
+
+          registry_architecture="$(
+            docker buildx imagetools inspect \
+              "${image_identity}" \
+              --format '{{json .Image}}' |
+            jq -r '.architecture // empty'
+          )"
+
+          registry_os="$(
+            docker buildx imagetools inspect \
+              "${image_identity}" \
+              --format '{{json .Image}}' |
+            jq -r '.os // empty'
+          )"
+
+          test "${registry_revision}" = "${GITHUB_SHA}"
+          test "${registry_architecture}" = "amd64"
+          test "${registry_os}" = "linux"
+
+      - name: Log out of GHCR
+        if: always()
+        shell: bash
+        run: docker logout ghcr.io || true
+
+  deploy:
+    name: Migrate, deploy, and smoke
+    needs: publish
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: phase-8b
+
+    permissions:
+      contents: read
+
+    env:
+      RELEASE_IMAGE_REPOSITORY: ${{ needs.publish.outputs.image_repository }}
+      RELEASE_IMAGE_DIGEST: ${{ needs.publish.outputs.image_digest }}
+      RELEASE_IMAGE_IDENTITY: ${{ needs.publish.outputs.image_identity }}
+
+      RENDER_SERVICE_URL: ${{ vars.RENDER_SERVICE_URL }}
+
+      ZITADEL_ISSUER: ${{ vars.ZITADEL_ISSUER }}
+      ZITADEL_PROJECT_ID: ${{ vars.ZITADEL_PROJECT_ID }}
+      ZITADEL_SMOKE_USER_ID: ${{ vars.ZITADEL_SMOKE_USER_ID }}
+      ZITADEL_SMOKE_KEY_ID: ${{ vars.ZITADEL_SMOKE_KEY_ID }}
+
+    steps:
+      - name: Check out exact release revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Validate protected release identity and public configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test "${#GITHUB_SHA}" -eq 40
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+
+          if [[ ! "${RELEASE_IMAGE_DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Invalid published release digest." >&2
+            exit 1
+          fi
+
+          test \
+            "${RELEASE_IMAGE_IDENTITY}" = \
+            "${RELEASE_IMAGE_REPOSITORY}@${RELEASE_IMAGE_DIGEST}"
+
+          for variable_name in \
+            RENDER_SERVICE_URL \
+            ZITADEL_ISSUER \
+            ZITADEL_PROJECT_ID \
+            ZITADEL_SMOKE_USER_ID \
+            ZITADEL_SMOKE_KEY_ID
+          do
+            if [[ -z "${!variable_name}" ]]; then
+              echo "Missing protected release variable: ${variable_name}" >&2
+              exit 1
+            fi
+          done
+
+          python3 - <<'PY'
+          import os
+          import urllib.parse
+
+          service_url = os.environ["RENDER_SERVICE_URL"]
+          parsed = urllib.parse.urlsplit(service_url)
+          hostname = (
+              parsed.hostname.lower()
+              if parsed.hostname is not None
+              else None
+          )
+
+          try:
+              port = parsed.port
+          except ValueError as error:
+              raise SystemExit("Invalid Render service URL.") from error
+
+          render_subdomain = (
+              hostname.removesuffix(".onrender.com")
+              if hostname is not None
+              and hostname.endswith(".onrender.com")
+              else ""
+          )
+
+          if (
+              parsed.scheme != "https"
+              or not render_subdomain
+              or "." in render_subdomain
+              or port is not None
+              or parsed.username is not None
+              or parsed.password is not None
+              or parsed.query
+              or parsed.fragment
+              or parsed.path not in ("", "/")
+          ):
+              raise SystemExit("Invalid Render service URL.")
+
+          print("protected_release_configuration=valid")
+          PY
+
+      - name: Pull exact public release image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker pull \
+            --platform linux/amd64 \
+            "${RELEASE_IMAGE_IDENTITY}" >/dev/null
+
+          local_revision="$(
+            docker image inspect \
+              --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' \
+              "${RELEASE_IMAGE_IDENTITY}"
+          )"
+
+          local_architecture="$(
+            docker image inspect \
+              --format '{{ .Architecture }}' \
+              "${RELEASE_IMAGE_IDENTITY}"
+          )"
+
+          local_os="$(
+            docker image inspect \
+              --format '{{ .Os }}' \
+              "${RELEASE_IMAGE_IDENTITY}"
+          )"
+
+          test "${local_revision}" = "${GITHUB_SHA}"
+          test "${local_architecture}" = "amd64"
+          test "${local_os}" = "linux"
+
+      - name: Migrate Neon from exact release image
+        shell: bash
+        env:
+          OPSMIND_DATABASE_URL: ${{ secrets.OPSMIND_MIGRATION_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${OPSMIND_DATABASE_URL}" ]]; then
+            echo "Missing protected migration database URL." >&2
+            exit 1
+          fi
+
+          docker run \
+            --rm \
+            --pull never \
+            --platform linux/amd64 \
+            --env OPSMIND_DATABASE_URL \
+            "${RELEASE_IMAGE_IDENTITY}" \
+            alembic upgrade head
+
+          echo "migration_result=success"
+
+      - name: Trigger exact Render release
+        id: render
+        shell: bash
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${RENDER_DEPLOY_HOOK_URL}" ]]; then
+            echo "Missing protected Render deploy hook." >&2
+            exit 1
+          fi
+
+          response_file="${RUNNER_TEMP}/opsmind-render-deploy.json"
+
+          http_code="$(
+            curl \
+              --silent \
+              --show-error \
+              --connect-timeout 10 \
+              --max-time 30 \
+              --output "${response_file}" \
+              --write-out '%{http_code}' \
+              --get \
+              --data-urlencode "imgURL=${RELEASE_IMAGE_IDENTITY}" \
+              "${RENDER_DEPLOY_HOOK_URL}"
+          )"
+
+          if [[ "${http_code}" != "200" ]]; then
+            rm -f "${response_file}"
+            echo \
+              "Render did not start one unique deploy (HTTP ${http_code})." \
+              >&2
+            exit 1
+          fi
+
+          render_deploy_id="$(
+            jq -r \
+              '
+                (.deploy.id // .id // empty)
+                | select(
+                    type == "string"
+                    and length > 0
+                    and length <= 128
+                  )
+              ' \
+              "${response_file}"
+          )"
+
+          rm -f "${response_file}"
+
+          if [[ -z "${render_deploy_id}" ]]; then
+            echo "Render deploy response did not contain a bounded deploy ID." >&2
+            exit 1
+          fi
+
+          echo "render_deploy_id=${render_deploy_id}" >> "${GITHUB_OUTPUT}"
+          echo "render_deploy_started=true"
+
+      - name: Wait for exact release health and readiness
+        id: availability
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import http.client
+          import json
+          import os
+          import time
+          import urllib.error
+          import urllib.request
+
+          BASE_URL = os.environ["RENDER_SERVICE_URL"].rstrip("/")
+          EXPECTED_REVISION = os.environ["GITHUB_SHA"]
+
+          POLL_INTERVAL_SECONDS = 5.0
+          POLL_BUDGET_SECONDS = 180.0
+          REQUEST_TIMEOUT_SECONDS = 4.5
+          MAX_RESPONSE_BYTES = 64 * 1024
+          MAX_ATTEMPTS = 36
+
+          def request_json(path: str, timeout: float):
+              request = urllib.request.Request(
+                  f"{BASE_URL}{path}",
+                  headers={
+                      "User-Agent": "OpsMind-Phase8B-Release-Smoke/1",
+                  },
+              )
+
+              with urllib.request.urlopen(
+                  request,
+                  timeout=timeout,
+              ) as response:
+                  payload = response.read(MAX_RESPONSE_BYTES + 1)
+
+                  if len(payload) > MAX_RESPONSE_BYTES:
+                      raise ValueError("response too large")
+
+                  return (
+                      response.status,
+                      response.headers,
+                      json.loads(payload),
+                  )
+
+          def poll(label: str, path: str, validator) -> int:
+              started = time.monotonic()
+              last_error = None
+
+              for attempt in range(1, MAX_ATTEMPTS + 1):
+                  scheduled = started + ((attempt - 1) * POLL_INTERVAL_SECONDS)
+                  delay = scheduled - time.monotonic()
+
+                  if delay > 0:
+                      time.sleep(delay)
+
+                  remaining = (
+                      POLL_BUDGET_SECONDS
+                      - (time.monotonic() - started)
+                  )
+
+                  if remaining <= 0:
+                      break
+
+                  timeout = min(
+                      REQUEST_TIMEOUT_SECONDS,
+                      max(0.1, remaining),
+                  )
+
+                  try:
+                      status, headers, body = request_json(path, timeout)
+
+                      if validator(status, headers, body):
+                          print(f"{label}=ready attempt={attempt}")
+                          return attempt
+
+                  except (
+                      urllib.error.HTTPError,
+                      urllib.error.URLError,
+                      http.client.RemoteDisconnected,
+                      ConnectionError,
+                      TimeoutError,
+                      json.JSONDecodeError,
+                      UnicodeDecodeError,
+                      ValueError,
+                  ) as error:
+                      last_error = type(error).__name__
+
+              raise SystemExit(
+                  f"{label} polling exhausted bounded budget"
+                  + (
+                      f" after transient {last_error}"
+                      if last_error is not None
+                      else ""
+                  )
+              )
+
+          def health_is_exact(status, headers, body) -> bool:
+              return (
+                  status == 200
+                  and headers.get("X-OpsMind-Revision")
+                  == EXPECTED_REVISION
+                  and isinstance(body, dict)
+                  and body.get("status") == "ok"
+              )
+
+          def readiness_is_ready(status, headers, body) -> bool:
+              del headers
+
+              if not isinstance(body, dict):
+                  return False
+
+              checks = body.get("checks")
+
+              return (
+                  status == 200
+                  and body.get("status") == "ready"
+                  and isinstance(checks, dict)
+                  and checks.get("persistence") == "ready"
+              )
+
+          health_attempts = poll(
+              "release_health",
+              "/health",
+              health_is_exact,
+          )
+
+          readiness_attempts = poll(
+              "release_readiness",
+              "/ready",
+              readiness_is_ready,
+          )
+
+          output_path = os.environ["GITHUB_OUTPUT"]
+
+          with open(output_path, "a", encoding="utf-8") as output:
+              output.write(f"health_attempts={health_attempts}\n")
+              output.write(
+                  f"readiness_attempts={readiness_attempts}\n"
+              )
+          PY
+
+      - name: Request least-privilege ZITADEL smoke token
+        shell: bash
+        env:
+          ZITADEL_SMOKE_PRIVATE_KEY: ${{ secrets.ZITADEL_SMOKE_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${ZITADEL_SMOKE_PRIVATE_KEY}" ]]; then
+            echo "Missing protected ZITADEL smoke private key." >&2
+            exit 1
+          fi
+
+          token_file="${RUNNER_TEMP}/opsmind-smoke-token"
+          umask 077
+
+          printf '%s' "${ZITADEL_SMOKE_PRIVATE_KEY}" |
+            docker run \
+              --rm \
+              --interactive \
+              --pull never \
+              --platform linux/amd64 \
+              --env ZITADEL_ISSUER \
+              --env ZITADEL_PROJECT_ID \
+              --env ZITADEL_SMOKE_USER_ID \
+              --env ZITADEL_SMOKE_KEY_ID \
+              --volume \
+                "${GITHUB_WORKSPACE}/scripts/request_zitadel_smoke_token.py:/tmp/request_zitadel_smoke_token.py:ro" \
+              "${RELEASE_IMAGE_IDENTITY}" \
+              python /tmp/request_zitadel_smoke_token.py \
+              > "${token_file}"
+
+          if [[ ! -s "${token_file}" ]]; then
+            rm -f "${token_file}"
+            echo "Smoke token helper produced no access token." >&2
+            exit 1
+          fi
+
+          smoke_token="$(cat "${token_file}")"
+          echo "::add-mask::${smoke_token}"
+          unset smoke_token
+          unset ZITADEL_SMOKE_PRIVATE_KEY
+
+          echo "SMOKE_TOKEN_FILE=${token_file}" >> "${GITHUB_ENV}"
+          echo "smoke_token_result=success"
+
+      - name: Verify authorization boundary and final release identity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+          import urllib.error
+          import urllib.request
+
+          BASE_URL = os.environ["RENDER_SERVICE_URL"].rstrip("/")
+          EXPECTED_REVISION = os.environ["GITHUB_SHA"]
+          TOKEN_FILE = pathlib.Path(os.environ["SMOKE_TOKEN_FILE"])
+
+          REQUEST_TIMEOUT_SECONDS = 30.0
+          MAX_RESPONSE_BYTES = 1024 * 1024
+
+          def bounded_body(response) -> bytes:
+              payload = response.read(MAX_RESPONSE_BYTES + 1)
+
+              if len(payload) > MAX_RESPONSE_BYTES:
+                  raise SystemExit("Smoke response exceeded bounded size.")
+
+              return payload
+
+          def request_id_is_bounded(headers) -> bool:
+              request_id = headers.get("X-Request-ID")
+
+              return (
+                  isinstance(request_id, str)
+                  and 0 < len(request_id) <= 128
+              )
+
+          products_url = f"{BASE_URL}/api/v1/products"
+
+          unauthenticated = urllib.request.Request(
+              products_url,
+              headers={
+                  "User-Agent": "OpsMind-Phase8B-Release-Smoke/1",
+              },
+          )
+
+          try:
+              urllib.request.urlopen(
+                  unauthenticated,
+                  timeout=REQUEST_TIMEOUT_SECONDS,
+              )
+          except urllib.error.HTTPError as error:
+              if error.code != 401:
+                  raise SystemExit(
+                      "Unauthenticated business smoke returned wrong status."
+                  ) from error
+
+              body = bounded_body(error)
+              document = json.loads(body)
+
+              if document != {"detail": "Authentication required."}:
+                  raise SystemExit(
+                      "Unauthenticated business smoke returned wrong body."
+                  )
+
+              if error.headers.get("WWW-Authenticate") != "Bearer":
+                  raise SystemExit(
+                      "Unauthenticated business smoke returned wrong challenge."
+                  )
+
+              if not request_id_is_bounded(error.headers):
+                  raise SystemExit(
+                      "Unauthenticated smoke request ID was missing or invalid."
+                  )
+          else:
+              raise SystemExit(
+                  "Unauthenticated business smoke unexpectedly succeeded."
+              )
+
+          token = TOKEN_FILE.read_text(encoding="utf-8")
+
+          if not token or len(token) > 8192 or any(
+              character.isspace()
+              for character in token
+          ):
+              raise SystemExit("Stored smoke access token was invalid.")
+
+          authenticated = urllib.request.Request(
+              products_url,
+              headers={
+                  "Authorization": f"Bearer {token}",
+                  "User-Agent": "OpsMind-Phase8B-Release-Smoke/1",
+              },
+          )
+
+          class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+              """Reject redirects so bearer credentials stay on one origin."""
+
+              def redirect_request(
+                  self,
+                  request,
+                  file_pointer,
+                  code,
+                  message,
+                  headers,
+                  new_url,
+              ):
+                  del (
+                      request,
+                      file_pointer,
+                      code,
+                      message,
+                      headers,
+                      new_url,
+                  )
+                  return None
+
+          authenticated_opener = urllib.request.build_opener(
+              NoRedirectHandler()
+          )
+
+          with authenticated_opener.open(
+              authenticated,
+              timeout=REQUEST_TIMEOUT_SECONDS,
+          ) as response:
+              if response.status != 200:
+                  raise SystemExit(
+                      "Authenticated read-only smoke returned wrong status."
+                  )
+
+              body = bounded_body(response)
+              document = json.loads(body)
+
+              if not isinstance(document, list):
+                  raise SystemExit(
+                      "Authenticated read-only smoke returned wrong body."
+                  )
+
+              if not request_id_is_bounded(response.headers):
+                  raise SystemExit(
+                      "Authenticated smoke request ID was missing or invalid."
+                  )
+
+              if token.encode("utf-8") in body:
+                  raise SystemExit(
+                      "Smoke access token leaked into response body."
+                  )
+
+          health_request = urllib.request.Request(
+              f"{BASE_URL}/health",
+              headers={
+                  "User-Agent": "OpsMind-Phase8B-Release-Smoke/1",
+              },
+          )
+
+          with urllib.request.urlopen(
+              health_request,
+              timeout=REQUEST_TIMEOUT_SECONDS,
+          ) as response:
+              body = bounded_body(response)
+              document = json.loads(body)
+
+              if (
+                  response.status != 200
+                  or response.headers.get("X-OpsMind-Revision")
+                  != EXPECTED_REVISION
+                  or not isinstance(document, dict)
+                  or document.get("status") != "ok"
+              ):
+                  raise SystemExit(
+                      "Final deployed release identity did not match."
+                  )
+
+          print("unauthenticated_business_smoke=401")
+          print("authenticated_read_only_smoke=200")
+          print(f"final_release_revision={EXPECTED_REVISION}")
+          PY
+
+      - name: Record protected release evidence
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          {
+            echo "### Phase 8B protected release"
+            echo
+            echo "- Git revision: \`${GITHUB_SHA}\`"
+            echo "- Image identity: \`${RELEASE_IMAGE_IDENTITY}\`"
+            echo "- Migration: \`success\`"
+            echo \
+              "- Render deploy ID: \`${{ steps.render.outputs.render_deploy_id }}\`"
+            echo \
+              "- Health attempts: \`${{ steps.availability.outputs.health_attempts }}\`"
+            echo \
+              "- Readiness attempts: \`${{ steps.availability.outputs.readiness_attempts }}\`"
+            echo "- Unauthenticated business smoke: \`401\`"
+            echo "- Authenticated read-only smoke: \`200\`"
+            echo "- Final release revision attestation: \`success\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Remove temporary smoke credential
+        if: always()
+        shell: bash
+        run: |
+          rm -f \
+            "${SMOKE_TOKEN_FILE:-}" \
+            "${RUNNER_TEMP}/opsmind-smoke-token" \
+            "${RUNNER_TEMP}/opsmind-render-deploy.json"

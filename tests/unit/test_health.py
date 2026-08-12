@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
 from opsmind.api.dependencies import get_readiness_probe
+from opsmind.api.routes.health import BUILD_REVISION_HEADER
 from opsmind.application import create_app
 from opsmind.core.config import Environment, PersistenceBackend, Settings
 from opsmind.observability import HTTP_LOGGER_NAME, REQUEST_ID_HEADER
@@ -45,6 +46,26 @@ def test_health_returns_exact_public_contract() -> None:
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {
+        "status": "ok",
+        "service": "opsmind-test-api",
+        "environment": "test",
+    }
+    assert BUILD_REVISION_HEADER not in response.headers
+
+
+def test_health_exposes_configured_release_revision_without_changing_body() -> None:
+    revision = "a" * 40
+    settings = Settings(
+        service_name="opsmind-test-api",
+        environment=Environment.TEST,
+        build_revision=revision,
+    )
+
+    response = TestClient(create_app(settings)).get("/health")
+
+    assert response.status_code == 200
+    assert response.headers[BUILD_REVISION_HEADER] == revision
     assert response.json() == {
         "status": "ok",
         "service": "opsmind-test-api",
@@ -191,6 +212,15 @@ def test_health_openapi_contract_is_documented() -> None:
     )
     assert operation["tags"] == ["health"]
     assert "200" in operation["responses"]
+    assert operation["responses"]["200"]["headers"][BUILD_REVISION_HEADER] == {
+        "description": (
+            "Full Git revision of the running release when build identity is available."
+        ),
+        "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$",
+        },
+    }
     assert health_schema["required"] == ["status", "service", "environment"]
     assert health_schema["properties"]["status"]["const"] == "ok"
 

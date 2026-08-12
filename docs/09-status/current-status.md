@@ -312,19 +312,33 @@ reviewing that residual. PR #69 squash-merged on 2026-08-10 as
 feature tree, Issue #68 closed, and Repository checks, Python quality, and
 Container quality all passed on canonical `main`. Phase 8A is Complete.
 
-## Phase 8B Owner Implementation Gate
+## Phase 8B Repository Implementation
 
 [Issue #70](https://github.com/AnishPaudyal/opsmind/issues/70) and the
-[Phase 8B gate](../01-architecture/phase-8b-cloud-backend-gate.md) define the
-exact zero-cost backend implementation package, account/bootstrap order,
+[Phase 8B gate](../01-architecture/phase-8b-cloud-backend-gate.md) govern the
+authorized zero-cost backend implementation package, account/bootstrap order,
 secret ownership, ZITADEL/JWKS contract, Neon pooled/direct connections,
 Render cold-start and immutable-release behavior, GHCR identity, IaC ownership,
 current free-tier evidence, acceptance criteria, and required owner actions.
 
-This is planning/governance only. No Render, Neon, ZITADEL, HCP Terraform,
-GHCR package, Render Blueprint, Terraform, deployment, credential, Cloudflare,
-frontend, or LocalStack resource exists. Issue #70 remains blocked until the
-repository owner separately authorizes its bounded implementation.
+The repository owner authorized the bounded Phase 8B implementation. The
+repository implementation now includes:
+
+- ZITADEL-compatible RS256/JWKS authentication with exact project-role mapping
+  behind the existing provider-neutral trusted-principal boundary;
+- hosted PostgreSQL connection hardening, immutable build revision exposure,
+  GHCR publication source, protected migration/deploy/smoke orchestration, and
+  the bounded read-only ZITADEL smoke-token helper;
+- provider-pinned Terraform for the ZITADEL project, three exact roles, public
+  SPA application, smoke identity metadata, and read-only smoke grant;
+- credential-free Terraform quality CI and an owner-controlled HCP Terraform
+  workspace/bootstrap contract.
+
+No live Phase 8B Neon, Render, ZITADEL, or HCP Terraform resource, GHCR package,
+cloud credential, or deployment is claimed yet. `render.yaml` is intentionally
+deferred until the first reviewed immutable GHCR digest exists. Frontend,
+Cloudflare, LocalStack, Phase 8C–8E, and production-readiness work remain
+outside the current implementation boundary.
 
 ## Issue #58 Residual Limitations
 
@@ -355,13 +369,15 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The immediate permitted work is repository-owner review of the Issue #70
-Phase 8B implementation gate. Phase 8B implementation requires a separate,
-explicit owner authorization after that review.
+The immediate permitted work is completion and review of the remaining
+repository-only Phase 8B implementation under Issue #70, followed by the
+documented owner-controlled bootstrap sequence.
 
-Phase 8B–8E implementation, cloud resource creation, frontend implementation,
-deployment, identity-provider configuration, Terraform/HCP Terraform, Render
-Blueprint, GHCR publication, LocalStack, and production-readiness work remain
-unauthorized pending their documented gates.
-Phase 9 data pipelines, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph work
-remain Planned.
+Live Neon, ZITADEL, HCP Terraform, GHCR, and Render actions must occur only at
+their documented prerequisites and owner-interaction points. The first
+`render.yaml` remains deferred until a reviewed immutable GHCR digest exists.
+
+Phase 8C frontend/Cloudflare work, Phase 8D hardening, Phase 8E LocalStack,
+production-readiness work, Phase 9 data pipelines, Phase 10 MLOps, and Phase 11
+LLM/RAG/LangGraph remain outside the current authorization or Planned as
+documented.

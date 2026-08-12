@@ -10,7 +10,10 @@ from sqlalchemy.engine import URL
 
 from opsmind.core.config import parse_postgresql_database_url
 from opsmind.persistence.postgresql import models as _models  # noqa: F401
-from opsmind.persistence.postgresql.database import Base
+from opsmind.persistence.postgresql.database import (
+    POSTGRESQL_CONNECT_TIMEOUT_SECONDS,
+    Base,
+)
 
 config = context.config
 
@@ -56,6 +59,7 @@ def run_migrations_online() -> None:
         _database_url(),
         hide_parameters=True,
         poolclass=pool.NullPool,
+        connect_args={"connect_timeout": POSTGRESQL_CONNECT_TIMEOUT_SECONDS},
     )
 
     try:

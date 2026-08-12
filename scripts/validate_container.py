@@ -123,7 +123,14 @@ def assert_image_contract(image: str) -> None:
     if "uvicorn" not in str(command) or "--workers 1" not in str(command):
         fail("Image command must run one Uvicorn worker")
     configured_environment = config.get("Env")
-    if not isinstance(configured_environment, list) or any(
+    if not isinstance(configured_environment, list):
+        fail("Image environment configuration is missing")
+
+    expected_revision_environment = f"OPSMIND_BUILD_REVISION={revision}"
+    if expected_revision_environment not in configured_environment:
+        fail("Runtime build revision must match the OCI revision")
+
+    if any(
         str(value).startswith(("OPSMIND_DATABASE_URL=", "OPSMIND_AUTH_PUBLIC_KEY="))
         for value in configured_environment
     ):

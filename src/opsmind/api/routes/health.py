@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from starlette.responses import JSONResponse
 
 from opsmind.api.dependencies import get_readiness_probe
@@ -13,16 +13,40 @@ from opsmind.schemas.health import HealthResponse, ReadinessChecks, ReadinessRes
 
 router = APIRouter(tags=["health"])
 
+BUILD_REVISION_HEADER = "X-OpsMind-Revision"
+
 
 @router.get(
     "/health",
     response_model=HealthResponse,
     status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "headers": {
+                BUILD_REVISION_HEADER: {
+                    "description": (
+                        "Full Git revision of the running release when build "
+                        "identity is available."
+                    ),
+                    "schema": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{40}$",
+                    },
+                }
+            }
+        }
+    },
     summary="Check process health",
     description="Report deterministic health for the running API process.",
 )
-def read_health(settings: Annotated[Settings, Depends(get_settings)]) -> HealthResponse:
+def read_health(
+    response: Response,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> HealthResponse:
     """Return process-level health without checking downstream systems."""
+    if settings.build_revision is not None:
+        response.headers[BUILD_REVISION_HEADER] = settings.build_revision
+
     return HealthResponse(
         status="ok",
         service=settings.service_name,
