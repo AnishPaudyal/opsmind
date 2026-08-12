@@ -99,6 +99,8 @@ consumer and authority are known.
    - Store the ZITADEL provider credential as a sensitive workspace variable.
      A separate HCP API token is not required for the selected VCS-driven
      workflow.
+   - Follow `phase-8b-hcp-terraform-bootstrap.md` for the exact workspace,
+     variable, speculative-plan, and manual-apply contract.
 5. **Render owner bootstrap**
    - Create or sign in to a Render Hobby workspace and connect GitHub only to
      this repository.

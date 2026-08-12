@@ -35,5 +35,8 @@ store, or output that private key.
 Phase 8B uses HCP Terraform VCS-driven plans and reviewed applies. Do not run a
 local `terraform apply` against the real ZITADEL instance.
 
+The owner bootstrap and workspace settings are defined in
+`docs/01-architecture/phase-8b-hcp-terraform-bootstrap.md`.
+
 Local commands may be used for formatting, initialization without backend
 configuration, provider locking, and static validation.
