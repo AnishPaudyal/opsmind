@@ -284,3 +284,29 @@ def test_settings_reject_invalid_jwks_configuration_values(
 
     with pytest.raises(ValidationError):
         Settings(**complete)  # type: ignore[arg-type]
+
+
+def test_settings_accept_full_lowercase_build_revision() -> None:
+    revision = "a" * 40
+
+    settings = Settings(build_revision=revision)
+
+    assert settings.build_revision == revision
+
+
+@pytest.mark.parametrize(
+    "revision",
+    [
+        "",
+        "abc123",
+        "A" * 40,
+        "g" * 40,
+        "a" * 39,
+        "a" * 41,
+        " " + ("a" * 40),
+        ("a" * 40) + " ",
+    ],
+)
+def test_settings_reject_invalid_build_revision(revision: str) -> None:
+    with pytest.raises(ValidationError, match="OPSMIND_BUILD_REVISION"):
+        Settings(build_revision=revision)

@@ -1,5 +1,6 @@
 """Typed environment-backed application configuration."""
 
+import re
 from enum import StrEnum
 from functools import lru_cache
 
@@ -58,6 +59,7 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     persistence_backend: PersistenceBackend = PersistenceBackend.MEMORY
     database_url: SecretStr | None = None
+    build_revision: str | None = None
     auth_issuer: str | None = None
     auth_audience: str | None = None
     auth_public_key: SecretStr | None = None
@@ -66,6 +68,16 @@ class Settings(BaseSettings):
     auth_clock_leeway_seconds: int = Field(default=0, ge=0, le=60)
     auth_jwks_timeout_seconds: float = Field(default=5.0, gt=0, le=10)
     auth_jwks_cache_seconds: float = Field(default=300.0, gt=0, le=3600)
+
+    @field_validator("build_revision")
+    @classmethod
+    def validate_build_revision(cls, value: str | None) -> str | None:
+        """Require an exact lowercase full Git SHA when build identity is set."""
+        if value is not None and re.fullmatch(r"[0-9a-f]{40}", value) is None:
+            raise ValueError(
+                "OPSMIND_BUILD_REVISION must be a 40-character lowercase Git SHA"
+            )
+        return value
 
     @field_validator("database_url")
     @classmethod

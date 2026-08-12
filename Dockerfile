@@ -34,6 +34,7 @@ LABEL org.opencontainers.image.title="OpsMind API" \
 
 ENV PATH="/app/.venv/bin:${PATH}" \
     PORT=8000 \
+    OPSMIND_BUILD_REVISION="${VCS_REF}" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
