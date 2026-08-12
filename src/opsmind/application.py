@@ -47,6 +47,10 @@ from opsmind.security import (
     JWTAuthenticationConfig,
     JWTAuthenticator,
 )
+from opsmind.security_zitadel import (
+    ZitadelJWTAuthenticationConfig,
+    ZitadelJWTAuthenticator,
+)
 
 
 def create_app(
@@ -105,16 +109,39 @@ def create_app(
         if resolved_settings.authentication_configured:
             assert resolved_settings.auth_issuer is not None
             assert resolved_settings.auth_audience is not None
-            assert resolved_settings.auth_public_key is not None
-            resolved_authenticator = JWTAuthenticator(
-                JWTAuthenticationConfig(
-                    issuer=resolved_settings.auth_issuer,
-                    audience=resolved_settings.auth_audience,
-                    public_key=resolved_settings.auth_public_key.get_secret_value(),
-                    algorithm=resolved_settings.auth_algorithm,
-                    clock_leeway_seconds=(resolved_settings.auth_clock_leeway_seconds),
+            if resolved_settings.static_authentication_configured:
+                assert resolved_settings.auth_public_key is not None
+                resolved_authenticator = JWTAuthenticator(
+                    JWTAuthenticationConfig(
+                        issuer=resolved_settings.auth_issuer,
+                        audience=resolved_settings.auth_audience,
+                        public_key=(
+                            resolved_settings.auth_public_key.get_secret_value()
+                        ),
+                        algorithm=resolved_settings.auth_algorithm,
+                        clock_leeway_seconds=(
+                            resolved_settings.auth_clock_leeway_seconds
+                        ),
+                    )
                 )
-            )
+            else:
+                assert resolved_settings.jwks_authentication_configured
+                assert resolved_settings.auth_jwks_url is not None
+                resolved_authenticator = ZitadelJWTAuthenticator(
+                    ZitadelJWTAuthenticationConfig(
+                        issuer=resolved_settings.auth_issuer,
+                        audience=resolved_settings.auth_audience,
+                        jwks_url=resolved_settings.auth_jwks_url,
+                        algorithm=resolved_settings.auth_algorithm,
+                        clock_leeway_seconds=(
+                            resolved_settings.auth_clock_leeway_seconds
+                        ),
+                        jwks_timeout_seconds=(
+                            resolved_settings.auth_jwks_timeout_seconds
+                        ),
+                        jwks_cache_seconds=(resolved_settings.auth_jwks_cache_seconds),
+                    )
+                )
         else:
             resolved_authenticator = DenyAllAuthenticator()
 

@@ -36,9 +36,14 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.auth_issuer is None
     assert settings.auth_audience is None
     assert settings.auth_public_key is None
+    assert settings.auth_jwks_url is None
     assert settings.auth_algorithm == "RS256"
     assert settings.auth_clock_leeway_seconds == 0
+    assert settings.auth_jwks_timeout_seconds == 5.0
+    assert settings.auth_jwks_cache_seconds == 300.0
     assert settings.authentication_configured is False
+    assert settings.static_authentication_configured is False
+    assert settings.jwks_authentication_configured is False
 
 
 def test_settings_accept_prefixed_environment_overrides(
@@ -70,6 +75,8 @@ def test_settings_accept_complete_authentication_configuration() -> None:
     )
 
     assert settings.authentication_configured is True
+    assert settings.static_authentication_configured is True
+    assert settings.jwks_authentication_configured is False
     assert settings.auth_algorithm == "RS256"
     assert settings.auth_clock_leeway_seconds == 5
     assert public_key not in repr(settings)
@@ -225,3 +232,55 @@ def test_settings_hide_database_credentials_in_representations() -> None:
     assert third_settings is not first_settings
 
     reset_settings_cache()
+
+
+def test_settings_accept_complete_jwks_authentication_configuration() -> None:
+    settings = Settings(
+        auth_issuer="https://identity.example.test/",
+        auth_audience="opsmind-project-123",
+        auth_jwks_url="https://identity.example.test/oauth/v2/keys",
+        auth_jwks_timeout_seconds=4.0,
+        auth_jwks_cache_seconds=240.0,
+    )
+
+    assert settings.authentication_configured is True
+    assert settings.static_authentication_configured is False
+    assert settings.jwks_authentication_configured is True
+    assert settings.auth_jwks_timeout_seconds == 4.0
+    assert settings.auth_jwks_cache_seconds == 240.0
+
+
+def test_settings_reject_static_key_and_jwks_together() -> None:
+    with pytest.raises(ValidationError, match="exactly one"):
+        Settings(
+            auth_issuer="https://identity.example.test/",
+            auth_audience="opsmind-project-123",
+            auth_public_key=SecretStr("synthetic-public-key"),
+            auth_jwks_url="https://identity.example.test/oauth/v2/keys",
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("auth_jwks_url", ""),
+        ("auth_jwks_url", " padded "),
+        ("auth_jwks_timeout_seconds", 0),
+        ("auth_jwks_timeout_seconds", 11),
+        ("auth_jwks_cache_seconds", 0),
+        ("auth_jwks_cache_seconds", 3601),
+    ],
+)
+def test_settings_reject_invalid_jwks_configuration_values(
+    field: str,
+    value: object,
+) -> None:
+    complete: dict[str, object] = {
+        "auth_issuer": "https://identity.example.test/",
+        "auth_audience": "opsmind-project-123",
+        "auth_jwks_url": "https://identity.example.test/oauth/v2/keys",
+    }
+    complete[field] = value
+
+    with pytest.raises(ValidationError):
+        Settings(**complete)  # type: ignore[arg-type]

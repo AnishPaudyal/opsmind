@@ -10,6 +10,7 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
+from jwt.algorithms import RSAAlgorithm
 from pydantic import SecretStr
 
 from opsmind.api.dependencies import get_authenticator
@@ -357,6 +358,74 @@ def test_configured_jwt_authenticator_reaches_protected_route() -> None:
             auth_issuer=issuer,
             auth_audience=audience,
             auth_public_key=SecretStr(public_pem),
+        )
+    )
+
+    response = TestClient(application).get(
+        "/api/v1/products",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_configured_jwks_authenticator_reaches_protected_route(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode("ascii")
+
+    serialized_jwk = RSAAlgorithm.to_jwk(private_key.public_key())
+    jwk = cast(dict[str, object], json.loads(serialized_jwk))
+    kid = "api-test-key"
+    jwk.update({"kid": kid, "use": "sig", "alg": "RS256"})
+
+    def fake_fetch_data(_: object) -> dict[str, object]:
+        return {"keys": [jwk]}
+
+    monkeypatch.setattr(
+        "opsmind.security_zitadel.BoundedPyJWKClient.fetch_data",
+        fake_fetch_data,
+    )
+
+    issuer = "https://identity.example.test/"
+    audience = "opsmind-project-123"
+    roles_claim = f"urn:zitadel:iam:org:project:{audience}:roles"
+    now = datetime.now(UTC)
+
+    token = jwt.encode(
+        {
+            "iss": issuer,
+            "aud": [audience, "frontend-client"],
+            "sub": "zitadel-api-reviewer",
+            "exp": now + timedelta(minutes=5),
+            "iat": now,
+            "nbf": now - timedelta(seconds=1),
+            "jti": "api-access-token-1",
+            roles_claim: [
+                {
+                    "opsmind.business.read": {
+                        "org-1": "example.test",
+                    }
+                }
+            ],
+        },
+        private_pem,
+        algorithm="RS256",
+        headers={"kid": kid},
+    )
+
+    application = create_app(
+        Settings(
+            environment=Environment.TEST,
+            auth_issuer=issuer,
+            auth_audience=audience,
+            auth_jwks_url="https://identity.example.test/oauth/v2/keys",
         )
     )
 

@@ -61,8 +61,11 @@ class Settings(BaseSettings):
     auth_issuer: str | None = None
     auth_audience: str | None = None
     auth_public_key: SecretStr | None = None
+    auth_jwks_url: str | None = None
     auth_algorithm: str = "RS256"
     auth_clock_leeway_seconds: int = Field(default=0, ge=0, le=60)
+    auth_jwks_timeout_seconds: float = Field(default=5.0, gt=0, le=10)
+    auth_jwks_cache_seconds: float = Field(default=300.0, gt=0, le=3600)
 
     @field_validator("database_url")
     @classmethod
@@ -72,7 +75,7 @@ class Settings(BaseSettings):
             parse_postgresql_database_url(value)
         return value
 
-    @field_validator("auth_issuer", "auth_audience")
+    @field_validator("auth_issuer", "auth_audience", "auth_jwks_url")
     @classmethod
     def validate_authentication_text(cls, value: str | None) -> str | None:
         """Reject blank or ambiguously padded authentication identifiers."""
@@ -113,23 +116,46 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def require_complete_authentication_configuration(self) -> "Settings":
-        """Reject partially configured token validation while allowing deny-all."""
-        configured = (
-            self.auth_issuer is not None,
-            self.auth_audience is not None,
-            self.auth_public_key is not None,
+        """Require one complete JWT trust source while allowing deny-all."""
+        static_key_configured = self.auth_public_key is not None
+        jwks_configured = self.auth_jwks_url is not None
+        any_authentication_value = any(
+            (
+                self.auth_issuer is not None,
+                self.auth_audience is not None,
+                static_key_configured,
+                jwks_configured,
+            )
         )
-        if any(configured) and not all(configured):
+        if not any_authentication_value:
+            return self
+
+        if (
+            self.auth_issuer is None
+            or self.auth_audience is None
+            or static_key_configured == jwks_configured
+        ):
             raise ValueError(
-                "OPSMIND_AUTH_ISSUER, OPSMIND_AUTH_AUDIENCE, and "
-                "OPSMIND_AUTH_PUBLIC_KEY must be configured together"
+                "OPSMIND_AUTH_ISSUER and OPSMIND_AUTH_AUDIENCE must be "
+                "configured together with exactly one of "
+                "OPSMIND_AUTH_PUBLIC_KEY or OPSMIND_AUTH_JWKS_URL"
             )
         return self
 
     @property
     def authentication_configured(self) -> bool:
-        """Return whether the complete JWT trust boundary is configured."""
+        """Return whether one complete JWT trust boundary is configured."""
         return self.auth_issuer is not None
+
+    @property
+    def static_authentication_configured(self) -> bool:
+        """Return whether authentication uses one configured static RSA key."""
+        return self.auth_public_key is not None
+
+    @property
+    def jwks_authentication_configured(self) -> bool:
+        """Return whether authentication uses a configured JWKS endpoint."""
+        return self.auth_jwks_url is not None
 
 
 @lru_cache(maxsize=1)
