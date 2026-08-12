@@ -84,6 +84,8 @@ authority are known.
      SQLAlchemy/Psycopg URLs: pooled runtime and direct migration. Codex cannot
      infer or retrieve these credentials without owner-authorized console/API
      access.
+   - Follow `phase-8b-neon-bootstrap.md` for the exact project, region,
+     database/role, pooled/direct URL, and secret-handoff contract.
 3. **ZITADEL owner bootstrap**
    - Create or sign in to one ZITADEL Cloud Free instance and complete email,
      CAPTCHA, and administrator bootstrap. The current Free plan is `$0` with
