@@ -61,6 +61,7 @@ jobs:
           required_checks=(
             "Container build and smoke"
             "Python quality"
+            "Terraform quality"
             "governance"
           )
 
