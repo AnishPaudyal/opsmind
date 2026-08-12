@@ -100,6 +100,9 @@ authority are known.
      Phase 8B project, roles, and applications after bootstrap.
    - Approve placeholder local and eventual Phase 8C redirect/logout origins.
      Phase 8B must not create the frontend or Cloudflare resources.
+   - Follow `phase-8b-zitadel-bootstrap.md` for the exact instance/organization,
+     Terraform-provider credential, HCP handoff, smoke-key, and rotation
+     contract.
 4. **HCP Terraform owner bootstrap**
    - Create or sign in to a free HCP Terraform account, verify email, and
      create the organization.
