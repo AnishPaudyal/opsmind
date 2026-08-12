@@ -150,7 +150,11 @@ def test_private_key_jwt_exchange_requests_project_audience_and_returns_jwt() ->
     fields = urllib.parse.parse_qs(raw_request.data.decode("ascii"))
     assert fields["grant_type"] == [JWT_BEARER_GRANT_TYPE]
     assert fields["scope"] == [
-        f"openid urn:zitadel:iam:org:project:id:{PROJECT_ID}:aud"
+        (
+            f"openid "
+            f"urn:zitadel:iam:org:project:id:{PROJECT_ID}:aud "
+            "urn:zitadel:iam:org:projects:roles"
+        )
     ]
 
     assertion = fields["assertion"][0]

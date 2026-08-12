@@ -263,7 +263,11 @@ def request_access_token(
 ) -> str:
     """Exchange one signed assertion for one bounded JWT access token."""
     assertion = build_assertion(config, private_key, now=now)
-    scope = f"openid urn:zitadel:iam:org:project:id:{config.project_id}:aud"
+    scope = (
+        f"openid "
+        f"urn:zitadel:iam:org:project:id:{config.project_id}:aud "
+        "urn:zitadel:iam:org:projects:roles"
+    )
 
     body = urllib.parse.urlencode(
         {
