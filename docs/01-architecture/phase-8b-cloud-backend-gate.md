@@ -74,6 +74,9 @@ authority are known.
      the GHCR package public and confirm it remains linked to this repository.
    - No PAT is expected: the repository `GITHUB_TOKEN` with `contents: read`
      and `packages: write` is sufficient for publication.
+   - Follow `phase-8b-github-release-environment-bootstrap.md` for the exact
+     environment protection, secret/variable, approval, and first-release
+     bootstrap contract.
 2. **Neon owner bootstrap**
    - Create or sign in to a Neon account and complete email/identity checks.
      The current Free plan advertises no credit card requirement.
