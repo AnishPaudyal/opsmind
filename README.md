@@ -12,11 +12,15 @@ Phases 0 through 7 are complete. The repository owner accepted the integrated
 Phase 7 `Proceed` review under Issue #64 on 2026-08-09. On 2026-08-10, the
 repository owner accepted ADR-0007's genuine `$0` recurring Phase 8 portfolio
 architecture. Phase 8A completed through PR #69 with its locked, non-root API
-container, disposable smoke validation, and container CI. Issue #70 and the
+container, disposable smoke validation, and container CI. PR #72 merged the
+repository-controlled Phase 8B foundation under Issue #70, including bounded
+ZITADEL/JWKS authentication, hosted PostgreSQL hardening, immutable cloud
+release workflow source, ZITADEL Terraform, Terraform CI, and owner bootstrap
+runbooks. The
 [Phase 8B implementation gate](docs/01-architecture/phase-8b-cloud-backend-gate.md)
-prepare the next zero-cost backend decision, but implementation, cloud resource
-creation, deployment, identity provisioning, frontend work, and the separate
-LocalStack skills track remain unauthorized.
+now governs the owner-controlled live-bootstrap sequence. No live cloud
+resource, GHCR release, deployment, frontend, or LocalStack skills environment
+is claimed, and Phase 8 remains Current.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
@@ -1021,7 +1025,8 @@ claim cryptographic tamper evidence, compliance certification, external
 ordering, production-scale concurrency, production security, or production
 readiness.
 
-Phase 7 and Phase 8A are complete. Phase 8B is prepared under blocked Issue #70
-for a separate repository-owner implementation decision. See
-[Current Status](docs/09-status/current-status.md) for the active gate and its
-validation evidence.
+Phase 7 and Phase 8A are complete. The Phase 8B repository foundation is merged
+through PR #72, while Issue #70 remains open for the owner-controlled live
+bootstrap and deployment evidence. See [Current
+Status](docs/09-status/current-status.md) for the active gate and its validation
+evidence.
