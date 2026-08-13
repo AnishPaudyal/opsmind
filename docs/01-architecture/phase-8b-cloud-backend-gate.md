@@ -14,24 +14,25 @@ The repository owner subsequently authorized the bounded Phase 8B
 implementation. PR #72 squash-merged the repository-controlled foundation as
 `c52dfedc2ce4019b64dd1e0333f28cbef77b8a82`. Its canonical tree exactly
 matches the reviewed feature tree, and all four required hosted checks passed
-on canonical `main`.
+on canonical `main`. PR #75 subsequently added the reviewed Render Blueprint
+and schema validation as canonical commit
+`ba2b4284e24d3a440e58bce4d6337a9ad008eade`.
 
 This document remains the governing scope, ownership, cost, secret, and stop
 contract. Authorization does not extend to Phase 8C frontend/Cloudflare work,
 Phase 8D hardening, Phase 8E LocalStack, production-readiness claims, or later
 phases.
 
-## Current authorization boundary
+## Completion status
 
-The bounded Phase 8B repository package defined below is merged.
-Owner-controlled account signup, credential creation, HCP
-Terraform apply approval, Render authorization, protected-environment approval,
-GHCR visibility changes, and live deployment remain explicit human actions
-performed only at their documented point in the bootstrap sequence.
+The bounded repository package, owner-controlled cloud bootstrap, HCP Terraform
+apply, GHCR publication, Render Blueprint synchronization, protected migration,
+exact-digest deployment, and live smoke validation are complete. Their
+authority boundaries remain in force for future releases.
 
 The current state is:
 
-`REPOSITORY IMPLEMENTATION MERGED — LIVE CLOUD BOOTSTRAP NOT STARTED`
+`PHASE 8B COMPLETE — PHASE 8 REMAINS CURRENT`
 
 ## Bounded implementation scope after approval
 
@@ -323,7 +324,7 @@ repositories. Reverify these policies on every implementation/release review.
 
 ## Render Blueprint and release ownership
 
-The future `render.yaml` owns only stable service configuration:
+The root `render.yaml` owns only stable service configuration:
 
 - service name and `type: web`;
 - `runtime: image` and a public GHCR repository/image reference;
@@ -410,6 +411,50 @@ Phase 8B is complete only when all of the following are evidenced:
 - no frontend, Cloudflare, LocalStack/AWS, Phase 8C–8E, later-phase, or
   production-readiness capability is claimed.
 
+## Final live evidence
+
+The first controlled release completed successfully through GitHub Actions
+Cloud release run #1 (`31738097577`) and the protected `phase-8b` environment.
+The release published application revision
+`1f7de97e593182bd79ff767de220532b8301acff` as
+`ghcr.io/anishpaudyal/opsmind:1f7de97e593182bd79ff767de220532b8301acff`
+and deployed immutable identity
+`ghcr.io/anishpaudyal/opsmind@sha256:1b3470e14704640e21f2ccf8bc93d779f732ec888950b9a19ddd0478b9f1be5d`.
+
+The protected release recorded:
+
+- Alembic migration success against the direct Neon TLS connection;
+- Render deploy `dep-d9v2si8n74is73ctnfig`;
+- `/health` success on attempt 1;
+- `/ready` success on attempt 1;
+- unauthenticated protected-route 401;
+- authenticated read-only 200;
+- final application-revision attestation success.
+
+The manually synchronized Blueprint `opsmind-phase-8b`
+(`exs-d9v2h467bikc73e4ruog`) used canonical commit
+`ba2b4284e24d3a440e58bce4d6337a9ad008eade` and created exactly one Free Ohio
+image-backed service: `opsmind-api` (`srv-d9v2kdid0e5s73egn4ug`) at
+`https://opsmind-api-ru63.onrender.com`. Its public `/health` response reported
+service `opsmind-api` in environment `production`.
+
+The canonical repository SHA is later than the deployed application revision
+because PR #75 added the Blueprint only after the first immutable image was
+published. Canonical `ba2b4284e24d3a440e58bce4d6337a9ad008eade` must not be
+reported as the deployed image revision; the deployed application remains the
+immutable `1f7de97e593182bd79ff767de220532b8301acff` image.
+
+Neon Free provides PostgreSQL 17 in AWS Ohio, with pooled SSL runtime traffic
+and a separate direct SSL migration path. ZITADEL provides the OpsMind project,
+three exact project roles, public SPA metadata, and bounded release-smoke
+identity. HCP Terraform retains ZITADEL state and run history. GHCR is public
+for anonymous Render pulls. No database URL, password, deploy hook, private key,
+JWT profile, token, or protected secret value is recorded in this evidence.
+
+The durable [Phase 8B review](../12-phase-reviews/phase-8b-review.md) evaluates
+this evidence and its residual limitations. Phase 8B is Complete; Phase 8
+remains Current.
+
 ## Implementation risks and required owner interaction
 
 | Risk | Mitigation | Owner interaction |
@@ -457,13 +502,9 @@ secret entry, and any cloud apply/deploy.
 
 ## Current stop boundary
 
-Phase 8B repository implementation now exists under Issue #70, including the
-backend trust adaptation, cloud connection hardening, immutable release
-workflow source, ZITADEL Terraform source, Terraform quality validation, and
-bootstrap documentation.
-
-No live Neon, Render, ZITADEL, or HCP Terraform Phase 8B resource, GHCR package,
-Render Blueprint, cloud credential, or deployment is claimed by this
-repository state. Do not claim Phase 8B complete until the measurable
-completion criteria above are evidenced. Phase 8C–8E and later-phase work
-remain outside this authorization.
+Issue #70 is formally closable when the documentation closeout pull request
+merges. That closure does not authorize Phase 8C frontend/Cloudflare work,
+Phase 8D hardening, Phase 8E LocalStack, later phases, or a production-readiness
+claim. Future Phase 8B releases remain protected operational actions and must
+preserve the ownership, secret, cost, migration, immutable-image, and approval
+boundaries in this document.
