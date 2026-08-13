@@ -54,30 +54,37 @@ Issue #68 Phase 8A containerization is complete. PR #69 was squash-merged as
 canonical tree exactly matches the reviewed feature tree, and all three
 post-merge workflows passed.
 
-Issue #70 is the blocked Phase 8B zero-cost cloud-backend implementation
-workstream. The current branch may prepare only its owner implementation gate:
+The repository owner authorized the bounded Issue #70 Phase 8B zero-cost
+cloud-backend repository implementation. PR #72 was squash-merged as
+`c52dfedc2ce4019b64dd1e0333f28cbef77b8a82`; its canonical tree exactly
+matches the reviewed feature tree, and Container quality, Python quality,
+Terraform quality, and Repository checks passed on canonical `main`.
 
-- exact implementation scope and measurable acceptance criteria;
-- human account/bootstrap and secret inventories;
-- ZITADEL/JWKS, Neon, Render, GHCR, migration, and IaC ownership contracts;
-- current official free-tier evidence, risks, and required owner interactions;
-- minimum current-status, roadmap, and governance documentation;
-- documentation validation and pull-request preparation.
+Issue #70 remains open because live bootstrap and deployment evidence is still
+absent. The repository-controlled Phase 8B foundation is merged, but no live
+Neon, ZITADEL, HCP Terraform, GHCR release, or Render service is claimed.
+`render.yaml` remains intentionally deferred until a real immutable GHCR
+digest exists, and no Phase 8 review exists yet.
 
-Do not begin on this branch:
+The next gate is the documented owner-controlled Phase 8B live-bootstrap
+sequence. Perform a live step only when the repository owner explicitly
+authorizes that step and its documented prerequisites are satisfied.
 
-- application, test, dependency, migration, settings, or workflow changes;
-- Terraform files, `render.yaml`, registry publication, or deployment code;
+Do not begin without separate authorization:
+
 - Render, Neon, ZITADEL, HCP Terraform, GHCR, Cloudflare, AWS, or other cloud
   resource creation/configuration;
 - credentials, account connections, identity-provider provisioning, or secret
   storage;
+- a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
+  `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
 - frontend, LocalStack, Phase 8C–8E, or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
-Issue #70 implementation remains blocked until the repository owner reviews
-the Phase 8B gate and separately authorizes the bounded implementation.
+Phase 8 remains Current. Do not mark Phase 8B or Phase 8 complete until the
+documented live-cloud acceptance evidence and owner review exist.
+
 ## Required Context
 
 Before starting work:

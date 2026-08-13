@@ -5,10 +5,10 @@ This document is the detailed authority for the current project state. The
 phase-review documents preserve the decisions and evidence that established
 earlier states.
 
-- Status date: 2026-08-10
-- Current formal gate: Phase 8 — Phase 8B owner implementation decision
-- Active workstream: blocked Issue #70 Phase 8B cloud-backend implementation
-  gate
+- Status date: 2026-08-12
+- Current formal gate: Phase 8 — Phase 8B owner-controlled live bootstrap
+- Active workstream: open Issue #70 Phase 8B cloud-backend bootstrap and live
+  validation
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -16,8 +16,8 @@ earlier states.
 - ADR-0007 result: Accepted by the repository owner on 2026-08-10
 - Issue #66 result: complete; PR #67 merged and Issue #66 closed
 - Issue #68 result: complete; PR #69 merged and Issue #68 closed
-- Issue #70 result: owner implementation gate prepared; implementation blocked
-  pending a separate repository-owner decision
+- Issue #70 result: repository foundation merged through PR #72; live bootstrap,
+  deployment evidence, and completion review remain pending
 
 ## Canonical Phase Status
 
@@ -31,7 +31,7 @@ earlier states.
 | 5 | Stockout risk and reorder recommendations | Complete | Owner-accepted Proceed review under Issue #50 |
 | 6 | Decision approval, rejection, and audit history | Complete | Owner-accepted Proceed review under Issue #52 |
 | 7 | Testing, security, and observability hardening | Complete | Owner accepted Proceed under Issue #64 on 2026-08-09 |
-| 8 | Cloud deployment and product delivery | Current | Phase 8A Complete; Phase 8B owner implementation gate prepared under Issue #70 |
+| 8 | Cloud deployment and product delivery | Current | Phase 8A Complete; Phase 8B repository foundation merged, live bootstrap pending under Issue #70 |
 | 9–12 | Data pipelines, MLOps, advanced AI, and production readiness | Planned | Not formally opened |
 
 Implementation delivery and formal phase completion remain separate. Phases 5
@@ -190,8 +190,8 @@ Current limitations include:
   restore, replication, or high availability;
 - no production log collection, monitoring, alerting, service-level objectives,
   or incident-response system;
-- no API container, AWS infrastructure, cloud deployment, or
-  production-readiness approval.
+- no live cloud deployment, AWS infrastructure, or production-readiness
+  approval.
 
 No AWS resources or managed production services exist. Tests and evaluations
 use synthetic or controlled data; no production, customer, personal, or
@@ -334,6 +334,20 @@ repository implementation now includes:
 - credential-free Terraform quality CI and an owner-controlled HCP Terraform
   workspace/bootstrap contract.
 
+PR #72 squash-merged the reviewed repository implementation on 2026-08-11 as
+`c52dfedc2ce4019b64dd1e0333f28cbef77b8a82`. Its canonical tree
+`b710581e0ef0ab6489016a3fbd4584669113f197` exactly matches reviewed feature
+HEAD `f2ef6871dced33fb4e9dd245d8e31a820309fec7`. Container quality, Python
+quality, Terraform quality, and Repository checks passed both before merge and
+on canonical `main`. The repository-controlled Phase 8B foundation is merged.
+Canonical Python quality passed 714 tests with zero skips, strict mypy across
+122 source files, and 95.74% combined line-and-branch coverage. Canonical
+container validation passed the full and repeat-build contracts; Trivy reported
+the accepted 19 High and 4 Critical inherited Debian findings, while the
+fixable High/Critical gate and Python/application High/Critical count remained
+zero. Terraform 1.15.8 formatting, locked backendless initialization,
+validation, and the exact `zitadel/zitadel` 3.3.0 provider check passed.
+
 No live Phase 8B Neon, Render, ZITADEL, or HCP Terraform resource, GHCR package,
 cloud credential, or deployment is claimed yet. `render.yaml` is intentionally
 deferred until the first reviewed immutable GHCR digest exists. Frontend,
@@ -369,9 +383,11 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The immediate permitted work is completion and review of the remaining
-repository-only Phase 8B implementation under Issue #70, followed by the
-documented owner-controlled bootstrap sequence.
+The exact safest next action is the first documented owner-controlled bootstrap
+step: create and protect the GitHub `phase-8b` deployment environment before
+any `cloud-release` dispatch. This requires explicit owner direction and must
+follow the GitHub release-environment runbook; it was not performed during this
+status reconciliation.
 
 Live Neon, ZITADEL, HCP Terraform, GHCR, and Render actions must occur only at
 their documented prerequisites and owner-interaction points. The first

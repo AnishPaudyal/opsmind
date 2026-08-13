@@ -11,8 +11,10 @@ Python quality, and Container quality all passed on `main`.
 Phase 8B implementation workstream governed by accepted
 [ADR-0007](decisions/0007-select-phase-8-zero-cost-cloud-deployment-and-product-delivery-architecture.md).
 The repository owner subsequently authorized the bounded Phase 8B
-implementation. Repository implementation is now in progress under that
-authority.
+implementation. PR #72 squash-merged the repository-controlled foundation as
+`c52dfedc2ce4019b64dd1e0333f28cbef77b8a82`. Its canonical tree exactly
+matches the reviewed feature tree, and all four required hosted checks passed
+on canonical `main`.
 
 This document remains the governing scope, ownership, cost, secret, and stop
 contract. Authorization does not extend to Phase 8C frontend/Cloudflare work,
@@ -21,15 +23,15 @@ phases.
 
 ## Current authorization boundary
 
-The authorized Phase 8B repository work may implement the bounded package
-defined below. Owner-controlled account signup, credential creation, HCP
+The bounded Phase 8B repository package defined below is merged.
+Owner-controlled account signup, credential creation, HCP
 Terraform apply approval, Render authorization, protected-environment approval,
 GHCR visibility changes, and live deployment remain explicit human actions
 performed only at their documented point in the bootstrap sequence.
 
 The current state is:
 
-`IMPLEMENTATION AUTHORIZED — REPOSITORY WORK IN PROGRESS — LIVE CLOUD BOOTSTRAP NOT STARTED`
+`REPOSITORY IMPLEMENTATION MERGED — LIVE CLOUD BOOTSTRAP NOT STARTED`
 
 ## Bounded implementation scope after approval
 
