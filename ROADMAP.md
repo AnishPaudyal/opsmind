@@ -26,7 +26,7 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
 | 6     | Decision approval, rejection, and audit history       | Complete      | Owner-accepted Phase 6 review under Issue #52                       |
 | 7     | Testing, security, and observability hardening        | Complete      | Owner-accepted Phase 7 review merged through PR #65                 |
-| 8     | Cloud deployment and first product delivery             | Current       | Phase 8A and Phase 8B Complete; Phase 8C not started               |
+| 8     | Cloud deployment and first product delivery             | Current       | Phase 8A and Phase 8B Complete; Phase 8C gate Accepted under #77   |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
 | 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
 | 11    | Advanced AI, retrieval, and event-driven capabilities | Planned       | LLM, RAG, tool calling, and LangGraph not started                   |
@@ -191,7 +191,10 @@ containerization completed through PR #69. Phase 8B zero-cost cloud backend is
 Complete: the repository foundation, owner-controlled cloud bootstrap, Render
 Blueprint, immutable GHCR publication, protected migration and deployment, and
 live health/readiness/authentication smoke evidence are recorded under Issue
-#70 and the Phase 8B review. Phase 8C has not started.
+#70 and the Phase 8B review. The repository owner accepted the Issue #77 Phase
+8C gate on 2026-08-13. Batch 1 implementation becomes authorized only after the
+acceptance PR merges to canonical `main`; Batch 2, Batch 3, and all live-provider
+mutations remain separately gated.
 
 Phase 7A testing and coverage hardening, Issue #58 observability/readiness, and
 the accepted ADR-0006 security implementation are complete and merged. Issue
@@ -206,8 +209,10 @@ The Phase 8B gate defines the backend account, identity, database, registry,
 deployment, secret, and IaC boundaries. Its completed evidence includes the
 backend trust adaptation, PostgreSQL cloud hardening, ZITADEL/HCP Terraform,
 Neon persistence, the reviewed Render Blueprint, public immutable GHCR release,
-and protected migration/deploy/smoke orchestration. Frontend, Phase 8C–8E work,
-and production-readiness approval remain subject to their documented gates.
+and protected migration/deploy/smoke orchestration. Phase 8C–8E work and
+production-readiness approval remain subject to their documented gates. The
+Phase 8C gate is Accepted and authorizes Batch 1 only after its acceptance PR
+merges; it does not authorize Batch 2, Batch 3, or live Cloudflare work.
 Phase 9 data, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain Planned.
 
 Detailed current evidence and next-work boundaries live in
