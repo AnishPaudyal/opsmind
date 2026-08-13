@@ -17,7 +17,11 @@ under Issue #70 with ZITADEL/JWKS authentication, Neon PostgreSQL, HCP
 Terraform-managed ZITADEL state, a public immutable GHCR image, a Render Free
 API service managed by Blueprint, and a protected migration-before-deploy
 release. The [Phase 8B review](docs/12-phase-reviews/phase-8b-review.md) records
-the exact live evidence and limitations. No frontend, Cloudflare deployment,
+the exact live evidence and limitations. The repository owner accepted the
+[Phase 8C gate](docs/01-architecture/phase-8c-authenticated-frontend-gate.md)
+under Issue #77 on 2026-08-13. Batch 1 implementation is authorized only after
+the gate acceptance merges to canonical `main`; Batch 2, Batch 3, and all live
+provider mutations remain separately gated. No frontend, Cloudflare deployment,
 LocalStack skills environment, or production-readiness claim exists, and Phase
 8 remains Current.
 
@@ -74,8 +78,9 @@ The current implemented local stack uses:
 
 Docker Compose remains scoped to the normal local PostgreSQL service. The API
 image and its isolated validation harness do not reuse or destroy that service
-or its named data volume. Next.js and TypeScript remain a later product
-direction, and no frontend is currently implemented.
+or its named data volume. Accepted ADR-0007 selects a static
+React/TypeScript/Vite SPA rather than Next.js because no SSR requirement exists.
+The Phase 8C gate is Accepted, but no frontend is currently implemented.
 
 Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each

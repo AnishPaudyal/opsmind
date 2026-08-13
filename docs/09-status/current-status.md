@@ -6,9 +6,9 @@ phase-review documents preserve the decisions and evidence that established
 earlier states.
 
 - Status date: 2026-08-13
-- Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C not started
-- Active workstream: Issue #70 Phase 8B documentation closeout; the issue closes
-  only when the closeout pull request merges
+- Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
+- Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
+  product; Batch 1 authorized only after the gate acceptance merges
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -16,9 +16,11 @@ earlier states.
 - ADR-0007 result: Accepted by the repository owner on 2026-08-10
 - Issue #66 result: complete; PR #67 merged and Issue #66 closed
 - Issue #68 result: complete; PR #69 merged and Issue #68 closed
-- Issue #70 result: Phase 8B Complete; repository foundation, live bootstrap,
-  immutable deployment, smoke evidence, and review are complete; issue closure
-  is deferred to the closeout pull request
+- Issue #70 result: complete; PR #76 merged the accepted Phase 8B operational
+  closeout as `77b4f1d8981fe998fe55a8bf6e3dea2f99e02dfd`, and Issue #70
+  closed
+- Issue #77 status: open; Phase 8C gate Accepted by the repository owner on
+  2026-08-13; implementation has not started
 
 ## Canonical Phase Status
 
@@ -32,7 +34,7 @@ earlier states.
 | 5 | Stockout risk and reorder recommendations | Complete | Owner-accepted Proceed review under Issue #50 |
 | 6 | Decision approval, rejection, and audit history | Complete | Owner-accepted Proceed review under Issue #52 |
 | 7 | Testing, security, and observability hardening | Complete | Owner accepted Proceed under Issue #64 on 2026-08-09 |
-| 8 | Cloud deployment and product delivery | Current | Phase 8A and Phase 8B Complete; Phase 8C not started |
+| 8 | Cloud deployment and product delivery | Current | Phase 8A and Phase 8B Complete; Phase 8C gate Accepted under Issue #77 |
 | 9–12 | Data pipelines, MLOps, advanced AI, and production readiness | Planned | Not formally opened |
 
 Implementation delivery and formal phase completion remain separate. Phases 5
@@ -373,10 +375,10 @@ The protected release reported:
 - authenticated read-only request: 200;
 - final application-revision attestation: success.
 
-Canonical repository `main` is
-`ba2b4284e24d3a440e58bce4d6337a9ad008eade` because the Blueprint followed the
-first image publication. That repository SHA is not the deployed application
-revision; the deployed image intentionally remains the immutable
+PR #76 squash-merged the owner-accepted Phase 8B review and closeout as
+`77b4f1d8981fe998fe55a8bf6e3dea2f99e02dfd` and closed Issue #70. That
+canonical repository SHA is not the deployed application revision; the
+deployed image intentionally remains the immutable
 `1f7de97e593182bd79ff767de220532b8301acff` image above.
 
 Live ownership remains separated: HCP Terraform owns supported ZITADEL project,
@@ -393,6 +395,24 @@ value is recorded here.
 Phase 8B is Complete. Frontend, Cloudflare, Phase 8C–8E, production monitoring,
 HA/DR, production-scale validation, and production-readiness work remain
 outside this completed backend slice.
+
+## Phase 8C Accepted Gate
+
+[Issue #77](https://github.com/AnishPaudyal/opsmind/issues/77) and the
+[accepted Phase 8C gate](../01-architecture/phase-8c-authenticated-frontend-gate.md)
+define the audited browser/API/authentication/CORS/Cloudflare boundary. The
+gate selects the accepted React/TypeScript/Vite static SPA, identifies one
+required review-list backend capability, preserves ZITADEL Authorization Code
+with PKCE and exact backend authorization, defines exact-origin CORS, and
+packages implementation into three broad validation gates.
+
+The repository owner accepted the gate on 2026-08-13. Batch 1 becomes authorized
+only after the acceptance PR merges to canonical `main`; Batch 2 and Batch 3
+remain unauthorized. No frontend source, Node dependency, Cloudflare resource,
+HCP Cloudflare workspace or apply, ZITADEL or human-operator mutation, Render or
+backend production CORS release, secret/environment mutation, deployment, or
+other live-provider mutation has begun. Phase 8C is not Complete, and Phase 8
+overall remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -423,8 +443,11 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The next product gate is Phase 8C frontend and Cloudflare delivery, but it must
-not begin without separate repository-owner authorization. Future Phase 8B
+After this gate acceptance merges to canonical `main`, the next permitted work
+is Phase 8C Batch 1 under Issue #77. Batch 2, Batch 3, Cloudflare account or
+resource creation, HCP Cloudflare work, live ZITADEL and human-operator changes,
+Render or backend production CORS releases, secret/environment changes, and all
+other live-provider mutations require separate authorization. Future Phase 8B
 releases must continue using the protected environment, external Alembic
 migration, exact immutable digest, bounded health/readiness checks, and
 least-privilege authenticated smoke.

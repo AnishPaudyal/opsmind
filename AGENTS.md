@@ -60,12 +60,16 @@ repository-controlled foundation as
 Blueprint as `ba2b4284e24d3a440e58bce4d6337a9ad008eade`; and Cloud release run
 `31738097577` successfully published, migrated, deployed, and smoke-tested the
 immutable application image for revision
-`1f7de97e593182bd79ff767de220532b8301acff`. Issue #70 remains open only until
-the documentation closeout pull request merges with `Closes #70`.
+`1f7de97e593182bd79ff767de220532b8301acff`. PR #76 merged the accepted
+operational closeout as `77b4f1d8981fe998fe55a8bf6e3dea2f99e02dfd`, and Issue
+#70 is closed.
 
-The next product gate is separately authorized Phase 8C frontend and
-Cloudflare work. Continuing an established Phase 8B release still requires the
-documented owner-controlled environment approval and secret boundaries.
+The repository owner accepted the Issue #77 Phase 8C authenticated frontend
+and full-stack product gate on 2026-08-13. Batch 1 implementation is authorized
+only after the gate acceptance merges to canonical `main`; Batch 2, Batch 3,
+and every live-provider mutation remain unauthorized.
+Continuing an established Phase 8B release still requires the documented
+owner-controlled environment approval and secret boundaries.
 
 Do not begin without separate authorization:
 
@@ -76,11 +80,14 @@ Do not begin without separate authorization:
 - a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
-- frontend, LocalStack, Phase 8C–8E, or production-readiness work;
+- Phase 8C Batch 2 or Batch 3, live frontend delivery, LocalStack, Phase 8D–8E,
+  or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
-Phase 8B is Complete, but Phase 8 remains Current. Do not mark Phase 8 or Phase
-8C complete until their separate evidence and owner reviews exist.
+Phase 8B is Complete, but Phase 8 remains Current. The Phase 8C gate is
+Accepted; Batch 1 becomes authorized only after the acceptance PR merges to
+canonical `main`. Do not mark Phase 8 or Phase 8C complete until their separate
+evidence and owner reviews exist.
 
 ## Required Context
 
