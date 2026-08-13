@@ -54,21 +54,18 @@ Issue #68 Phase 8A containerization is complete. PR #69 was squash-merged as
 canonical tree exactly matches the reviewed feature tree, and all three
 post-merge workflows passed.
 
-The repository owner authorized the bounded Issue #70 Phase 8B zero-cost
-cloud-backend repository implementation. PR #72 was squash-merged as
-`c52dfedc2ce4019b64dd1e0333f28cbef77b8a82`; its canonical tree exactly
-matches the reviewed feature tree, and Container quality, Python quality,
-Terraform quality, and Repository checks passed on canonical `main`.
+Issue #70 Phase 8B zero-cost cloud backend is complete. PR #72 merged the
+repository-controlled foundation as
+`c52dfedc2ce4019b64dd1e0333f28cbef77b8a82`; PR #75 merged the reviewed Render
+Blueprint as `ba2b4284e24d3a440e58bce4d6337a9ad008eade`; and Cloud release run
+`31738097577` successfully published, migrated, deployed, and smoke-tested the
+immutable application image for revision
+`1f7de97e593182bd79ff767de220532b8301acff`. Issue #70 remains open only until
+the documentation closeout pull request merges with `Closes #70`.
 
-Issue #70 remains open because live bootstrap and deployment evidence is still
-absent. The repository-controlled Phase 8B foundation is merged, but no live
-Neon, ZITADEL, HCP Terraform, GHCR release, or Render service is claimed.
-`render.yaml` remains intentionally deferred until a real immutable GHCR
-digest exists, and no Phase 8 review exists yet.
-
-The next gate is the documented owner-controlled Phase 8B live-bootstrap
-sequence. Perform a live step only when the repository owner explicitly
-authorizes that step and its documented prerequisites are satisfied.
+The next product gate is separately authorized Phase 8C frontend and
+Cloudflare work. Continuing an established Phase 8B release still requires the
+documented owner-controlled environment approval and secret boundaries.
 
 Do not begin without separate authorization:
 
@@ -82,8 +79,8 @@ Do not begin without separate authorization:
 - frontend, LocalStack, Phase 8C–8E, or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
-Phase 8 remains Current. Do not mark Phase 8B or Phase 8 complete until the
-documented live-cloud acceptance evidence and owner review exist.
+Phase 8B is Complete, but Phase 8 remains Current. Do not mark Phase 8 or Phase
+8C complete until their separate evidence and owner reviews exist.
 
 ## Required Context
 

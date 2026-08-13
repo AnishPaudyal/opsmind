@@ -5,10 +5,10 @@ This document is the detailed authority for the current project state. The
 phase-review documents preserve the decisions and evidence that established
 earlier states.
 
-- Status date: 2026-08-12
-- Current formal gate: Phase 8 — Phase 8B owner-controlled live bootstrap
-- Active workstream: open Issue #70 Phase 8B cloud-backend bootstrap and live
-  validation
+- Status date: 2026-08-13
+- Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C not started
+- Active workstream: Issue #70 Phase 8B documentation closeout; the issue closes
+  only when the closeout pull request merges
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -16,8 +16,9 @@ earlier states.
 - ADR-0007 result: Accepted by the repository owner on 2026-08-10
 - Issue #66 result: complete; PR #67 merged and Issue #66 closed
 - Issue #68 result: complete; PR #69 merged and Issue #68 closed
-- Issue #70 result: repository foundation merged through PR #72; live bootstrap,
-  deployment evidence, and completion review remain pending
+- Issue #70 result: Phase 8B Complete; repository foundation, live bootstrap,
+  immutable deployment, smoke evidence, and review are complete; issue closure
+  is deferred to the closeout pull request
 
 ## Canonical Phase Status
 
@@ -31,7 +32,7 @@ earlier states.
 | 5 | Stockout risk and reorder recommendations | Complete | Owner-accepted Proceed review under Issue #50 |
 | 6 | Decision approval, rejection, and audit history | Complete | Owner-accepted Proceed review under Issue #52 |
 | 7 | Testing, security, and observability hardening | Complete | Owner accepted Proceed under Issue #64 on 2026-08-09 |
-| 8 | Cloud deployment and product delivery | Current | Phase 8A Complete; Phase 8B repository foundation merged, live bootstrap pending under Issue #70 |
+| 8 | Cloud deployment and product delivery | Current | Phase 8A and Phase 8B Complete; Phase 8C not started |
 | 9–12 | Data pipelines, MLOps, advanced AI, and production readiness | Planned | Not formally opened |
 
 Implementation delivery and formal phase completion remain separate. Phases 5
@@ -180,8 +181,8 @@ human pull-request review.
 
 Current limitations include:
 
-- no provisioned production identity provider, credential lifecycle, or key
-  rotation service;
+- no application-managed identity lifecycle, user/session database, or
+  automated end-to-end credential-rotation system;
 - no application user/session database, tenant boundary, row-level policy, or
   enterprise RBAC/ABAC;
 - no cryptographic signatures, hash chaining, tamper-evident audit store, or
@@ -190,10 +191,11 @@ Current limitations include:
   restore, replication, or high availability;
 - no production log collection, monitoring, alerting, service-level objectives,
   or incident-response system;
-- no live cloud deployment, AWS infrastructure, or production-readiness
-  approval.
+- no AWS deployment, production SLA, HA/DR, or production-readiness approval.
 
-No AWS resources or managed production services exist. Tests and evaluations
+The live Render, Neon, ZITADEL, HCP Terraform, GHCR, and GitHub deployment
+environment are bounded portfolio services, not managed-production or
+production-readiness evidence. No AWS resources exist. Tests and evaluations
 use synthetic or controlled data; no production, customer, personal, or
 regulated data is required.
 
@@ -312,7 +314,7 @@ reviewing that residual. PR #69 squash-merged on 2026-08-10 as
 feature tree, Issue #68 closed, and Repository checks, Python quality, and
 Container quality all passed on canonical `main`. Phase 8A is Complete.
 
-## Phase 8B Repository Implementation
+## Phase 8B Completion
 
 [Issue #70](https://github.com/AnishPaudyal/opsmind/issues/70) and the
 [Phase 8B gate](../01-architecture/phase-8b-cloud-backend-gate.md) govern the
@@ -321,8 +323,8 @@ secret ownership, ZITADEL/JWKS contract, Neon pooled/direct connections,
 Render cold-start and immutable-release behavior, GHCR identity, IaC ownership,
 current free-tier evidence, acceptance criteria, and required owner actions.
 
-The repository owner authorized the bounded Phase 8B implementation. The
-repository implementation now includes:
+The repository owner authorized and completed the bounded Phase 8B
+implementation. The repository implementation includes:
 
 - ZITADEL-compatible RS256/JWKS authentication with exact project-role mapping
   behind the existing provider-neutral trusted-principal boundary;
@@ -348,11 +350,49 @@ fixable High/Critical gate and Python/application High/Critical count remained
 zero. Terraform 1.15.8 formatting, locked backendless initialization,
 validation, and the exact `zitadel/zitadel` 3.3.0 provider check passed.
 
-No live Phase 8B Neon, Render, ZITADEL, or HCP Terraform resource, GHCR package,
-cloud credential, or deployment is claimed yet. `render.yaml` is intentionally
-deferred until the first reviewed immutable GHCR digest exists. Frontend,
-Cloudflare, LocalStack, Phase 8C–8E, and production-readiness work remain
-outside the current implementation boundary.
+PR #75 added the credential-free root Render Blueprint and official-schema CI
+validation, then squash-merged as
+`ba2b4284e24d3a440e58bce4d6337a9ad008eade`. The Blueprint `opsmind-phase-8b`
+(`exs-d9v2h467bikc73e4ruog`) manually synchronized that canonical commit and
+created exactly one Free Ohio image-backed service, `opsmind-api`
+(`srv-d9v2kdid0e5s73egn4ug`), at
+`https://opsmind-api-ru63.onrender.com`.
+
+Cloud release run #1 (`31738097577`) completed successfully through the
+protected `phase-8b` environment. It published application revision
+`1f7de97e593182bd79ff767de220532b8301acff` as the public full-SHA GHCR tag and
+deployed immutable identity
+`ghcr.io/anishpaudyal/opsmind@sha256:1b3470e14704640e21f2ccf8bc93d779f732ec888950b9a19ddd0478b9f1be5d`.
+The protected release reported:
+
+- controlled Alembic migration: success;
+- Render deploy `dep-d9v2si8n74is73ctnfig`: success;
+- `/health`: success on attempt 1;
+- `/ready`: success on attempt 1;
+- unauthenticated protected business request: 401;
+- authenticated read-only request: 200;
+- final application-revision attestation: success.
+
+Canonical repository `main` is
+`ba2b4284e24d3a440e58bce4d6337a9ad008eade` because the Blueprint followed the
+first image publication. That repository SHA is not the deployed application
+revision; the deployed image intentionally remains the immutable
+`1f7de97e593182bd79ff767de220532b8301acff` image above.
+
+Live ownership remains separated: HCP Terraform owns supported ZITADEL project,
+role, application, and smoke-identity state; the owner manually bootstrapped
+Neon and its role/connection boundary; Alembic owns the schema; `render.yaml`
+and Render Blueprint own the stable service shape; the owner/dashboard owns
+Render secret values; and GitHub Actions owns image publication, controlled
+migration, exact-digest deployment, and smoke orchestration. The owner removed
+the downloaded local smoke-key JSON and cleared the clipboard after the
+authenticated smoke. The active ZITADEL credential and protected GitHub secret
+remain available for future controlled releases; no key material or secret
+value is recorded here.
+
+Phase 8B is Complete. Frontend, Cloudflare, Phase 8C–8E, production monitoring,
+HA/DR, production-scale validation, and production-readiness work remain
+outside this completed backend slice.
 
 ## Issue #58 Residual Limitations
 
@@ -383,17 +423,13 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The exact safest next action is the first documented owner-controlled bootstrap
-step: create and protect the GitHub `phase-8b` deployment environment before
-any `cloud-release` dispatch. This requires explicit owner direction and must
-follow the GitHub release-environment runbook; it was not performed during this
-status reconciliation.
+The next product gate is Phase 8C frontend and Cloudflare delivery, but it must
+not begin without separate repository-owner authorization. Future Phase 8B
+releases must continue using the protected environment, external Alembic
+migration, exact immutable digest, bounded health/readiness checks, and
+least-privilege authenticated smoke.
 
-Live Neon, ZITADEL, HCP Terraform, GHCR, and Render actions must occur only at
-their documented prerequisites and owner-interaction points. The first
-`render.yaml` remains deferred until a reviewed immutable GHCR digest exists.
-
-Phase 8C frontend/Cloudflare work, Phase 8D hardening, Phase 8E LocalStack,
-production-readiness work, Phase 9 data pipelines, Phase 10 MLOps, and Phase 11
-LLM/RAG/LangGraph remain outside the current authorization or Planned as
-documented.
+Phase 8D hardening, Phase 8E LocalStack, production-readiness work, Phase 9 data
+pipelines, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain outside the
+current authorization or Planned as documented. Phase 8 overall remains
+Current.
