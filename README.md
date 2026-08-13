@@ -80,7 +80,24 @@ Docker Compose remains scoped to the normal local PostgreSQL service. The API
 image and its isolated validation harness do not reuse or destroy that service
 or its named data volume. Accepted ADR-0007 selects a static
 React/TypeScript/Vite SPA rather than Next.js because no SSR requirement exists.
-The Phase 8C gate is Accepted, but no frontend is currently implemented.
+The Phase 8C gate is Accepted. Batch 1 introduces the static frontend
+foundation described below; it is not deployed and does not make Phase 8C
+Complete.
+
+## Frontend foundation
+
+The Phase 8C Batch 1 browser application lives in [`frontend`](frontend). It
+uses Node.js 24 LTS, npm, React, strict TypeScript, Vite, React Router, TanStack
+Query, `oidc-client-ts`, and OpenAPI-derived FastAPI types. See the
+[frontend guide](frontend/README.md) for local public configuration, commands,
+auth/session boundaries, and current limitations.
+
+The foundation supplies the accepted routes, responsive shell, loading/error/
+forbidden/unavailable states, Authorization Code with PKCE adapter, and central
+typed API transport. It does not fake the operational workflow. The required
+recommendation-list endpoint and backend CORS remain Batch 2; Cloudflare,
+production ZITADEL/operator configuration, Render/backend release changes, and
+deployment remain separately authorized Batch 3 work.
 
 Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each
