@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: opsmind-api
+    runtime: image
+    plan: free
+    region: ohio
+    image:
+      url: ghcr.io/anishpaudyal/opsmind@sha256:1b3470e14704640e21f2ccf8bc93d779f732ec888950b9a19ddd0478b9f1be5d
+    healthCheckPath: /health
+    envVars:
+      - key: OPSMIND_ENVIRONMENT
+        value: production
+      - key: OPSMIND_PERSISTENCE_BACKEND
+        value: postgresql
+      - key: OPSMIND_DATABASE_URL
+        sync: false
+      - key: OPSMIND_AUTH_ISSUER
+        sync: false
+      - key: OPSMIND_AUTH_AUDIENCE
+        sync: false
+      - key: OPSMIND_AUTH_JWKS_URL
+        sync: false
+      - key: OPSMIND_AUTH_ALGORITHM
+        value: RS256
