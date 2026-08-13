@@ -10,7 +10,7 @@ output "project_role_claim" {
 
 output "spa_client_id" {
   description = "Public OIDC client ID for the future Phase 8C browser application."
-  value       = zitadel_application_oidc.spa.client_id
+  value       = nonsensitive(zitadel_application_oidc.spa.client_id)
 }
 
 output "smoke_user_id" {
