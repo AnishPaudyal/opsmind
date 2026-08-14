@@ -1,0 +1,96 @@
+name: Frontend quality
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - "scripts/export_openapi.py"
+      - "src/opsmind/api/**"
+      - "src/opsmind/application.py"
+      - "src/opsmind/schemas/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/frontend-quality.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - "scripts/export_openapi.py"
+      - "src/opsmind/api/**"
+      - "src/opsmind/application.py"
+      - "src/opsmind/schemas/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/frontend-quality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Frontend quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Node.js from the governed LTS pin
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install uv for deterministic OpenAPI export
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.11.28"
+          enable-cache: true
+          cache-dependency-glob: |
+            .python-version
+            pyproject.toml
+            uv.lock
+          cache-python: false
+
+      - name: Install project Python
+        run: uv python install --project ..
+
+      - name: Install locked frontend dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Verify formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Strict type check
+        run: npm run typecheck
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Verify generated OpenAPI contract
+        run: npm run openapi:check
+
+      - name: Build static production assets
+        run: npm run build
+
+      - name: Audit locked dependencies
+        run: npm audit --audit-level=high
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Test protected browser-routing foundation
+        run: npm run test:e2e

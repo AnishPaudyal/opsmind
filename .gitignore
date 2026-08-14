@@ -25,9 +25,12 @@ build/
 
 # Node and frontend
 node_modules/
+.vite/
 .next/
 out/
 coverage/
+playwright-report/
+test-results/
 *.tsbuildinfo
 
 # Local databases and runtime state

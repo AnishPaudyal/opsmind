@@ -1,0 +1,2303 @@
+{
+  "components": {
+    "schemas": {
+      "ApproveRecommendationRequest": {
+        "additionalProperties": false,
+        "description": "Caller-supplied approval details without authoritative actor identity.",
+        "example": {
+          "approved_quantity": 19,
+          "note": "Approved as recommended."
+        },
+        "properties": {
+          "approved_quantity": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Approved whole-unit quantity; defaults to the recommendation.",
+            "title": "Approved Quantity"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional decision note; blank input is stored as null.",
+            "title": "Note"
+          }
+        },
+        "title": "ApproveRecommendationRequest",
+        "type": "object"
+      },
+      "DemandBatchCreate": {
+        "description": "Nonempty batch of daily demand observations for one product.",
+        "example": {
+          "observations": [
+            {
+              "demand_date": "2026-07-02",
+              "quantity": 18
+            },
+            {
+              "demand_date": "2026-07-01",
+              "quantity": 12
+            }
+          ]
+        },
+        "properties": {
+          "observations": {
+            "description": "Daily observations stored atomically as one batch.",
+            "items": {
+              "$ref": "#/components/schemas/DemandObservationCreate"
+            },
+            "minItems": 1,
+            "title": "Observations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "observations"
+        ],
+        "title": "DemandBatchCreate",
+        "type": "object"
+      },
+      "DemandObservationCreate": {
+        "description": "One daily demand value accepted for batch ingestion.",
+        "properties": {
+          "demand_date": {
+            "description": "Calendar date for this daily demand observation.",
+            "examples": [
+              "2026-07-01"
+            ],
+            "format": "date",
+            "title": "Demand Date",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Non-negative observed demand; zero is valid.",
+            "examples": [
+              12
+            ],
+            "minimum": 0.0,
+            "title": "Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "demand_date",
+          "quantity"
+        ],
+        "title": "DemandObservationCreate",
+        "type": "object"
+      },
+      "DemandObservationResponse": {
+        "description": "Stored daily product demand returned by the API.",
+        "properties": {
+          "demand_date": {
+            "description": "Observation calendar date.",
+            "format": "date",
+            "title": "Demand Date",
+            "type": "string"
+          },
+          "product_id": {
+            "description": "Product owning the demand observation.",
+            "format": "uuid",
+            "title": "Product Id",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Observed non-negative daily demand.",
+            "title": "Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "product_id",
+          "demand_date",
+          "quantity"
+        ],
+        "title": "DemandObservationResponse",
+        "type": "object"
+      },
+      "Environment": {
+        "description": "Supported OpsMind runtime environments.",
+        "enum": [
+          "local",
+          "test",
+          "staging",
+          "production"
+        ],
+        "title": "Environment",
+        "type": "string"
+      },
+      "ForecastMethod": {
+        "description": "Supported transparent forecast methods.",
+        "enum": [
+          "simple_mean"
+        ],
+        "title": "ForecastMethod",
+        "type": "string"
+      },
+      "ForecastResponse": {
+        "description": "Transparent metadata and numeric output for one baseline forecast.",
+        "properties": {
+          "as_of_date": {
+            "description": "Inclusive effective cutoff for eligible demand.",
+            "examples": [
+              "2026-07-04"
+            ],
+            "format": "date",
+            "title": "As Of Date",
+            "type": "string"
+          },
+          "average_daily_demand": {
+            "description": "Arithmetic mean rounded independently to two decimals.",
+            "examples": [
+              9.75
+            ],
+            "title": "Average Daily Demand",
+            "type": "number"
+          },
+          "forecast_quantity": {
+            "description": "Exact mean times horizon, rounded to two decimals.",
+            "examples": [
+              68.25
+            ],
+            "title": "Forecast Quantity",
+            "type": "number"
+          },
+          "horizon_days": {
+            "description": "Number of forecast days.",
+            "examples": [
+              7
+            ],
+            "title": "Horizon Days",
+            "type": "integer"
+          },
+          "lookback_observations_requested": {
+            "description": "Requested count of recent eligible observations.",
+            "examples": [
+              7
+            ],
+            "title": "Lookback Observations Requested",
+            "type": "integer"
+          },
+          "method": {
+            "$ref": "#/components/schemas/ForecastMethod",
+            "description": "Deterministic forecast method used.",
+            "examples": [
+              "simple_mean"
+            ]
+          },
+          "observations_used": {
+            "description": "Actual count of observations included.",
+            "examples": [
+              4
+            ],
+            "title": "Observations Used",
+            "type": "integer"
+          },
+          "product_id": {
+            "description": "Product whose demand was forecast.",
+            "format": "uuid",
+            "title": "Product Id",
+            "type": "string"
+          },
+          "training_end_date": {
+            "description": "Latest selected observation date.",
+            "examples": [
+              "2026-07-04"
+            ],
+            "format": "date",
+            "title": "Training End Date",
+            "type": "string"
+          },
+          "training_start_date": {
+            "description": "Earliest selected observation date.",
+            "examples": [
+              "2026-07-01"
+            ],
+            "format": "date",
+            "title": "Training Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "method",
+          "as_of_date",
+          "lookback_observations_requested",
+          "observations_used",
+          "training_start_date",
+          "training_end_date",
+          "average_daily_demand",
+          "horizon_days",
+          "forecast_quantity"
+        ],
+        "title": "ForecastResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "description": "Public process-health response.",
+        "properties": {
+          "environment": {
+            "$ref": "#/components/schemas/Environment"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "service",
+          "environment"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "InventoryResponse": {
+        "description": "Public inventory position with calculated availability.",
+        "properties": {
+          "allocated_quantity": {
+            "description": "Quantity allocated to demand.",
+            "title": "Allocated Quantity",
+            "type": "integer"
+          },
+          "available_quantity": {
+            "description": "On-hand quantity minus allocated quantity; may be negative.",
+            "title": "Available Quantity",
+            "type": "integer"
+          },
+          "on_hand_quantity": {
+            "description": "Physical quantity currently on hand.",
+            "title": "On Hand Quantity",
+            "type": "integer"
+          },
+          "product_id": {
+            "description": "Product owning this inventory position.",
+            "format": "uuid",
+            "title": "Product Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "on_hand_quantity",
+          "allocated_quantity",
+          "available_quantity"
+        ],
+        "title": "InventoryResponse",
+        "type": "object"
+      },
+      "InventorySetRequest": {
+        "description": "Authoritative quantities accepted for an inventory position.",
+        "example": {
+          "allocated_quantity": 35,
+          "on_hand_quantity": 100
+        },
+        "properties": {
+          "allocated_quantity": {
+            "description": "Quantity already allocated to demand.",
+            "minimum": 0.0,
+            "title": "Allocated Quantity",
+            "type": "integer"
+          },
+          "on_hand_quantity": {
+            "description": "Physical quantity currently on hand.",
+            "minimum": 0.0,
+            "title": "On Hand Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "on_hand_quantity",
+          "allocated_quantity"
+        ],
+        "title": "InventorySetRequest",
+        "type": "object"
+      },
+      "PersistenceBackend": {
+        "description": "Supported operational-data persistence backends.",
+        "enum": [
+          "memory",
+          "postgresql"
+        ],
+        "title": "PersistenceBackend",
+        "type": "string"
+      },
+      "PersistenceCheckStatus": {
+        "description": "Bounded persistence readiness values.",
+        "enum": [
+          "ready",
+          "not_ready"
+        ],
+        "title": "PersistenceCheckStatus",
+        "type": "string"
+      },
+      "ProductCreateRequest": {
+        "description": "Fields accepted when creating a product.",
+        "example": {
+          "is_active": true,
+          "lead_time_days": 14,
+          "name": "Temperature Sensor",
+          "sku": "SENSOR-001",
+          "unit_of_measure": "each"
+        },
+        "properties": {
+          "is_active": {
+            "default": true,
+            "description": "Whether the product is currently active.",
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "lead_time_days": {
+            "description": "Non-negative replenishment lead time in calendar days.",
+            "minimum": 0.0,
+            "title": "Lead Time Days",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Human-readable product name.",
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "sku": {
+            "description": "Business SKU; surrounding whitespace is removed and letters uppercase.",
+            "minLength": 1,
+            "title": "Sku",
+            "type": "string"
+          },
+          "unit_of_measure": {
+            "description": "Unit used to count this product, such as each or case.",
+            "minLength": 1,
+            "title": "Unit Of Measure",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku",
+          "name",
+          "unit_of_measure",
+          "lead_time_days"
+        ],
+        "title": "ProductCreateRequest",
+        "type": "object"
+      },
+      "ProductResponse": {
+        "description": "Public representation of a stored product.",
+        "properties": {
+          "id": {
+            "description": "Server-generated product identifier.",
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "description": "Whether the product is active.",
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "lead_time_days": {
+            "description": "Replenishment lead time in days.",
+            "title": "Lead Time Days",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Trimmed human-readable product name.",
+            "title": "Name",
+            "type": "string"
+          },
+          "sku": {
+            "description": "Canonical normalized product SKU.",
+            "title": "Sku",
+            "type": "string"
+          },
+          "unit_of_measure": {
+            "description": "Trimmed product counting unit.",
+            "title": "Unit Of Measure",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "name",
+          "unit_of_measure",
+          "lead_time_days",
+          "is_active"
+        ],
+        "title": "ProductResponse",
+        "type": "object"
+      },
+      "ReadinessChecks": {
+        "description": "Bounded public dependency-readiness checks.",
+        "properties": {
+          "persistence": {
+            "$ref": "#/components/schemas/PersistenceCheckStatus"
+          }
+        },
+        "required": [
+          "persistence"
+        ],
+        "title": "ReadinessChecks",
+        "type": "object"
+      },
+      "ReadinessResponse": {
+        "description": "Bounded public application-readiness response.",
+        "properties": {
+          "backend": {
+            "$ref": "#/components/schemas/PersistenceBackend"
+          },
+          "checks": {
+            "$ref": "#/components/schemas/ReadinessChecks"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/Environment"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReadinessStatus"
+          }
+        },
+        "required": [
+          "status",
+          "service",
+          "environment",
+          "backend",
+          "checks"
+        ],
+        "title": "ReadinessResponse",
+        "type": "object"
+      },
+      "ReadinessStatus": {
+        "description": "Bounded overall readiness values.",
+        "enum": [
+          "ready",
+          "not_ready"
+        ],
+        "title": "ReadinessStatus",
+        "type": "string"
+      },
+      "RecommendationAuditEventResponse": {
+        "description": "One immutable event in a recommendation review history.",
+        "properties": {
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unverified caller-supplied actor for a terminal decision.",
+            "title": "Actor"
+          },
+          "approved_quantity": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Approved whole-unit quantity, or null otherwise.",
+            "title": "Approved Quantity"
+          },
+          "decision_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Linked terminal decision identifier, when applicable.",
+            "title": "Decision Id"
+          },
+          "event_id": {
+            "description": "Server-generated audit event identifier.",
+            "format": "uuid",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/RecommendationAuditEventType",
+            "description": "Workflow event represented by this record."
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional approval note or required rejection reason.",
+            "title": "Note"
+          },
+          "occurred_at": {
+            "description": "Timezone-aware UTC event time.",
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "recommendation_id": {
+            "description": "Stored recommendation identifier.",
+            "format": "uuid",
+            "title": "Recommendation Id",
+            "type": "string"
+          },
+          "recommended_reorder_quantity": {
+            "description": "Original system-recommended whole-unit quantity.",
+            "minimum": 1.0,
+            "title": "Recommended Reorder Quantity",
+            "type": "integer"
+          },
+          "review_status": {
+            "$ref": "#/components/schemas/RecommendationReviewStatus",
+            "description": "Review status produced by the event."
+          },
+          "sequence_number": {
+            "description": "Per-recommendation ordering number starting at one.",
+            "minimum": 1.0,
+            "title": "Sequence Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "recommendation_id",
+          "sequence_number",
+          "event_type",
+          "occurred_at",
+          "review_status",
+          "decision_id",
+          "actor",
+          "recommended_reorder_quantity",
+          "approved_quantity",
+          "note"
+        ],
+        "title": "RecommendationAuditEventResponse",
+        "type": "object"
+      },
+      "RecommendationAuditEventType": {
+        "description": "Supported recommendation workflow audit events.",
+        "enum": [
+          "review_created",
+          "recommendation_approved",
+          "recommendation_rejected"
+        ],
+        "title": "RecommendationAuditEventType",
+        "type": "string"
+      },
+      "RecommendationAuditHistoryResponse": {
+        "description": "Sequence-ordered immutable audit history for one recommendation.",
+        "properties": {
+          "events": {
+            "description": "Events ordered by ascending per-recommendation sequence.",
+            "items": {
+              "$ref": "#/components/schemas/RecommendationAuditEventResponse"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "recommendation_id": {
+            "description": "Stored recommendation identifier.",
+            "format": "uuid",
+            "title": "Recommendation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recommendation_id",
+          "events"
+        ],
+        "title": "RecommendationAuditHistoryResponse",
+        "type": "object"
+      },
+      "RecommendationDecisionResponse": {
+        "description": "Public representation of one terminal decision.",
+        "properties": {
+          "approved_quantity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Approved quantity, or null for a rejection.",
+            "title": "Approved Quantity"
+          },
+          "decided_at": {
+            "description": "Timezone-aware UTC decision time.",
+            "format": "date-time",
+            "title": "Decided At",
+            "type": "string"
+          },
+          "decided_by": {
+            "description": "Stable trusted-principal identifier.",
+            "title": "Decided By",
+            "type": "string"
+          },
+          "decision_id": {
+            "description": "Server-generated decision identifier.",
+            "format": "uuid",
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "decision_type": {
+            "$ref": "#/components/schemas/RecommendationDecisionType",
+            "description": "Terminal approval or rejection type."
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional approval note or required rejection reason.",
+            "title": "Note"
+          }
+        },
+        "required": [
+          "decision_id",
+          "decision_type",
+          "decided_by",
+          "decided_at",
+          "approved_quantity",
+          "note"
+        ],
+        "title": "RecommendationDecisionResponse",
+        "type": "object"
+      },
+      "RecommendationDecisionType": {
+        "description": "Supported terminal recommendation decisions.",
+        "enum": [
+          "approved",
+          "rejected"
+        ],
+        "title": "RecommendationDecisionType",
+        "type": "string"
+      },
+      "RecommendationReviewStatus": {
+        "description": "Supported states for a stored recommendation review.",
+        "enum": [
+          "pending_review",
+          "approved",
+          "rejected"
+        ],
+        "title": "RecommendationReviewStatus",
+        "type": "string"
+      },
+      "RejectRecommendationRequest": {
+        "additionalProperties": false,
+        "description": "Caller-supplied rejection details without authoritative actor identity.",
+        "example": {
+          "reason": "Inbound inventory is already scheduled."
+        },
+        "properties": {
+          "reason": {
+            "description": "Required explanation for rejection.",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "RejectRecommendationRequest",
+        "type": "object"
+      },
+      "ReorderRecommendationPolicy": {
+        "description": "Supported explainable reorder policies.",
+        "enum": [
+          "projected_shortage_ceiling"
+        ],
+        "title": "ReorderRecommendationPolicy",
+        "type": "string"
+      },
+      "ReorderRecommendationResponse": {
+        "description": "Whole-unit proposal with explanatory forecast and exposure context.",
+        "properties": {
+          "allocated_quantity": {
+            "description": "Current committed inventory quantity.",
+            "examples": [
+              10
+            ],
+            "title": "Allocated Quantity",
+            "type": "integer"
+          },
+          "as_of_date": {
+            "description": "Inclusive effective cutoff for eligible demand.",
+            "examples": [
+              "2026-07-04"
+            ],
+            "format": "date",
+            "title": "As Of Date",
+            "type": "string"
+          },
+          "available_inventory": {
+            "description": "On-hand quantity minus allocated quantity.",
+            "examples": [
+              30
+            ],
+            "title": "Available Inventory",
+            "type": "integer"
+          },
+          "average_daily_demand": {
+            "description": "Selected arithmetic mean rounded to two decimals.",
+            "examples": [
+              9.75
+            ],
+            "title": "Average Daily Demand",
+            "type": "number"
+          },
+          "forecast_method": {
+            "$ref": "#/components/schemas/ForecastMethod",
+            "description": "Deterministic demand baseline used by exposure.",
+            "examples": [
+              "simple_mean"
+            ]
+          },
+          "forecasted_lead_time_demand": {
+            "description": "Exact mean projected across product lead time.",
+            "examples": [
+              48.75
+            ],
+            "title": "Forecasted Lead Time Demand",
+            "type": "number"
+          },
+          "lead_time_days": {
+            "description": "Product replenishment lead time used as the horizon.",
+            "examples": [
+              5
+            ],
+            "title": "Lead Time Days",
+            "type": "integer"
+          },
+          "lookback_observations_requested": {
+            "description": "Requested count of recent eligible observations.",
+            "examples": [
+              4
+            ],
+            "title": "Lookback Observations Requested",
+            "type": "integer"
+          },
+          "observations_used": {
+            "description": "Actual count of demand observations selected.",
+            "examples": [
+              4
+            ],
+            "title": "Observations Used",
+            "type": "integer"
+          },
+          "on_hand_quantity": {
+            "description": "Current physical inventory quantity.",
+            "examples": [
+              40
+            ],
+            "title": "On Hand Quantity",
+            "type": "integer"
+          },
+          "product_id": {
+            "description": "Product whose reorder was proposed.",
+            "format": "uuid",
+            "title": "Product Id",
+            "type": "string"
+          },
+          "projected_inventory_balance": {
+            "description": "Available inventory minus lead-time demand.",
+            "examples": [
+              -18.75
+            ],
+            "title": "Projected Inventory Balance",
+            "type": "number"
+          },
+          "projected_shortage_quantity": {
+            "description": "Normalized public shortage used by the policy.",
+            "examples": [
+              18.75
+            ],
+            "title": "Projected Shortage Quantity",
+            "type": "number"
+          },
+          "recommendation_policy": {
+            "$ref": "#/components/schemas/ReorderRecommendationPolicy",
+            "description": "Deterministic policy used to produce the proposal.",
+            "examples": [
+              "projected_shortage_ceiling"
+            ]
+          },
+          "recommendation_status": {
+            "$ref": "#/components/schemas/ReorderRecommendationStatus",
+            "description": "Whether the public shortage produces a reorder proposal.",
+            "examples": [
+              "reorder_recommended"
+            ]
+          },
+          "recommended_reorder_quantity": {
+            "description": "Whole-unit ceiling of normalized projected shortage.",
+            "examples": [
+              19
+            ],
+            "title": "Recommended Reorder Quantity",
+            "type": "integer"
+          },
+          "training_end_date": {
+            "description": "Latest selected demand date.",
+            "examples": [
+              "2026-07-04"
+            ],
+            "format": "date",
+            "title": "Training End Date",
+            "type": "string"
+          },
+          "training_start_date": {
+            "description": "Earliest selected demand date.",
+            "examples": [
+              "2026-07-01"
+            ],
+            "format": "date",
+            "title": "Training Start Date",
+            "type": "string"
+          },
+          "unit_of_measure": {
+            "description": "Product unit represented by the proposed quantity.",
+            "examples": [
+              "units"
+            ],
+            "title": "Unit Of Measure",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "unit_of_measure",
+          "recommendation_policy",
+          "recommendation_status",
+          "forecast_method",
+          "as_of_date",
+          "lookback_observations_requested",
+          "observations_used",
+          "training_start_date",
+          "training_end_date",
+          "average_daily_demand",
+          "lead_time_days",
+          "on_hand_quantity",
+          "allocated_quantity",
+          "available_inventory",
+          "forecasted_lead_time_demand",
+          "projected_inventory_balance",
+          "projected_shortage_quantity",
+          "recommended_reorder_quantity"
+        ],
+        "title": "ReorderRecommendationResponse",
+        "type": "object"
+      },
+      "ReorderRecommendationReviewResponse": {
+        "description": "Stored immutable recommendation snapshot and review state.",
+        "properties": {
+          "created_at": {
+            "description": "Timezone-aware UTC creation time.",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecommendationDecisionResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Terminal decision, or null while review is pending."
+          },
+          "recommendation": {
+            "$ref": "#/components/schemas/ReorderRecommendationResponse",
+            "description": "Immutable recommendation and its original evidence."
+          },
+          "recommendation_id": {
+            "description": "Stable server-generated workflow identifier.",
+            "format": "uuid",
+            "title": "Recommendation Id",
+            "type": "string"
+          },
+          "review_status": {
+            "$ref": "#/components/schemas/RecommendationReviewStatus",
+            "description": "Current pending or terminal review state."
+          }
+        },
+        "required": [
+          "recommendation_id",
+          "recommendation",
+          "review_status",
+          "created_at",
+          "decision"
+        ],
+        "title": "ReorderRecommendationReviewResponse",
+        "type": "object"
+      },
+      "ReorderRecommendationStatus": {
+        "description": "Deterministic proposal outcomes.",
+        "enum": [
+          "no_reorder_needed",
+          "reorder_recommended"
+        ],
+        "title": "ReorderRecommendationStatus",
+        "type": "string"
+      },
+      "StockoutExposureResponse": {
+        "description": "Explanatory lead-time inventory coverage for one product.",
+        "properties": {
+          "allocated_quantity": {
+            "description": "Current committed inventory quantity.",
+            "examples": [
+              10
+            ],
+            "title": "Allocated Quantity",
+            "type": "integer"
+          },
+          "as_of_date": {
+            "description": "Inclusive effective cutoff for eligible demand.",
+            "examples": [
+              "2026-07-04"
+            ],
+            "format": "date",
+            "title": "As Of Date",
+            "type": "string"
+          },
+          "available_inventory": {
+            "description": "On-hand quantity minus allocated quantity.",
+            "examples": [
+              50
+            ],
+            "title": "Available Inventory",
+            "type": "integer"
+          },
+          "average_daily_demand": {
+            "description": "Selected arithmetic mean rounded to two decimals.",
+            "examples": [
+              9.75
+            ],
+            "title": "Average Daily Demand",
+            "type": "number"
+          },
+          "forecast_method": {
+            "$ref": "#/components/schemas/ForecastMethod",
+            "description": "Deterministic demand baseline used.",
+            "examples": [
+              "simple_mean"
+            ]
+          },
+          "forecasted_lead_time_demand": {
+            "description": "Exact mean projected across product lead time.",
+            "examples": [
+              48.75
+            ],
+            "title": "Forecasted Lead Time Demand",
+            "type": "number"
+          },
+          "lead_time_days": {
+            "description": "Product replenishment lead time used as the horizon.",
+            "examples": [
+              5
+            ],
+            "title": "Lead Time Days",
+            "type": "integer"
+          },
+          "lookback_observations_requested": {
+            "description": "Requested count of recent eligible observations.",
+            "examples": [
+              4
+            ],
+            "title": "Lookback Observations Requested",
+            "type": "integer"
+          },
+          "observations_used": {
+            "description": "Actual count of demand observations selected.",
+            "examples": [
+              4
+            ],
+            "title": "Observations Used",
+            "type": "integer"
+          },
+          "on_hand_quantity": {
+            "description": "Current physical inventory quantity.",
+            "examples": [
+              60
+            ],
+            "title": "On Hand Quantity",
+            "type": "integer"
+          },
+          "product_id": {
+            "description": "Product whose exposure was calculated.",
+            "format": "uuid",
+            "title": "Product Id",
+            "type": "string"
+          },
+          "projected_inventory_balance": {
+            "description": "Available inventory minus lead-time demand.",
+            "examples": [
+              1.25
+            ],
+            "title": "Projected Inventory Balance",
+            "type": "number"
+          },
+          "projected_shortage_quantity": {
+            "description": "Non-negative shortage derived from the public balance.",
+            "examples": [
+              0.0
+            ],
+            "title": "Projected Shortage Quantity",
+            "type": "number"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StockoutExposureStatus",
+            "description": "Deterministic sufficiency status, not a probability.",
+            "examples": [
+              "sufficient"
+            ]
+          },
+          "training_end_date": {
+            "description": "Latest selected demand date.",
+            "examples": [
+              "2026-07-04"
+            ],
+            "format": "date",
+            "title": "Training End Date",
+            "type": "string"
+          },
+          "training_start_date": {
+            "description": "Earliest selected demand date.",
+            "examples": [
+              "2026-07-01"
+            ],
+            "format": "date",
+            "title": "Training Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "forecast_method",
+          "as_of_date",
+          "lookback_observations_requested",
+          "observations_used",
+          "training_start_date",
+          "training_end_date",
+          "average_daily_demand",
+          "lead_time_days",
+          "on_hand_quantity",
+          "allocated_quantity",
+          "available_inventory",
+          "forecasted_lead_time_demand",
+          "projected_inventory_balance",
+          "projected_shortage_quantity",
+          "status"
+        ],
+        "title": "StockoutExposureResponse",
+        "type": "object"
+      },
+      "StockoutExposureStatus": {
+        "description": "Deterministic inventory-coverage outcomes.",
+        "enum": [
+          "sufficient",
+          "shortage_projected"
+        ],
+        "title": "StockoutExposureStatus",
+        "type": "string"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "description": "Signed bearer access token validated by OpsMind.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "opsmind-api API",
+    "title": "OpsMind",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/products": {
+      "get": {
+        "description": "List products in canonical SKU order.",
+        "operationId": "list_products_api_v1_products_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProductResponse"
+                  },
+                  "title": "Response List Products Api V1 Products Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "List products",
+        "tags": [
+          "products"
+        ]
+      },
+      "post": {
+        "description": "Create a validated product with a server-generated UUID.",
+        "operationId": "create_product_api_v1_products_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "409": {
+            "description": "Normalized SKU already exists."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Create a product",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/products/{product_id}": {
+      "get": {
+        "description": "Retrieve a product by UUID.",
+        "operationId": "get_product_api_v1_products__product_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Get a product",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/products/{product_id}/demand": {
+      "get": {
+        "description": "Return chronological demand within optional inclusive bounds.",
+        "operationId": "list_demand_observations_api_v1_products__product_id__demand_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Inclusive first demand date to return.",
+            "in": "query",
+            "name": "start_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Inclusive first demand date to return.",
+              "title": "Start Date"
+            }
+          },
+          {
+            "description": "Inclusive last demand date to return.",
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Inclusive last demand date to return.",
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DemandObservationResponse"
+                  },
+                  "title": "Response List Demand Observations Api V1 Products  Product Id  Demand Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "List product demand observations",
+        "tags": [
+          "demand"
+        ]
+      },
+      "post": {
+        "description": "Atomically add one batch and return it chronologically.",
+        "operationId": "add_demand_observations_api_v1_products__product_id__demand_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemandBatchCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DemandObservationResponse"
+                  },
+                  "title": "Response Add Demand Observations Api V1 Products  Product Id  Demand Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "409": {
+            "description": "Demand already exists for a submitted date."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Add product demand observations",
+        "tags": [
+          "demand"
+        ]
+      }
+    },
+    "/api/v1/products/{product_id}/forecast": {
+      "get": {
+        "description": "Calculate a deterministic forecast without storing or mutating state.",
+        "operationId": "get_baseline_demand_forecast_api_v1_products__product_id__forecast_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Number of recent eligible demand observations to use.",
+            "in": "query",
+            "name": "lookback_observations",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "description": "Number of recent eligible demand observations to use.",
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Lookback Observations",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of future days covered by the forecast.",
+            "in": "query",
+            "name": "horizon_days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "description": "Number of future days covered by the forecast.",
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Horizon Days",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Inclusive demand cutoff; defaults to latest demand date.",
+            "in": "query",
+            "name": "as_of_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Inclusive demand cutoff; defaults to latest demand date.",
+              "title": "As Of Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "422": {
+            "description": "Invalid parameters or insufficient demand history."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Calculate a baseline demand forecast",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
+    "/api/v1/products/{product_id}/inventory": {
+      "get": {
+        "description": "Retrieve authoritative and calculated inventory quantities.",
+        "operationId": "get_inventory_api_v1_products__product_id__inventory_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Product or inventory position not found."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Get product inventory",
+        "tags": [
+          "products"
+        ]
+      },
+      "put": {
+        "description": "Set or replace authoritative inventory quantities for a product.",
+        "operationId": "set_inventory_api_v1_products__product_id__inventory_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventorySetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Set product inventory",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/products/{product_id}/reorder-recommendation": {
+      "get": {
+        "description": "Propose whole units from normalized shortage without mutating state.",
+        "operationId": "get_reorder_recommendation_api_v1_products__product_id__reorder_recommendation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Number of recent eligible demand observations to use.",
+            "in": "query",
+            "name": "lookback_observations",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "description": "Number of recent eligible demand observations to use.",
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Lookback Observations",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Inclusive demand cutoff; defaults to latest demand date.",
+            "in": "query",
+            "name": "as_of_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Inclusive demand cutoff; defaults to latest demand date.",
+              "title": "As Of Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderRecommendationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Product or inventory position not found."
+          },
+          "422": {
+            "description": "Invalid parameters or insufficient demand history."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Calculate a deterministic reorder recommendation",
+        "tags": [
+          "reorder recommendation"
+        ]
+      }
+    },
+    "/api/v1/products/{product_id}/reorder-recommendations": {
+      "post": {
+        "description": "Calculate and store one immutable actionable recommendation snapshot.",
+        "operationId": "create_reorder_recommendation_review_api_v1_products__product_id__reorder_recommendations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Number of recent eligible demand observations to use.",
+            "in": "query",
+            "name": "lookback_observations",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "description": "Number of recent eligible demand observations to use.",
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Lookback Observations",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Inclusive demand cutoff; defaults to latest demand date.",
+            "in": "query",
+            "name": "as_of_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Inclusive demand cutoff; defaults to latest demand date.",
+              "title": "As Of Date"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderRecommendationReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Product or inventory position not found."
+          },
+          "409": {
+            "description": "No actionable recommendation is available."
+          },
+          "422": {
+            "description": "Invalid parameters or insufficient demand history."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Create a stored reorder recommendation review",
+        "tags": [
+          "reorder recommendation review"
+        ]
+      }
+    },
+    "/api/v1/products/{product_id}/stockout-exposure": {
+      "get": {
+        "description": "Calculate lead-time inventory exposure without mutating state.",
+        "operationId": "get_stockout_exposure_api_v1_products__product_id__stockout_exposure_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Number of recent eligible demand observations to use.",
+            "in": "query",
+            "name": "lookback_observations",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "description": "Number of recent eligible demand observations to use.",
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Lookback Observations",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Inclusive demand cutoff; defaults to latest demand date.",
+            "in": "query",
+            "name": "as_of_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Inclusive demand cutoff; defaults to latest demand date.",
+              "title": "As Of Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockoutExposureResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Product or inventory position not found."
+          },
+          "422": {
+            "description": "Invalid parameters or insufficient demand history."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Calculate deterministic stockout exposure",
+        "tags": [
+          "stockout exposure"
+        ]
+      }
+    },
+    "/api/v1/reorder-recommendations/{recommendation_id}": {
+      "get": {
+        "description": "Retrieve a stored snapshot without recalculating any source data.",
+        "operationId": "get_reorder_recommendation_review_api_v1_reorder_recommendations__recommendation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recommendation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recommendation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderRecommendationReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Stored recommendation review not found."
+          },
+          "422": {
+            "description": "Invalid recommendation identifier."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Get a stored reorder recommendation review",
+        "tags": [
+          "reorder recommendation review"
+        ]
+      }
+    },
+    "/api/v1/reorder-recommendations/{recommendation_id}/approve": {
+      "post": {
+        "description": "Atomically approve a pending review or retry the same approval.",
+        "operationId": "approve_reorder_recommendation_api_v1_reorder_recommendations__recommendation_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recommendation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recommendation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRecommendationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderRecommendationReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Stored recommendation review not found."
+          },
+          "409": {
+            "description": "Decision conflicts with the terminal review state."
+          },
+          "422": {
+            "description": "Invalid identifier or approval details."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Approve a stored reorder recommendation",
+        "tags": [
+          "reorder recommendation review"
+        ]
+      }
+    },
+    "/api/v1/reorder-recommendations/{recommendation_id}/audit-events": {
+      "get": {
+        "description": "Return stored events without recalculating or mutating workflow state.",
+        "operationId": "get_recommendation_audit_history_api_v1_reorder_recommendations__recommendation_id__audit_events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recommendation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recommendation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationAuditHistoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Stored recommendation review not found."
+          },
+          "422": {
+            "description": "Invalid recommendation identifier."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Get recommendation review audit history",
+        "tags": [
+          "reorder recommendation review"
+        ]
+      }
+    },
+    "/api/v1/reorder-recommendations/{recommendation_id}/reject": {
+      "post": {
+        "description": "Atomically reject a pending review or retry the same rejection.",
+        "operationId": "reject_reorder_recommendation_api_v1_reorder_recommendations__recommendation_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recommendation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recommendation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRecommendationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderRecommendationReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "404": {
+            "description": "Stored recommendation review not found."
+          },
+          "409": {
+            "description": "Decision conflicts with the terminal review state."
+          },
+          "422": {
+            "description": "Invalid identifier or rejection details."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Reject a stored reorder recommendation",
+        "tags": [
+          "reorder recommendation review"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Report deterministic health for the running API process.",
+        "operationId": "read_health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response",
+            "headers": {
+              "X-OpsMind-Revision": {
+                "description": "Full Git revision of the running release when build identity is available.",
+                "schema": {
+                  "pattern": "^[0-9a-f]{40}$",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Check process health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/ready": {
+      "get": {
+        "description": "Report bounded readiness for configured application dependencies.",
+        "operationId": "read_readiness_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            },
+            "description": "Configured application dependencies are not ready."
+          }
+        },
+        "summary": "Check application readiness",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  }
+}

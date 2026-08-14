@@ -1,0 +1,7 @@
+coverage/
+dist/
+node_modules/
+openapi/openapi.json
+playwright-report/
+src/api/generated/schema.ts
+test-results/

@@ -145,6 +145,34 @@ Build output is generated evidence and must not be committed. Material changes
 to the framework, packaging, configuration boundary, or route architecture
 require ADR review.
 
+### Frontend development
+
+The static browser application lives under `frontend/` and uses the Node.js 24
+LTS pin in `frontend/.nvmrc`. From that directory, install only the committed
+lockfile graph and run the complete credential-free quality gate:
+
+```bash
+nvm use
+npm ci
+npm run check
+npm run test:e2e
+```
+
+Regenerate the typed API contract only from canonical FastAPI OpenAPI:
+
+```bash
+npm run openapi:generate
+npm run openapi:check
+```
+
+Commit the deterministic OpenAPI JSON and generated TypeScript together. Do not
+hand-maintain duplicate backend response types. Keep all five `VITE_OPSMIND_*`
+values public, place local overrides only in ignored `.env.local`, and never use
+a `VITE_` variable for a password, token, private key, database URL, client
+secret, or provider credential. OIDC state belongs only in `sessionStorage`;
+FastAPI remains the authorization authority, safe reads use bounded retries,
+and mutations must not replay automatically.
+
 Product and inventory tests can be run directly while developing the first
 business API:
 
