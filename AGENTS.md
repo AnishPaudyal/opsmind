@@ -65,9 +65,10 @@ operational closeout as `77b4f1d8981fe998fe55a8bf6e3dea2f99e02dfd`, and Issue
 #70 is closed.
 
 The repository owner accepted the Issue #77 Phase 8C authenticated frontend
-and full-stack product gate on 2026-08-13. Batch 1 implementation is authorized
-only after the gate acceptance merges to canonical `main`; Batch 2, Batch 3,
-and every live-provider mutation remain unauthorized.
+and full-stack product gate on 2026-08-13. PR #79 merged Batch 1 as
+`3a49eedc7e842998a49ec2c4393096973d828f11`. Batch 2 is owner-authorized and
+implemented locally for review; Batch 3 and every live-provider mutation remain
+unauthorized.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -80,14 +81,14 @@ Do not begin without separate authorization:
 - a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
-- Phase 8C Batch 2 or Batch 3, live frontend delivery, LocalStack, Phase 8D–8E,
+- Phase 8C Batch 3, live frontend delivery, LocalStack, Phase 8D–8E,
   or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
-Phase 8B is Complete, but Phase 8 remains Current. The Phase 8C gate is
-Accepted; Batch 1 becomes authorized only after the acceptance PR merges to
-canonical `main`. Do not mark Phase 8 or Phase 8C complete until their separate
-evidence and owner reviews exist.
+Phase 8B and Phase 8C Batch 1 are Complete, but Phase 8 remains Current. The
+Phase 8C gate is Accepted and Batch 2 is implemented locally for review. Do not
+mark Phase 8C complete or begin Batch 3 until their separate evidence and owner
+authorizations exist.
 
 ## Required Context
 

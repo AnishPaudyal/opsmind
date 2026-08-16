@@ -297,6 +297,7 @@ def test_openapi_documents_complete_permission_boundary() -> None:
         ("/api/v1/products/{product_id}/stockout-exposure", "get"),
         ("/api/v1/products/{product_id}/reorder-recommendation", "get"),
         ("/api/v1/products/{product_id}/reorder-recommendations", "post"),
+        ("/api/v1/reorder-recommendations", "get"),
         ("/api/v1/reorder-recommendations/{recommendation_id}", "get"),
         (
             "/api/v1/reorder-recommendations/{recommendation_id}/audit-events",

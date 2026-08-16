@@ -1,15 +1,17 @@
-# OpsMind frontend foundation
+# OpsMind operational frontend
 
-This directory contains the Phase 8C Batch 1 static React/TypeScript/Vite
-application foundation. It establishes browser routing, session-only ZITADEL
+This directory contains the Phase 8C Batch 2 static React/TypeScript/Vite
+operational workspace. It uses browser routing, session-only ZITADEL
 Authorization Code with PKCE, a generated FastAPI contract, typed HTTP
 transport, bounded query behavior, accessible reusable states, and a responsive
-workspace shell.
+workspace shell to deliver the local product-to-audit workflow.
 
-It does not yet implement the operational product-to-audit workflow, the
-recommendation-list backend endpoint, backend CORS, production identity
-redirects, a human operator grant, Cloudflare delivery, or any live deployment.
-Those remain separately gated Batch 2 and Batch 3 work.
+The workspace lists and creates products, manages inventory and demand,
+calculates forecast/exposure/reorder evidence, persists actionable reviews,
+reconstructs the review queue after refresh, and supports approval/rejection
+with trusted audit history. It does not place external orders. Production
+identity redirects, a human operator grant, Cloudflare delivery, and live
+deployment remain separately gated Batch 3 work.
 
 ## Requirements
 
@@ -31,7 +33,37 @@ hook, or provider credential.
 
 The local example uses the loopback API and the existing public ZITADEL issuer,
 project ID, and User Agent client ID. Production callback/logout/origin values
-are intentionally not configured in Batch 1.
+are intentionally not configured in Batch 2.
+
+Run the backend at `http://127.0.0.1:8000` and configure its exact local browser
+origin without enabling credentials:
+
+```bash
+export OPSMIND_CORS_ALLOWED_ORIGINS='["http://localhost:5173"]'
+uv run uvicorn opsmind.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+The local API may use the memory backend or the repository's disposable
+PostgreSQL developer service. Deterministic automated tests use fake auth and
+MSW; they never require live ZITADEL. The hosted SPA's localhost callback has
+not been mutated or independently asserted during Batch 2, so optional manual
+local ZITADEL sign-in may require separately authorized provider configuration.
+
+## Feature map
+
+- `/` uses only product and persisted-review collection reads for bounded
+  operational totals.
+- `/products` lists canonical products and exposes creation to users presenting
+  `business:write`.
+- `/products/:productId` composes inventory, demand, baseline forecast,
+  stockout exposure, current reorder calculation, and review persistence.
+- `/recommendations` reconstructs persisted reviews newest-first with exact
+  product/status filters.
+- `/recommendations/:recommendationId` shows immutable evidence, terminal
+  decisions, and sequence-ordered trusted audit attribution.
+
+Presentation roles improve usability only. FastAPI remains authoritative for
+`business:read`, `business:write`, and `recommendation:decide`.
 
 ## Commands
 

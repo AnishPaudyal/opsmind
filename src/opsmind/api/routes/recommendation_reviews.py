@@ -28,6 +28,7 @@ from opsmind.domain.errors import (
 from opsmind.domain.recommendation_audit import RecommendationAuditEvent
 from opsmind.domain.recommendation_review import (
     RecommendationDecision,
+    RecommendationReviewStatus,
     ReorderRecommendationReview,
     create_recommendation_review,
 )
@@ -74,6 +75,14 @@ LookbackQuery = Annotated[
 AsOfDateQuery = Annotated[
     date | None,
     Query(description="Inclusive demand cutoff; defaults to latest demand date."),
+]
+ProductFilterQuery = Annotated[
+    UUID | None,
+    Query(description="Exact product identifier filter."),
+]
+ReviewStatusQuery = Annotated[
+    RecommendationReviewStatus | None,
+    Query(description="Exact recommendation review-status filter."),
 ]
 
 
@@ -235,6 +244,34 @@ def create_reorder_recommendation_review(
             detail=str(error),
         ) from error
     return _review_response(stored_review)
+
+
+@router.get(
+    "/reorder-recommendations",
+    response_model=list[ReorderRecommendationReviewResponse],
+    status_code=status.HTTP_200_OK,
+    summary="List stored reorder recommendation reviews",
+    responses={
+        **AUTHENTICATION_RESPONSES,
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "description": "Invalid product identifier or review status."
+        },
+    },
+)
+def list_reorder_recommendation_reviews(
+    workflow_repository: WorkflowRepositoryDependency,
+    _principal: BusinessReadPrincipal,
+    product_id: ProductFilterQuery = None,
+    review_status: ReviewStatusQuery = None,
+) -> list[ReorderRecommendationReviewResponse]:
+    """List persisted snapshots without recalculation or mutation."""
+    return [
+        _review_response(review)
+        for review in workflow_repository.list_reviews(
+            product_id=product_id,
+            review_status=review_status,
+        )
+    ]
 
 
 @router.get(

@@ -226,6 +226,16 @@ def test_shared_operational_and_approved_workflow_state_survive_restarts(
                 )
                 == pending_history
             )
+            assert second_client.get("/api/v1/reorder-recommendations").json() == [
+                created
+            ]
+            assert second_client.get(
+                "/api/v1/reorder-recommendations",
+                params={
+                    "product_id": product_id,
+                    "review_status": "pending_review",
+                },
+            ).json() == [created]
 
             second_product = second_client.post(
                 "/api/v1/products",
@@ -315,6 +325,10 @@ def test_shared_operational_and_approved_workflow_state_survive_restarts(
     ) as final_client:
         assert get_workflow_review(final_client, recommendation_id) == approved
         assert get_workflow_history(final_client, recommendation_id) == approved_history
+        assert final_client.get(
+            "/api/v1/reorder-recommendations",
+            params={"review_status": "approved"},
+        ).json() == [approved]
 
         retry = final_client.post(
             approval_path,

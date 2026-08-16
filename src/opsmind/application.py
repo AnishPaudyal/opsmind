@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.engine import Engine
 
 from opsmind.api.dependencies import (
@@ -181,6 +182,16 @@ def create_app(
     )
     configure_http_logger()
     application.add_middleware(RequestIDMiddleware)
+    if resolved_settings.cors_allowed_origins:
+        application.add_middleware(
+            CORSMiddleware,
+            allow_origins=list(resolved_settings.cors_allowed_origins),
+            allow_credentials=False,
+            allow_methods=["GET", "POST", "PUT", "OPTIONS"],
+            allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+            expose_headers=["X-Request-ID", "X-OpsMind-Revision"],
+            max_age=600,
+        )
     application.dependency_overrides[get_settings] = provide_settings
     application.dependency_overrides[get_product_inventory_repository] = (
         provide_product_inventory_repository

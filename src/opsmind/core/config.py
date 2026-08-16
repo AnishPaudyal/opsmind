@@ -3,6 +3,7 @@
 import re
 from enum import StrEnum
 from functools import lru_cache
+from urllib.parse import urlsplit
 
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -68,6 +69,43 @@ class Settings(BaseSettings):
     auth_clock_leeway_seconds: int = Field(default=0, ge=0, le=60)
     auth_jwks_timeout_seconds: float = Field(default=5.0, gt=0, le=10)
     auth_jwks_cache_seconds: float = Field(default=300.0, gt=0, le=3600)
+    cors_allowed_origins: tuple[str, ...] = ()
+
+    @field_validator("cors_allowed_origins")
+    @classmethod
+    def validate_cors_allowed_origins(
+        cls,
+        value: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        """Require unique explicit HTTP(S) origins without wildcard semantics."""
+        if len(set(value)) != len(value):
+            raise ValueError("OPSMIND_CORS_ALLOWED_ORIGINS must not contain duplicates")
+        for origin in value:
+            if not origin or origin != origin.strip() or "*" in origin:
+                raise ValueError(
+                    "OPSMIND_CORS_ALLOWED_ORIGINS must contain exact origins"
+                )
+            parsed = urlsplit(origin)
+            try:
+                _ = parsed.port
+            except ValueError:
+                raise ValueError(
+                    "OPSMIND_CORS_ALLOWED_ORIGINS must contain exact origins"
+                ) from None
+            if (
+                parsed.scheme not in {"http", "https"}
+                or parsed.hostname is None
+                or parsed.username is not None
+                or parsed.password is not None
+                or parsed.path != ""
+                or parsed.query != ""
+                or parsed.fragment != ""
+                or not origin.startswith(f"{parsed.scheme}://")
+            ):
+                raise ValueError(
+                    "OPSMIND_CORS_ALLOWED_ORIGINS must contain exact origins"
+                )
+        return value
 
     @field_validator("build_revision")
     @classmethod
