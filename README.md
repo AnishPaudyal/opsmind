@@ -19,10 +19,10 @@ API service managed by Blueprint, and a protected migration-before-deploy
 release. The [Phase 8B review](docs/12-phase-reviews/phase-8b-review.md) records
 the exact live evidence and limitations. The repository owner accepted the
 [Phase 8C gate](docs/01-architecture/phase-8c-authenticated-frontend-gate.md)
-under Issue #77 on 2026-08-13. Batch 1 is merged, and the owner has authorized
-Batch 2's local operational workflow, persistent review queue, and exact-origin
-CORS implementation. Batch 3 and all live provider mutations remain separately
-gated. No Cloudflare deployment,
+under Issue #77 on 2026-08-13. Batches 1 and 2 are Complete. The owner has
+authorized Batch 3 Substep 1 only: credential-free Cloudflare Terraform, CI,
+runbook, static security headers, and repository preparation. Substeps 2–8 and
+all live-provider mutations remain separately gated. No Cloudflare deployment,
 LocalStack skills environment, or production-readiness claim exists, and Phase
 8 remains Current.
 
@@ -97,9 +97,9 @@ The workspace supplies product creation, inventory and demand operations,
 forecast/exposure/reorder evidence, persisted review discovery, decisions, and
 trusted audit history through the generated API contract. Backend authorization
 remains authoritative, mutations never retry automatically, and the dashboard
-uses bounded collection reads. Cloudflare,
-production ZITADEL/operator configuration, Render/backend release changes, and
-deployment remain separately authorized Batch 3 work.
+uses bounded collection reads. Cloudflare deployment, production
+ZITADEL/operator configuration, Render/backend release changes, and every live
+mutation remain separately authorized later Batch 3 work.
 
 Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each

@@ -68,8 +68,10 @@ The repository owner accepted the Issue #77 Phase 8C authenticated frontend
 and full-stack product gate on 2026-08-13. PR #79 merged Batch 1 as
 `3a49eedc7e842998a49ec2c4393096973d828f11`, and PR #80 merged Batch 2 as
 `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`. Batch 1 and Batch 2 are
-Complete; Issue #77 remains open, while Batch 3 and every live-provider
-mutation remain unauthorized.
+Complete. The repository owner authorized Batch 3 on 2026-08-16 and authorized
+Substep 1 only: credential-free Cloudflare Terraform, CI, runbook,
+security-header, and repository preparation. Issue #77 remains open; Substeps
+2–8 and every live-provider mutation remain unauthorized.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -82,14 +84,14 @@ Do not begin without separate authorization:
 - a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
-- Phase 8C Batch 3, live frontend delivery, LocalStack, Phase 8D–8E,
+- Phase 8C Batch 3 Substeps 2–8, live frontend delivery, LocalStack, Phase 8D–8E,
   or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
 Phase 8B and Phase 8C Batches 1 and 2 are Complete, but Phase 8 remains
 Current. The Phase 8C gate is Accepted, Phase 8C is not Complete, and Batch 3
-is unauthorized and not started. Do not mark Phase 8C complete or begin Batch
-3 until their separate evidence and owner authorizations exist.
+Substep 1 is the only authorized Batch 3 work. Do not begin Substeps 2–8 or any
+live-provider mutation until their separate owner authorizations exist.
 
 ## Required Context
 

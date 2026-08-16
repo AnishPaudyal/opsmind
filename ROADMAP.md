@@ -26,7 +26,7 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
 | 6     | Decision approval, rejection, and audit history       | Complete      | Owner-accepted Phase 6 review under Issue #52                       |
 | 7     | Testing, security, and observability hardening        | Complete      | Owner-accepted Phase 7 review merged through PR #65                 |
-| 8     | Cloud deployment and first product delivery             | Current       | Phase 8A and Phase 8B Complete; Phase 8C gate Accepted under #77   |
+| 8     | Cloud deployment and first product delivery            | Current       | Phase 8A/8B Complete; Phase 8C Batches 1/2 Complete; Batch 3 Substep 1 authorized |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
 | 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
 | 11    | Advanced AI, retrieval, and event-driven capabilities | Planned       | LLM, RAG, tool calling, and LangGraph not started                   |
@@ -192,8 +192,9 @@ Complete: the repository foundation, owner-controlled cloud bootstrap, Render
 Blueprint, immutable GHCR publication, protected migration and deployment, and
 live health/readiness/authentication smoke evidence are recorded under Issue
 #70 and the Phase 8B review. The repository owner accepted the Issue #77 Phase
-8C gate on 2026-08-13. Batch 1 implementation becomes authorized only after the
-acceptance PR merges to canonical `main`; Batch 2, Batch 3, and all live-provider
+8C gate on 2026-08-13. Batches 1 and 2 are Complete. On 2026-08-16, the owner
+authorized Batch 3 and authorized Substep 1 only for credential-free
+Cloudflare repository preparation; Substeps 2–8 and all live-provider
 mutations remain separately gated.
 
 Phase 7A testing and coverage hardening, Issue #58 observability/readiness, and
@@ -211,8 +212,10 @@ backend trust adaptation, PostgreSQL cloud hardening, ZITADEL/HCP Terraform,
 Neon persistence, the reviewed Render Blueprint, public immutable GHCR release,
 and protected migration/deploy/smoke orchestration. Phase 8C–8E work and
 production-readiness approval remain subject to their documented gates. The
-Phase 8C gate is Accepted and authorizes Batch 1 only after its acceptance PR
-merges; it does not authorize Batch 2, Batch 3, or live Cloudflare work.
+Phase 8C gate is Accepted, Batches 1 and 2 are Complete, and Batch 3 Substep 1
+is authorized for credential-free repository preparation only. It does not
+authorize Cloudflare/HCP creation, provider apply, deployment, or another live
+mutation.
 Phase 9 data, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain Planned.
 
 Detailed current evidence and next-work boundaries live in
