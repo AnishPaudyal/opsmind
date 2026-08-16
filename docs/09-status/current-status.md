@@ -8,8 +8,8 @@ earlier states.
 - Status date: 2026-08-16
 - Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
 - Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
-  product; Batch 1 Complete and Batch 2 authorized for local implementation,
-  with Batch 3 still unauthorized
+  product; Batch 1 and Batch 2 Complete, with Batch 3 unauthorized and not
+  started
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -21,8 +21,9 @@ earlier states.
   closeout as `77b4f1d8981fe998fe55a8bf6e3dea2f99e02dfd`, and Issue #70
   closed
 - Issue #77 status: open; Phase 8C gate Accepted by the repository owner on
-  2026-08-13; Batch 1 is Complete; Batch 2 is implemented locally for review;
-  Batch 3 and deployment remain unauthorized
+  2026-08-13; Batch 1 is Complete; PR #80 merged Batch 2 as
+  `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`; Batch 2 is Complete; Batch 3
+  is unauthorized and not started
 
 ## Canonical Phase Status
 
@@ -410,14 +411,17 @@ packages implementation into three broad validation gates.
 
 The repository owner accepted the gate on 2026-08-13, PR #78 merged that
 acceptance as `3d181b951a6dde4664038bde16c37e6f1eef46c9`, and PR #79 merged
-Batch 1 as `3a49eedc7e842998a49ec2c4393096973d828f11`. Batch 2 is now
-implemented locally for review: the browser connects the product-to-audit
-workflow, stored reviews can be rediscovered newest-first through an exact-
-filter collection endpoint, and backend CORS is disabled by default and limited
-to strictly validated explicit origins. No Cloudflare resource, HCP Cloudflare
-workspace or apply, ZITADEL or human-operator mutation, Render/backend release,
-secret/environment mutation, or frontend deployment occurred. Phase 8C is not
-Complete, Batch 3 remains unauthorized, and Phase 8 overall remains Current.
+Batch 1 as `3a49eedc7e842998a49ec2c4393096973d828f11`. PR #80 merged Batch 2
+as `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`; Batch 2 is Complete and its
+operational workflow is represented on canonical `main`. The complete React
+workflow connects products through audit history, stored reviews can be
+rediscovered newest-first through `GET /api/v1/reorder-recommendations`, and
+backend CORS remains disabled by default and limited to strictly validated
+explicit origins. No production CORS origin is configured, and no Cloudflare
+project, HCP Cloudflare workspace or apply, ZITADEL human operator, Render or
+backend release, secret/environment mutation, Batch 3 live wiring, or frontend
+deployment is claimed. Phase 8C is not Complete, Batch 3 remains unauthorized
+and not started, Issue #77 remains open, and Phase 8 overall remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -448,14 +452,13 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The currently permitted work is the reviewed Phase 8C Batch 2 implementation
-under Issue #77. Batch 3, Cloudflare account or
-resource creation, HCP Cloudflare work, live ZITADEL and human-operator changes,
-Render or backend production CORS releases, secret/environment changes, and all
-other live-provider mutations require separate authorization. Future Phase 8B
-releases must continue using the protected environment, external Alembic
-migration, exact immutable digest, bounded health/readiness checks, and
-least-privilege authenticated smoke.
+No further Phase 8C implementation batch is currently authorized. Batch 3,
+Cloudflare account or resource creation, HCP Cloudflare work, live ZITADEL and
+human-operator changes, Render or backend production CORS releases,
+secret/environment changes, and all other live-provider mutations require
+separate authorization. Future Phase 8B releases must continue using the
+protected environment, external Alembic migration, exact immutable digest,
+bounded health/readiness checks, and least-privilege authenticated smoke.
 
 Phase 8D hardening, Phase 8E LocalStack, production-readiness work, Phase 9 data
 pipelines, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain outside the
