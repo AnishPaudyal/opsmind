@@ -69,9 +69,13 @@ and full-stack product gate on 2026-08-13. PR #79 merged Batch 1 as
 `3a49eedc7e842998a49ec2c4393096973d828f11`, and PR #80 merged Batch 2 as
 `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`. Batch 1 and Batch 2 are
 Complete. The repository owner authorized Batch 3 on 2026-08-16 and authorized
-Substep 1 only: credential-free Cloudflare Terraform, CI, runbook,
-security-header, and repository preparation. Issue #77 remains open; Substeps
-2–8 and every live-provider mutation remain unauthorized.
+Substep 1 for credential-free Cloudflare Terraform, CI, runbook,
+security-header, and repository preparation. PR #82 squash-merged that
+foundation as `7526f6eab78ef685669b3246e4a4487a83d1c331`, so Substep 1 is
+Complete. The owner conditionally authorized Substep 2 only after its
+documented reconciliation, free-tier, least-privilege, repository-scope, and
+security prerequisites pass. Issue #77 remains open; Substeps 3–8 remain
+unauthorized.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -84,13 +88,14 @@ Do not begin without separate authorization:
 - a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
-- Phase 8C Batch 3 Substeps 2–8, live frontend delivery, LocalStack, Phase 8D–8E,
+- Phase 8C Batch 3 Substeps 3–8, live frontend delivery, LocalStack, Phase 8D–8E,
   or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
 Phase 8B and Phase 8C Batches 1 and 2 are Complete, but Phase 8 remains
 Current. The Phase 8C gate is Accepted, Phase 8C is not Complete, and Batch 3
-Substep 1 is the only authorized Batch 3 work. Do not begin Substeps 2–8 or any
+Substep 1 is Complete. Substep 2 is conditionally authorized only within its
+documented stop conditions; do not begin Substeps 3–8 or any broader
 live-provider mutation until their separate owner authorizations exist.
 
 ## Required Context

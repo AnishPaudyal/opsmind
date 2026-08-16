@@ -20,9 +20,13 @@ release. The [Phase 8B review](docs/12-phase-reviews/phase-8b-review.md) records
 the exact live evidence and limitations. The repository owner accepted the
 [Phase 8C gate](docs/01-architecture/phase-8c-authenticated-frontend-gate.md)
 under Issue #77 on 2026-08-13. Batches 1 and 2 are Complete. The owner has
-authorized Batch 3 Substep 1 only: credential-free Cloudflare Terraform, CI,
-runbook, static security headers, and repository preparation. Substeps 2–8 and
-all live-provider mutations remain separately gated. No Cloudflare deployment,
+merged Batch 3 Substep 1 through PR #82 as the credential-free Cloudflare
+Terraform, CI, runbook, static security-header, and repository foundation.
+Substep 1 is Complete. Substep 2 is conditionally authorized only after its
+documented security, free-tier, least-privilege, repository-scope, and
+reconciliation prerequisites pass; Substeps 3–8 remain separately gated. No
+Cloudflare Pages project, HCP Cloudflare workspace, real Pages origin,
+Cloudflare deployment,
 LocalStack skills environment, or production-readiness claim exists, and Phase
 8 remains Current.
 
