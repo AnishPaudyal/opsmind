@@ -8,9 +8,8 @@ earlier states.
 - Status date: 2026-08-16
 - Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
 - Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
-  product; Batch 1 and Batch 2 Complete; Batch 3 authorized with Substep 1
-  credential-free repository preparation in progress and Substeps 2–8
-  unauthorized
+  product; Batch 1, Batch 2, and Batch 3 Substep 1 Complete; Substep 2
+  conditionally authorized and Substeps 3–8 unauthorized
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -24,8 +23,9 @@ earlier states.
 - Issue #77 status: open; Phase 8C gate Accepted by the repository owner on
   2026-08-13; Batch 1 is Complete; PR #80 merged Batch 2 as
   `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`; Batch 2 is Complete; Batch 3
-  is authorized; Substep 1 is in progress, while Substeps 2–8 and all live
-  mutations remain unauthorized
+  is authorized; PR #82 merged Substep 1 as
+  `7526f6eab78ef685669b3246e4a4487a83d1c331`; Substep 1 is Complete;
+  Substep 2 is conditionally authorized, while Substeps 3–8 remain unauthorized
 
 ## Canonical Phase Status
 
@@ -422,11 +422,17 @@ backend CORS remains disabled by default and limited to strictly validated
 explicit origins. No production CORS origin is configured, and no Cloudflare
 project, HCP Cloudflare workspace or apply, ZITADEL human operator, Render or
 backend release, secret/environment mutation, Batch 3 live wiring, or frontend
-deployment is claimed. On 2026-08-16, the repository owner authorized Batch 3
-and Substep 1 only for the credential-free Cloudflare Terraform, CI, runbook,
-security-header, and repository foundation. Phase 8C is not Complete, Substeps
-2–8 remain unauthorized, Issue #77 remains open, and Phase 8 overall remains
-Current.
+deployment is claimed. On 2026-08-16, the repository owner authorized Batch 3,
+and PR #82 squash-merged the credential-free Cloudflare Terraform, CI, runbook,
+security-header, and repository foundation as
+`7526f6eab78ef685669b3246e4a4487a83d1c331`. Substep 1 is Complete. Substep 2
+is conditionally authorized only after its documented reconciliation,
+free-tier, least-privilege, repository-scope, and security prerequisites pass.
+No Cloudflare Pages project, HCP Cloudflare workspace, Terraform apply, real
+Pages origin, ZITADEL production wiring, human portfolio operator or grant,
+Render production CORS wiring, backend release, or frontend deployment exists.
+Phase 8C is not Complete, Substeps 3–8 remain unauthorized, Issue #77 remains
+open, and Phase 8 overall remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -457,14 +463,14 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-Only Phase 8C Batch 3 Substep 1 repository preparation is currently authorized.
-Substeps 2–8, Cloudflare account or resource creation, GitHub connection
-changes, HCP Cloudflare workspace or apply, live ZITADEL and human-operator
-changes, Render or backend production CORS releases, secret/environment
-changes, deployment, and all other live-provider mutations require separate
-authorization. Future Phase 8B releases must continue using the protected
-environment, external Alembic migration, exact immutable digest, bounded
-health/readiness checks, and least-privilege authenticated smoke.
+Phase 8C Batch 3 Substep 1 is Complete. Substep 2 may proceed only if its
+documented reconciliation, security, least-privilege, repository-scope, and
+free-tier prerequisites pass, and it must stop before Terraform apply.
+Substeps 3–8, ZITADEL and human-operator changes, Render production CORS or
+backend releases, frontend deployment, and all broader live-provider mutations
+require separate authorization. Future Phase 8B releases must continue using
+the protected environment, external Alembic migration, exact immutable digest,
+bounded health/readiness checks, and least-privilege authenticated smoke.
 
 Phase 8D hardening, Phase 8E LocalStack, production-readiness work, Phase 9 data
 pipelines, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain outside the
