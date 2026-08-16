@@ -793,6 +793,7 @@ def test_custom_prefix_applies_and_health_remains_exact_and_unversioned() -> Non
 
     created = create_review(client, product_id, api_v1_prefix=prefix)
 
+    assert client.get(f"{prefix}/reorder-recommendations").json() == [created]
     assert (
         client.get(
             f"{prefix}/reorder-recommendations/{created['recommendation_id']}"
@@ -818,6 +819,57 @@ def test_custom_prefix_applies_and_health_remains_exact_and_unversioned() -> Non
         "environment": "test",
     }
     assert client.get(f"{prefix}/health").status_code == 404
+
+
+def test_list_reviews_is_newest_first_and_supports_exact_filters() -> None:
+    application, _, workflow_repository = make_application()
+    client = authenticated_test_client(application)
+    first_product_id = prepare_actionable_product(client)
+    first = create_review(client, first_product_id)
+    second_product_id = create_product(client, sku="SENSOR-002")
+    set_inventory(client, second_product_id, 0, 0)
+    add_demand(client, second_product_id)
+    create_review(client, second_product_id)
+    approved = client.post(
+        f"/api/v1/reorder-recommendations/{first['recommendation_id']}/approve",
+        json={},
+    )
+    assert approved.status_code == 200
+
+    all_reviews = client.get("/api/v1/reorder-recommendations")
+    by_product = client.get(
+        "/api/v1/reorder-recommendations", params={"product_id": first_product_id}
+    )
+    by_status = client.get(
+        "/api/v1/reorder-recommendations", params={"review_status": "approved"}
+    )
+
+    assert all_reviews.status_code == 200
+    assert [item["recommendation_id"] for item in all_reviews.json()] == [
+        str(item.recommendation_id) for item in workflow_repository.list_reviews()
+    ]
+    assert [item["recommendation_id"] for item in by_product.json()] == [
+        first["recommendation_id"]
+    ]
+    assert [item["recommendation_id"] for item in by_status.json()] == [
+        first["recommendation_id"]
+    ]
+
+
+def test_list_reviews_requires_authentication_and_validates_filters() -> None:
+    application, _, _ = make_application()
+    unauthenticated = TestClient(application)
+
+    assert unauthenticated.get("/api/v1/reorder-recommendations").status_code == 401
+    assert (
+        make_client()
+        .get(
+            "/api/v1/reorder-recommendations",
+            params={"review_status": "not-a-status"},
+        )
+        .status_code
+        == 422
+    )
 
 
 def test_review_workflow_does_not_create_orders_or_mutate_operational_state() -> None:
@@ -847,6 +899,7 @@ def test_openapi_documents_review_contract_and_bounded_responses() -> None:
     create_operation = paths["/api/v1/products/{product_id}/reorder-recommendations"][
         "post"
     ]
+    list_operation = paths["/api/v1/reorder-recommendations"]["get"]
     get_operation = paths["/api/v1/reorder-recommendations/{recommendation_id}"]["get"]
     approve_operation = paths[
         "/api/v1/reorder-recommendations/{recommendation_id}/approve"
@@ -860,6 +913,11 @@ def test_openapi_documents_review_contract_and_bounded_responses() -> None:
     audit_operation = audit_path["get"]
 
     assert set(create_operation["responses"]) >= {"201", "404", "409", "422"}
+    assert set(list_operation["responses"]) >= {"200", "401", "403", "422"}
+    assert [parameter["name"] for parameter in list_operation["parameters"]] == [
+        "product_id",
+        "review_status",
+    ]
     assert set(get_operation["responses"]) >= {"200", "404", "422"}
     assert set(approve_operation["responses"]) >= {"200", "404", "409", "422"}
     assert set(reject_operation["responses"]) >= {"200", "404", "409", "422"}
@@ -933,6 +991,7 @@ def test_openapi_documents_review_contract_and_bounded_responses() -> None:
     assert event_properties["occurred_at"]["format"] == "date-time"
     assert event_properties["sequence_number"]["type"] == "integer"
     assert event_properties["recommended_reorder_quantity"]["type"] == "integer"
+    assert "Trusted authenticated principal" in event_properties["actor"]["description"]
     assert {
         choice.get("type") for choice in event_properties["decision_id"]["anyOf"]
     } == {

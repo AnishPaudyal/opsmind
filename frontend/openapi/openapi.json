@@ -521,7 +521,7 @@
                 "type": "null"
               }
             ],
-            "description": "Unverified caller-supplied actor for a terminal decision.",
+            "description": "Trusted authenticated principal identifier for a terminal decision; null for system-created events.",
             "title": "Actor"
           },
           "approved_quantity": {
@@ -2003,6 +2003,85 @@
         "summary": "Calculate deterministic stockout exposure",
         "tags": [
           "stockout exposure"
+        ]
+      }
+    },
+    "/api/v1/reorder-recommendations": {
+      "get": {
+        "description": "List persisted snapshots without recalculation or mutation.",
+        "operationId": "list_reorder_recommendation_reviews_api_v1_reorder_recommendations_get",
+        "parameters": [
+          {
+            "description": "Exact product identifier filter.",
+            "in": "query",
+            "name": "product_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact product identifier filter.",
+              "title": "Product Id"
+            }
+          },
+          {
+            "description": "Exact recommendation review-status filter.",
+            "in": "query",
+            "name": "review_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RecommendationReviewStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact recommendation review-status filter.",
+              "title": "Review Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReorderRecommendationReviewResponse"
+                  },
+                  "title": "Response List Reorder Recommendation Reviews Api V1 Reorder Recommendations Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required."
+          },
+          "403": {
+            "description": "Insufficient permission."
+          },
+          "422": {
+            "description": "Invalid product identifier or review status."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "List stored reorder recommendation reviews",
+        "tags": [
+          "reorder recommendation review"
         ]
       }
     },

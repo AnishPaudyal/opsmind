@@ -5,7 +5,10 @@ from typing import Protocol
 from uuid import UUID
 
 from opsmind.domain.recommendation_audit import RecommendationAuditEvent
-from opsmind.domain.recommendation_review import ReorderRecommendationReview
+from opsmind.domain.recommendation_review import (
+    RecommendationReviewStatus,
+    ReorderRecommendationReview,
+)
 
 
 class RecommendationWorkflowRepository(Protocol):
@@ -22,6 +25,15 @@ class RecommendationWorkflowRepository(Protocol):
 
     def get_review(self, recommendation_id: UUID) -> ReorderRecommendationReview:
         """Return a stored review or raise a typed not-found error."""
+        ...
+
+    def list_reviews(
+        self,
+        *,
+        product_id: UUID | None = None,
+        review_status: RecommendationReviewStatus | None = None,
+    ) -> tuple[ReorderRecommendationReview, ...]:
+        """Return matching reviews newest first with a stable identifier tie-break."""
         ...
 
     def list_audit_events(

@@ -11,7 +11,6 @@ describe("application routing and shell", () => {
     ["/", "Know what needs attention—and why."],
     ["/products", "Operational catalog"],
     ["/recommendations", "Decision review queue"],
-    ["/recommendations/review-123", "Decision evidence"],
   ])("renders the protected foundation route %s", async (path, heading) => {
     window.history.replaceState(null, "", path);
     render(
@@ -37,10 +36,7 @@ describe("application routing and shell", () => {
     window.history.replaceState(null, "", "/products/product-123");
     const auth = new FakeAuthService("authenticated", ["opsmind.business.read"]);
     render(<App authService={auth} config={publicConfig} />);
-    expect(
-      await screen.findByRole("heading", { name: "Product evidence chain" }),
-    ).toBeVisible();
-    expect(screen.getByText("product-123")).toBeVisible();
+    expect(await screen.findByText("Loading product workspace")).toBeVisible();
     expect(screen.getByText("1 mapped presentation role")).toBeVisible();
   });
 

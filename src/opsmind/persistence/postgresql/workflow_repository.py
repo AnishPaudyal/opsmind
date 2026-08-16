@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -106,6 +106,45 @@ class PostgresRecommendationWorkflowRepository:
                 recommendation_id,
             )
             return self._review_from_rows(review_row, decision_row)
+
+    def list_reviews(
+        self,
+        *,
+        product_id: UUID | None = None,
+        review_status: RecommendationReviewStatus | None = None,
+    ) -> tuple[ReorderRecommendationReview, ...]:
+        """Return filtered detached aggregates in deterministic newest-first order."""
+        statement = (
+            select(RecommendationReviewRow, RecommendationDecisionRow)
+            .outerjoin(
+                RecommendationDecisionRow,
+                and_(
+                    RecommendationDecisionRow.recommendation_id
+                    == RecommendationReviewRow.recommendation_id,
+                    RecommendationDecisionRow.decision_id
+                    == RecommendationReviewRow.decision_id,
+                ),
+            )
+            .order_by(
+                RecommendationReviewRow.created_at.desc(),
+                RecommendationReviewRow.recommendation_id.desc(),
+            )
+        )
+        if product_id is not None:
+            statement = statement.where(
+                RecommendationReviewRow.product_id == product_id
+            )
+        if review_status is not None:
+            statement = statement.where(
+                RecommendationReviewRow.review_status == review_status.value
+            )
+
+        with self._session_factory() as session:
+            rows = session.execute(statement).all()
+            return tuple(
+                self._review_from_rows(review_row, decision_row)
+                for review_row, decision_row in rows
+            )
 
     def list_audit_events(
         self,

@@ -9,9 +9,22 @@ export const queryKeys = {
   inventory: (productId: string) =>
     [...queryKeys.product(productId), "inventory"] as const,
   demand: (productId: string) => [...queryKeys.product(productId), "demand"] as const,
+  calculations: (productId: string) =>
+    [...queryKeys.product(productId), "calculations"] as const,
+  forecast: (productId: string, options: object) =>
+    [...queryKeys.calculations(productId), "forecast", options] as const,
+  exposure: (productId: string, options: object) =>
+    [...queryKeys.calculations(productId), "exposure", options] as const,
+  reorder: (productId: string, options: object) =>
+    [...queryKeys.calculations(productId), "reorder", options] as const,
   recommendations: () => [...queryKeys.all, "recommendations"] as const,
+  recommendationLists: () => [...queryKeys.recommendations(), "list"] as const,
+  recommendationList: (filters: object) =>
+    [...queryKeys.recommendationLists(), filters] as const,
   recommendation: (recommendationId: string) =>
     [...queryKeys.recommendations(), recommendationId] as const,
+  audit: (recommendationId: string) =>
+    [...queryKeys.recommendation(recommendationId), "audit"] as const,
 };
 
 export function shouldRetryRead(failureCount: number, error: unknown): boolean {

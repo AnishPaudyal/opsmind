@@ -9,8 +9,8 @@ export function FormField({
   registration,
   ...inputProps
 }: InputHTMLAttributes<HTMLInputElement> & {
-  readonly error?: string;
-  readonly help?: string;
+  readonly error?: string | undefined;
+  readonly help?: string | undefined;
   readonly id: string;
   readonly label: string;
   readonly registration?: UseFormRegisterReturn;

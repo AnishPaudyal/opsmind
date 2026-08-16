@@ -19,9 +19,10 @@ API service managed by Blueprint, and a protected migration-before-deploy
 release. The [Phase 8B review](docs/12-phase-reviews/phase-8b-review.md) records
 the exact live evidence and limitations. The repository owner accepted the
 [Phase 8C gate](docs/01-architecture/phase-8c-authenticated-frontend-gate.md)
-under Issue #77 on 2026-08-13. Batch 1 implementation is authorized only after
-the gate acceptance merges to canonical `main`; Batch 2, Batch 3, and all live
-provider mutations remain separately gated. No frontend, Cloudflare deployment,
+under Issue #77 on 2026-08-13. Batch 1 is merged, and the owner has authorized
+Batch 2's local operational workflow, persistent review queue, and exact-origin
+CORS implementation. Batch 3 and all live provider mutations remain separately
+gated. No Cloudflare deployment,
 LocalStack skills environment, or production-readiness claim exists, and Phase
 8 remains Current.
 
@@ -46,7 +47,7 @@ This repository does not yet contain:
 - Application-managed users, sessions, organizations, or tenant isolation
 - Calibrated stockout probability or a trained stockout model
 - Purchase-order creation or external ordering integration
-- A frontend user interface
+- A deployed frontend user interface
 - A production-grade database posture, production data, or
   production-readiness approval
 
@@ -80,22 +81,23 @@ Docker Compose remains scoped to the normal local PostgreSQL service. The API
 image and its isolated validation harness do not reuse or destroy that service
 or its named data volume. Accepted ADR-0007 selects a static
 React/TypeScript/Vite SPA rather than Next.js because no SSR requirement exists.
-The Phase 8C gate is Accepted. Batch 1 introduces the static frontend
-foundation described below; it is not deployed and does not make Phase 8C
-Complete.
+The Phase 8C gate is Accepted. Batch 1 established the static frontend
+foundation, and Batch 2 connects its local operational workflow. It is not
+deployed and does not make Phase 8C Complete.
 
-## Frontend foundation
+## Frontend operational workspace
 
-The Phase 8C Batch 1 browser application lives in [`frontend`](frontend). It
+The Phase 8C browser application lives in [`frontend`](frontend). It
 uses Node.js 24 LTS, npm, React, strict TypeScript, Vite, React Router, TanStack
 Query, `oidc-client-ts`, and OpenAPI-derived FastAPI types. See the
 [frontend guide](frontend/README.md) for local public configuration, commands,
 auth/session boundaries, and current limitations.
 
-The foundation supplies the accepted routes, responsive shell, loading/error/
-forbidden/unavailable states, Authorization Code with PKCE adapter, and central
-typed API transport. It does not fake the operational workflow. The required
-recommendation-list endpoint and backend CORS remain Batch 2; Cloudflare,
+The workspace supplies product creation, inventory and demand operations,
+forecast/exposure/reorder evidence, persisted review discovery, decisions, and
+trusted audit history through the generated API contract. Backend authorization
+remains authoritative, mutations never retry automatically, and the dashboard
+uses bounded collection reads. Cloudflare,
 production ZITADEL/operator configuration, Render/backend release changes, and
 deployment remain separately authorized Batch 3 work.
 
@@ -181,6 +183,7 @@ business prefix:
 | `GET` | `/api/v1/products/{product_id}/stockout-exposure` | `business:read` | Calculate deterministic lead-time exposure. |
 | `GET` | `/api/v1/products/{product_id}/reorder-recommendation` | `business:read` | Calculate a whole-unit reorder recommendation. |
 | `POST` | `/api/v1/products/{product_id}/reorder-recommendations` | `business:write` | Store one actionable recommendation snapshot for review. |
+| `GET` | `/api/v1/reorder-recommendations` | `business:read` | List stored reviews newest-first with optional exact product/status filters. |
 | `GET` | `/api/v1/reorder-recommendations/{recommendation_id}` | `business:read` | Retrieve a stored recommendation review. |
 | `POST` | `/api/v1/reorder-recommendations/{recommendation_id}/approve` | `recommendation:decide` | Approve a pending recommendation. |
 | `POST` | `/api/v1/reorder-recommendations/{recommendation_id}/reject` | `recommendation:decide` | Reject a pending recommendation. |
@@ -194,6 +197,7 @@ overrides are:
 - `OPSMIND_ENVIRONMENT` (`local`, `test`, `staging`, or `production`)
 - `OPSMIND_DEBUG`
 - `OPSMIND_API_V1_PREFIX`
+- `OPSMIND_CORS_ALLOWED_ORIGINS` (JSON list of exact origins; empty by default)
 - `OPSMIND_PERSISTENCE_BACKEND` (`memory` or `postgresql`)
 - `OPSMIND_DATABASE_URL` (required only for `postgresql`)
 - `OPSMIND_AUTH_ISSUER`

@@ -29,7 +29,10 @@ class RecommendationAuditEventResponse(BaseModel):
         description="Linked terminal decision identifier, when applicable."
     )
     actor: str | None = Field(
-        description="Unverified caller-supplied actor for a terminal decision."
+        description=(
+            "Trusted authenticated principal identifier for a terminal decision; "
+            "null for system-created events."
+        )
     )
     recommended_reorder_quantity: int = Field(
         ge=1,

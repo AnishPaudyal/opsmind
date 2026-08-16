@@ -23,6 +23,7 @@ from opsmind.domain.recommendation_audit import (
     create_review_decision_audit_event,
 )
 from opsmind.domain.recommendation_review import (
+    RecommendationReviewStatus,
     ReorderRecommendationReview,
     approve_recommendation,
     create_recommendation_review,
@@ -90,12 +91,16 @@ def make_recommendation() -> ReorderRecommendation:
     )
 
 
-def make_pending_review() -> ReorderRecommendationReview:
+def make_pending_review(
+    recommendation_id: UUID = RECOMMENDATION_ID,
+    *,
+    created_at: datetime = CREATED_AT,
+) -> ReorderRecommendationReview:
     """Build one valid pending review."""
     return create_recommendation_review(
-        recommendation_id=RECOMMENDATION_ID,
+        recommendation_id=recommendation_id,
         recommendation=make_recommendation(),
-        created_at=CREATED_AT,
+        created_at=created_at,
     )
 
 
@@ -234,6 +239,37 @@ def test_get_review_returns_complete_pending_snapshot_across_instances(
     assert second == expected
     assert first is not expected
     assert second is not first
+
+
+def test_list_reviews_persists_filters_and_newest_first_order(
+    session_factory: SessionFactory,
+) -> None:
+    repository = make_repository(session_factory)
+    first = create_pending_workflow(session_factory, repository)
+    approved = repository.approve_review(
+        first.recommendation_id,
+        decision_id=DECISION_ID,
+        event_id=DECISION_EVENT_ID,
+        decided_by="planner@example.com",
+        decided_at=DECIDED_AT,
+        approved_quantity=None,
+        note=None,
+    )
+    second = make_pending_review(
+        SECOND_RECOMMENDATION_ID,
+        created_at=CREATED_AT + timedelta(hours=1),
+    )
+    repository.create_review(second, event_id=SECOND_CREATION_EVENT_ID)
+
+    restarted = make_repository(session_factory)
+    assert restarted.list_reviews() == (second, approved)
+    assert restarted.list_reviews(
+        product_id=PRODUCT_ID,
+        review_status=RecommendationReviewStatus.APPROVED,
+    ) == (approved,)
+    assert (
+        restarted.list_reviews(review_status=RecommendationReviewStatus.REJECTED) == ()
+    )
 
 
 def test_get_review_reconstructs_terminal_decision(

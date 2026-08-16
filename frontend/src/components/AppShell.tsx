@@ -71,8 +71,8 @@ export function AppShell() {
       </aside>
       <div className="workspace">
         <header className="topbar">
-          <span className="environment-pill">Foundation workspace</span>
-          <span>Phase 8C · Batch 1</span>
+          <span className="environment-pill">Operational workspace</span>
+          <span>Phase 8C · Batch 2</span>
         </header>
         <main className="page" id="main-content">
           <Outlet />

@@ -41,6 +41,7 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.auth_clock_leeway_seconds == 0
     assert settings.auth_jwks_timeout_seconds == 5.0
     assert settings.auth_jwks_cache_seconds == 300.0
+    assert settings.cors_allowed_origins == ()
     assert settings.authentication_configured is False
     assert settings.static_authentication_configured is False
     assert settings.jwks_authentication_configured is False
@@ -146,6 +147,54 @@ def test_settings_reject_an_invalid_boolean(monkeypatch: pytest.MonkeyPatch) -> 
 
     with pytest.raises(ValidationError):
         Settings()
+
+
+def test_settings_accept_exact_cors_origins_from_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    clear_opsmind_environment(monkeypatch)
+    monkeypatch.setenv(
+        "OPSMIND_CORS_ALLOWED_ORIGINS",
+        '["http://localhost:5173","https://frontend.example.test"]',
+    )
+
+    settings = Settings()
+
+    assert settings.cors_allowed_origins == (
+        "http://localhost:5173",
+        "https://frontend.example.test",
+    )
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "*",
+        "https://*.example.test",
+        "https://user@example.test",
+        "https://example.test/",
+        "https://example.test/path",
+        "https://example.test?query=value",
+        "https://example.test#fragment",
+        "example.test",
+        "ftp://example.test",
+        " https://example.test",
+        "https://example.test:invalid",
+    ],
+)
+def test_settings_reject_non_exact_cors_origins(origin: str) -> None:
+    with pytest.raises(ValidationError, match="exact origins"):
+        Settings(cors_allowed_origins=(origin,))
+
+
+def test_settings_reject_duplicate_cors_origins() -> None:
+    with pytest.raises(ValidationError, match="must not contain duplicates"):
+        Settings(
+            cors_allowed_origins=(
+                "https://frontend.example.test",
+                "https://frontend.example.test",
+            )
+        )
 
 
 def test_settings_cache_is_stable_and_explicitly_resettable(

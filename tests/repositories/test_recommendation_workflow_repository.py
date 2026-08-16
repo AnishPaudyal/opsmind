@@ -47,10 +47,13 @@ DECIDED_AT = datetime(2026, 8, 1, 13, 0, tzinfo=UTC)
 
 def make_review(
     recommendation_id: UUID = RECOMMENDATION_ID,
+    *,
+    product_id: UUID = PRODUCT_ID,
+    created_at: datetime = CREATED_AT,
 ) -> ReorderRecommendationReview:
     """Build one pending actionable recommendation review."""
     recommendation = ReorderRecommendation(
-        product_id=PRODUCT_ID,
+        product_id=product_id,
         unit_of_measure="units",
         recommendation_policy=(ReorderRecommendationPolicy.PROJECTED_SHORTAGE_CEILING),
         recommendation_status=ReorderRecommendationStatus.REORDER_RECOMMENDED,
@@ -73,7 +76,7 @@ def make_review(
     return create_recommendation_review(
         recommendation_id=recommendation_id,
         recommendation=recommendation,
-        created_at=CREATED_AT,
+        created_at=created_at,
     )
 
 
@@ -107,6 +110,50 @@ def test_duplicate_identifier_never_overwrites_existing_review() -> None:
 
     assert repository.get_review(RECOMMENDATION_ID) is original
     assert repository.list_audit_events(RECOMMENDATION_ID) is original_history
+
+
+def test_list_reviews_filters_and_orders_newest_first_deterministically() -> None:
+    repository = InMemoryRecommendationWorkflowRepository()
+    second_product_id = UUID("00000000-0000-0000-0000-000000000002")
+    older_id = UUID("00000000-0000-0000-0000-000000000102")
+    newer_low_id = UUID("00000000-0000-0000-0000-000000000103")
+    newer_high_id = UUID("00000000-0000-0000-0000-000000000104")
+    older = make_review(
+        older_id,
+        created_at=CREATED_AT - timedelta(hours=1),
+    )
+    newer_low = make_review(newer_low_id)
+    newer_high = make_review(newer_high_id, product_id=second_product_id)
+    repository.create_review(older, event_id=CREATION_EVENT_ID)
+    repository.create_review(newer_low, event_id=APPROVAL_EVENT_ID)
+    repository.create_review(newer_high, event_id=REJECTION_EVENT_ID)
+    repository.approve_review(
+        newer_low_id,
+        decision_id=APPROVAL_ID,
+        event_id=RETRY_EVENT_ID,
+        decided_by="Reviewer",
+        decided_at=DECIDED_AT,
+    )
+
+    assert repository.list_reviews() == (
+        newer_high,
+        repository.get_review(newer_low_id),
+        older,
+    )
+    assert repository.list_reviews(product_id=PRODUCT_ID) == (
+        repository.get_review(newer_low_id),
+        older,
+    )
+    assert repository.list_reviews(
+        review_status=RecommendationReviewStatus.APPROVED
+    ) == (repository.get_review(newer_low_id),)
+    assert (
+        repository.list_reviews(
+            product_id=second_product_id,
+            review_status=RecommendationReviewStatus.APPROVED,
+        )
+        == ()
+    )
 
 
 def test_event_construction_failure_stores_neither_review_nor_history() -> None:
@@ -403,6 +450,7 @@ def test_internal_mapping_has_no_public_exposure() -> None:
         "create_review",
         "get_review",
         "list_audit_events",
+        "list_reviews",
         "reject_review",
     )
 

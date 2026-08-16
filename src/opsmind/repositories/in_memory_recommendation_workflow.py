@@ -63,6 +63,33 @@ class InMemoryRecommendationWorkflowRepository:
             except KeyError:
                 raise RecommendationReviewNotFoundError(recommendation_id) from None
 
+    def list_reviews(
+        self,
+        *,
+        product_id: UUID | None = None,
+        review_status: RecommendationReviewStatus | None = None,
+    ) -> tuple[ReorderRecommendationReview, ...]:
+        """Return filtered reviews in deterministic newest-first order."""
+        with self._lock:
+            matches = (
+                review
+                for review in self._reviews.values()
+                if (
+                    product_id is None or review.recommendation.product_id == product_id
+                )
+                and (review_status is None or review.review_status is review_status)
+            )
+            return tuple(
+                sorted(
+                    matches,
+                    key=lambda review: (
+                        review.created_at,
+                        review.recommendation_id.int,
+                    ),
+                    reverse=True,
+                )
+            )
+
     def list_audit_events(
         self,
         recommendation_id: UUID,

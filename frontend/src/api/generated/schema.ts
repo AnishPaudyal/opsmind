@@ -176,6 +176,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reorder-recommendations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List stored reorder recommendation reviews
+         * @description List persisted snapshots without recalculation or mutation.
+         */
+        get: operations["list_reorder_recommendation_reviews_api_v1_reorder_recommendations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reorder-recommendations/{recommendation_id}": {
         parameters: {
             query?: never;
@@ -651,7 +671,7 @@ export interface components {
         RecommendationAuditEventResponse: {
             /**
              * Actor
-             * @description Unverified caller-supplied actor for a terminal decision.
+             * @description Trusted authenticated principal identifier for a terminal decision; null for system-created events.
              */
             actor: string | null;
             /**
@@ -1662,6 +1682,52 @@ export interface operations {
                 content?: never;
             };
             /** @description Invalid parameters or insufficient demand history. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_reorder_recommendation_reviews_api_v1_reorder_recommendations_get: {
+        parameters: {
+            query?: {
+                /** @description Exact product identifier filter. */
+                product_id?: string | null;
+                /** @description Exact recommendation review-status filter. */
+                review_status?: components["schemas"]["RecommendationReviewStatus"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReorderRecommendationReviewResponse"][];
+                };
+            };
+            /** @description Authentication required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Insufficient permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid product identifier or review status. */
             422: {
                 headers: {
                     [name: string]: unknown;

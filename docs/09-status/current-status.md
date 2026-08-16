@@ -5,10 +5,11 @@ This document is the detailed authority for the current project state. The
 phase-review documents preserve the decisions and evidence that established
 earlier states.
 
-- Status date: 2026-08-13
+- Status date: 2026-08-16
 - Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
 - Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
-  product; Batch 1 authorized, with Batch 2 and Batch 3 still unauthorized
+  product; Batch 1 Complete and Batch 2 authorized for local implementation,
+  with Batch 3 still unauthorized
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -20,8 +21,8 @@ earlier states.
   closeout as `77b4f1d8981fe998fe55a8bf6e3dea2f99e02dfd`, and Issue #70
   closed
 - Issue #77 status: open; Phase 8C gate Accepted by the repository owner on
-  2026-08-13; the Batch 1 frontend foundation is implemented for review but is
-  not deployed and does not authorize Batch 2 or Batch 3
+  2026-08-13; Batch 1 is Complete; Batch 2 is implemented locally for review;
+  Batch 3 and deployment remain unauthorized
 
 ## Canonical Phase Status
 
@@ -407,15 +408,16 @@ required review-list backend capability, preserves ZITADEL Authorization Code
 with PKCE and exact backend authorization, defines exact-origin CORS, and
 packages implementation into three broad validation gates.
 
-The repository owner accepted the gate on 2026-08-13, and PR #78 merged that
-acceptance as `3d181b951a6dde4664038bde16c37e6f1eef46c9`. Batch 1 is now
-authorized, and its static browser, authentication, typed-contract, quality,
-and application-shell foundation is implemented for review. Batch 2 and Batch
-3 remain unauthorized. No operational workflow UI, recommendation-list
-endpoint, backend CORS, Cloudflare resource, HCP Cloudflare workspace or apply,
-ZITADEL or human-operator mutation, Render/backend release, secret/environment
-mutation, or frontend deployment has begun. Phase 8C is not Complete, and Phase
-8 overall remains Current.
+The repository owner accepted the gate on 2026-08-13, PR #78 merged that
+acceptance as `3d181b951a6dde4664038bde16c37e6f1eef46c9`, and PR #79 merged
+Batch 1 as `3a49eedc7e842998a49ec2c4393096973d828f11`. Batch 2 is now
+implemented locally for review: the browser connects the product-to-audit
+workflow, stored reviews can be rediscovered newest-first through an exact-
+filter collection endpoint, and backend CORS is disabled by default and limited
+to strictly validated explicit origins. No Cloudflare resource, HCP Cloudflare
+workspace or apply, ZITADEL or human-operator mutation, Render/backend release,
+secret/environment mutation, or frontend deployment occurred. Phase 8C is not
+Complete, Batch 3 remains unauthorized, and Phase 8 overall remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -446,8 +448,8 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-The currently permitted work is Phase 8C Batch 1 under Issue #77. Batch 2,
-Batch 3, Cloudflare account or
+The currently permitted work is the reviewed Phase 8C Batch 2 implementation
+under Issue #77. Batch 3, Cloudflare account or
 resource creation, HCP Cloudflare work, live ZITADEL and human-operator changes,
 Render or backend production CORS releases, secret/environment changes, and all
 other live-provider mutations require separate authorization. Future Phase 8B
