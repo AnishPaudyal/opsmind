@@ -29,6 +29,59 @@ jobs:
           --schemafile https://render.com/schema/render.yaml.json
           render.yaml
 
+      - name: Validate credential-free Cloudflare delivery foundation
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_cloudflare_files=(
+            infra/cloudflare/.terraform.lock.hcl
+            infra/cloudflare/README.md
+            infra/cloudflare/main.tf
+            infra/cloudflare/outputs.tf
+            infra/cloudflare/variables.tf
+            infra/cloudflare/versions.tf
+            frontend/public/_headers
+          )
+
+          for file in "${required_cloudflare_files[@]}"; do
+            test -s "${file}"
+          done
+
+          resource_declarations="$(
+            grep -hE '^resource "cloudflare_[^"]+"' infra/cloudflare/*.tf
+          )"
+          test "${resource_declarations}" = \
+            'resource "cloudflare_pages_project" "opsmind" {'
+
+          grep -Fq 'version = "= 5.22.0"' infra/cloudflare/versions.tf
+          grep -Fq 'production_deployments_enabled = false' infra/cloudflare/main.tf
+          grep -Fq 'preview_deployment_setting     = "none"' infra/cloudflare/main.tf
+
+          if grep -Eq '[a-z0-9-]+\.pages\.dev' \
+            infra/cloudflare/*.tf frontend/public/_headers; then
+            echo "A concrete Pages hostname was committed before provider handoff."
+            exit 1
+          fi
+
+          grep -Fq "Content-Security-Policy: default-src 'self'" frontend/public/_headers
+          grep -Fq "frame-ancestors 'none'" frontend/public/_headers
+          grep -Fq 'X-Frame-Options: DENY' frontend/public/_headers
+          grep -Fq 'X-Content-Type-Options: nosniff' frontend/public/_headers
+          grep -Fq 'Referrer-Policy: no-referrer' frontend/public/_headers
+          grep -Fq 'Permissions-Policy:' frontend/public/_headers
+
+          if grep -Eq "(unsafe-eval|script-src[^;]*\*|connect-src[^;]*\*|frame-src[^;]*\*)" \
+            frontend/public/_headers; then
+            echo "The static security policy contains a prohibited broad source."
+            exit 1
+          fi
+
+          if grep -Eq 'terraform (plan|apply)' .github/workflows/terraform-quality.yml; then
+            echo "Credentialed Terraform execution must not run in pull-request CI."
+            exit 1
+          fi
+
       - name: Validate required files
         shell: bash
         run: |

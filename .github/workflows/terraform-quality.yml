@@ -12,17 +12,26 @@ permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Terraform quality
+  validate:
+    name: Terraform validation (${{ matrix.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ZITADEL
+            directory: infra/zitadel
+            provider_address: registry.terraform.io/zitadel/zitadel
+            provider_version: 3.3.0
+          - name: Cloudflare
+            directory: infra/cloudflare
+            provider_address: registry.terraform.io/cloudflare/cloudflare
+            provider_version: 5.22.0
+
     env:
       TF_IN_AUTOMATION: "true"
-
-    defaults:
-      run:
-        working-directory: infra/zitadel
 
     steps:
       - name: Check out repository
@@ -44,6 +53,7 @@ jobs:
 
       - name: Verify Terraform formatting
         run: terraform fmt -check -recursive
+        working-directory: ${{ matrix.directory }}
 
       - name: Initialize locked providers without backend
         run: >-
@@ -51,23 +61,40 @@ jobs:
           -backend=false
           -input=false
           -lockfile=readonly
+        working-directory: ${{ matrix.directory }}
 
       - name: Validate Terraform configuration
         run: terraform validate
+        working-directory: ${{ matrix.directory }}
 
       - name: Verify locked provider identity
         shell: bash
+        env:
+          PROVIDER_ADDRESS: ${{ matrix.provider_address }}
+          PROVIDER_VERSION: ${{ matrix.provider_version }}
         run: |
           set -euo pipefail
 
           provider_output="$(terraform providers)"
           printf '%s\n' "${provider_output}"
 
-          grep -Fq             'provider[registry.terraform.io/zitadel/zitadel] 3.3.0'             <<<"${provider_output}"
+          grep -Fq "provider[${PROVIDER_ADDRESS}] ${PROVIDER_VERSION}" <<<"${provider_output}"
 
-          grep -Fq             'version     = "3.3.0"'             .terraform.lock.hcl
+          grep -Fq "version     = \"${PROVIDER_VERSION}\"" .terraform.lock.hcl
 
-          grep -Fq             'constraints = "3.3.0"'             .terraform.lock.hcl
+          grep -Fq "constraints = \"${PROVIDER_VERSION}\"" .terraform.lock.hcl
+        working-directory: ${{ matrix.directory }}
 
       - name: Verify initialization preserved dependency lock
         run: git diff --exit-code -- .terraform.lock.hcl
+        working-directory: ${{ matrix.directory }}
+
+  quality:
+    name: Terraform quality
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Confirm all Terraform directories passed
+        run: test "${{ needs.validate.result }}" = "success"
