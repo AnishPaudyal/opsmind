@@ -5,11 +5,11 @@ This document is the detailed authority for the current project state. The
 phase-review documents preserve the decisions and evidence that established
 earlier states.
 
-- Status date: 2026-08-16
+- Status date: 2026-08-20
 - Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
 - Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
-  product; Batch 1, Batch 2, and Batch 3 Substep 1 Complete; Substep 2
-  conditionally authorized and Substeps 3–8 unauthorized
+  product; Batch 1, Batch 2, and Batch 3 Substeps 1 and 2 Complete; Substep 3
+  In Progress and Substeps 4–8 unauthorized
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -25,7 +25,8 @@ earlier states.
   `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`; Batch 2 is Complete; Batch 3
   is authorized; PR #82 merged Substep 1 as
   `7526f6eab78ef685669b3246e4a4487a83d1c331`; Substep 1 is Complete;
-  Substep 2 is conditionally authorized, while Substeps 3–8 remain unauthorized
+  Substep 2 is Complete; Substep 3 is In Progress after a failed pre-creation
+  apply; Substeps 4–8 remain unauthorized
 
 ## Canonical Phase Status
 
@@ -314,6 +315,18 @@ lower-risk supported base. CI reports all High/Critical findings and separately
 fails on fixable findings. This residual base-image risk remains explicit and
 must be revisited when upstream fixes or a newer official base are available.
 
+On 2026-08-20, that revisit became mandatory: Debian published fixed Trixie
+`util-linux` packages and the required container gate reported 36 fixable High
+findings for CVE-2026-53612 through CVE-2026-53615. The official Python tag
+still referenced the pinned image's Debian base digest, so the narrow
+remediation upgrades only the nine affected runtime binary packages to the
+exact signed Debian security versions. The Trivy policy is not suppressed or
+weakened. Hosted validation installed the expected versions, passed the full
+and repeat-build container contracts, reported 13 High and 4 Critical
+inherited findings without available fixes, and reported zero fixable Debian
+and zero Python/application findings. CVE-2026-53612 through CVE-2026-53615 no
+longer fail the required gate.
+
 The repository owner authorized the final Phase 8A merge boundary after
 reviewing that residual. PR #69 squash-merged on 2026-08-10 as
 `631b8a2d1c9696b374f2b96b0295190bbca4a3bf`. Its canonical tree
@@ -420,19 +433,30 @@ workflow connects products through audit history, stored reviews can be
 rediscovered newest-first through `GET /api/v1/reorder-recommendations`, and
 backend CORS remains disabled by default and limited to strictly validated
 explicit origins. No production CORS origin is configured, and no Cloudflare
-project, HCP Cloudflare workspace or apply, ZITADEL human operator, Render or
-backend release, secret/environment mutation, Batch 3 live wiring, or frontend
-deployment is claimed. On 2026-08-16, the repository owner authorized Batch 3,
+project, ZITADEL human operator, Render or backend release, Batch 3 live wiring,
+or frontend deployment is claimed. On 2026-08-16, the repository owner
+authorized Batch 3,
 and PR #82 squash-merged the credential-free Cloudflare Terraform, CI, runbook,
 security-header, and repository foundation as
-`7526f6eab78ef685669b3246e4a4487a83d1c331`. Substep 1 is Complete. Substep 2
-is conditionally authorized only after its documented reconciliation,
-free-tier, least-privilege, repository-scope, and security prerequisites pass.
-No Cloudflare Pages project, HCP Cloudflare workspace, Terraform apply, real
-Pages origin, ZITADEL production wiring, human portfolio operator or grant,
-Render production CORS wiring, backend release, or frontend deployment exists.
-Phase 8C is not Complete, Substeps 3–8 remain unauthorized, Issue #77 remains
-open, and Phase 8 overall remains Current.
+`7526f6eab78ef685669b3246e4a4487a83d1c331`. Substep 1 is Complete.
+
+Substep 2 is Complete. The owner verified Cloudflare Free at `$0`, restricted
+the GitHub App to `AnishPaudyal/opsmind`, and stored a Pages Write-only API token
+only as a Sensitive/write-only HCP variable. Workspace
+`opsmind-phase-8c-cloudflare` uses Terraform `1.15.8`, Remote execution,
+working directory `infra/cloudflare`, VCS trigger `infra/cloudflare/**`, and
+disabled auto-apply. Credentialed speculative plan `run-APcJQx868crLvfka`
+reported one add, zero changes, and zero destroys without creating a resource.
+
+Substep 3 is authorized and In Progress. Applyable plan
+`run-i4t9u2G97QgeNP4k` also reported one add, zero changes, and zero destroys.
+The owner confirmed that reviewed apply, but Cloudflare rejected the create
+request with error `8000066` because production and preview `fail_open` values
+must be equal. The failure occurred before Pages project creation; HCP remains
+at zero managed resources, no authoritative Pages origin exists, and a
+corrective repository patch is required before a fresh plan. Phase 8C is not
+Complete, Substeps 4–8 remain unauthorized, Issue #77 remains open, and Phase 8
+overall remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -463,12 +487,13 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-Phase 8C Batch 3 Substep 1 is Complete. Substep 2 may proceed only if its
-documented reconciliation, security, least-privilege, repository-scope, and
-free-tier prerequisites pass, and it must stop before Terraform apply.
-Substeps 3–8, ZITADEL and human-operator changes, Render production CORS or
-backend releases, frontend deployment, and all broader live-provider mutations
-require separate authorization. Future Phase 8B releases must continue using
+Phase 8C Batch 3 Substeps 1 and 2 are Complete. Substep 3 is In Progress. After
+the corrective repository change is merged, its next action is a fresh HCP
+plan for exactly one add, zero changes, and zero destroys; the plan must be
+reviewed before any separately authorized apply. Substeps 4–8, ZITADEL and
+human-operator changes, Render production CORS or backend releases, frontend
+deployment, and all broader live-provider mutations require separate
+authorization. Future Phase 8B releases must continue using
 the protected environment, external Alembic migration, exact immutable digest,
 bounded health/readiness checks, and least-privilege authenticated smoke.
 

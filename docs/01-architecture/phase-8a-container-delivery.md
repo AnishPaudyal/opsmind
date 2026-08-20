@@ -211,6 +211,28 @@ finding, then separately fails if any finding with an available fix remains.
 This is explicit risk accounting, not a vulnerability-free claim or blind
 suppression. The local cache volume was removed after capturing the evidence.
 
+On 2026-08-20, Debian published Trixie security version
+`2.41.5-0+deb13u1` for the `util-linux` source family. The required PR scan
+then identified 36 fixable High findings across `bsdutils`, `libblkid1`,
+`liblastlog2-2`, `libmount1`, `libsmartcols1`, `libuuid1`, `login`, `mount`,
+and `util-linux` for CVE-2026-53612 through CVE-2026-53615. The current
+official Python 3.13 slim tag still used the same Debian base digest as the
+pinned image, so a tag refresh alone did not contain the fix. The runtime stage
+therefore upgrades only those nine binary packages to their exact signed Debian
+security versions and removes the APT lists in the same layer. The existing
+Trivy policy remains unchanged and must confirm that no fixable High or
+Critical finding remains; no ignore or accepted-risk exception applies to an
+available fix.
+
+Hosted validation installed `1:2.41.5-0+deb13u1` for `bsdutils`,
+`1:4.16.0-2+really2.41.5-0+deb13u1` for `login`, and
+`2.41.5-0+deb13u1` for the other seven packages. The full Debian 13.6 scan
+then reported 13 High and 4 Critical inherited findings, all without an
+available fix, while the unchanged fixable-finding scan reported zero Debian
+and zero Python/application findings. The full and repeat-build container
+contracts also passed. CVE-2026-53612 through CVE-2026-53615 no longer appear
+in the required fixable gate.
+
 ## Compose and CI decisions
 
 `compose.postgresql.yml` remains the single PostgreSQL developer-service

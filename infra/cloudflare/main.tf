@@ -21,7 +21,13 @@ resource "cloudflare_pages_project" "opsmind" {
   }
 
   deployment_configs = {
+    preview = {
+      fail_open = true
+    }
+
     production = {
+      fail_open = true
+
       env_vars = {
         for key, value in local.production_environment : key => {
           type  = "plain_text"

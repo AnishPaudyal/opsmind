@@ -72,10 +72,12 @@ Complete. The repository owner authorized Batch 3 on 2026-08-16 and authorized
 Substep 1 for credential-free Cloudflare Terraform, CI, runbook,
 security-header, and repository preparation. PR #82 squash-merged that
 foundation as `7526f6eab78ef685669b3246e4a4487a83d1c331`, so Substep 1 is
-Complete. The owner conditionally authorized Substep 2 only after its
-documented reconciliation, free-tier, least-privilege, repository-scope, and
-security prerequisites pass. Issue #77 remains open; Substeps 3–8 remain
-unauthorized.
+Complete. Substep 2 completed its Cloudflare Free, repository-scoped GitHub
+App, least-privilege token, HCP workspace, and credentialed plan verification.
+Substep 3 is authorized and In Progress. Its reviewed first apply failed before
+project creation because Cloudflare error `8000066` requires equal production
+and preview `fail_open` values; HCP still reports zero managed resources and no
+Pages origin exists. Issue #77 remains open; Substeps 4–8 remain unauthorized.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -88,15 +90,16 @@ Do not begin without separate authorization:
 - a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
-- Phase 8C Batch 3 Substeps 3–8, live frontend delivery, LocalStack, Phase 8D–8E,
+- Phase 8C Batch 3 Substeps 4–8, live frontend delivery, LocalStack, Phase 8D–8E,
   or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
 Phase 8B and Phase 8C Batches 1 and 2 are Complete, but Phase 8 remains
 Current. The Phase 8C gate is Accepted, Phase 8C is not Complete, and Batch 3
-Substep 1 is Complete. Substep 2 is conditionally authorized only within its
-documented stop conditions; do not begin Substeps 3–8 or any broader
-live-provider mutation until their separate owner authorizations exist.
+Substeps 1 and 2 are Complete. Substep 3 is In Progress, but a fresh HCP plan
+and any later apply remain separate owner-controlled actions after the
+repository correction. Do not begin Substeps 4–8 or any broader live-provider
+mutation until their separate owner authorizations exist.
 
 ## Required Context
 

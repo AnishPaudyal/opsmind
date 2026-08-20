@@ -26,6 +26,19 @@ FROM python:3.13-slim@sha256:9662417aace5ae7b8e2609cce472b72a8958e134ba372808abe
 
 ARG VCS_REF
 
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends --only-upgrade \
+      bsdutils=1:2.41.5-0+deb13u1 \
+      libblkid1=2.41.5-0+deb13u1 \
+      liblastlog2-2=2.41.5-0+deb13u1 \
+      libmount1=2.41.5-0+deb13u1 \
+      libsmartcols1=2.41.5-0+deb13u1 \
+      libuuid1=2.41.5-0+deb13u1 \
+      login=1:4.16.0-2+really2.41.5-0+deb13u1 \
+      mount=2.41.5-0+deb13u1 \
+      util-linux=2.41.5-0+deb13u1 \
+    && rm -rf /var/lib/apt/lists/*
+
 LABEL org.opencontainers.image.title="OpsMind API" \
       org.opencontainers.image.description="OpsMind supply-chain decision-intelligence API" \
       org.opencontainers.image.source="https://github.com/AnishPaudyal/opsmind" \
