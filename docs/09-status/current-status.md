@@ -315,6 +315,14 @@ lower-risk supported base. CI reports all High/Critical findings and separately
 fails on fixable findings. This residual base-image risk remains explicit and
 must be revisited when upstream fixes or a newer official base are available.
 
+On 2026-08-20, that revisit became mandatory: Debian published fixed Trixie
+`util-linux` packages and the required container gate reported 36 fixable High
+findings for CVE-2026-53612 through CVE-2026-53615. The official Python tag
+still referenced the pinned image's Debian base digest, so the narrow
+remediation upgrades only the nine affected runtime binary packages to the
+exact signed Debian security versions. The Trivy policy is not suppressed or
+weakened; its hosted zero-fixable-finding result remains the merge gate.
+
 The repository owner authorized the final Phase 8A merge boundary after
 reviewing that residual. PR #69 squash-merged on 2026-08-10 as
 `631b8a2d1c9696b374f2b96b0295190bbca4a3bf`. Its canonical tree
