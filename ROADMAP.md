@@ -26,7 +26,7 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
 | 6     | Decision approval, rejection, and audit history       | Complete      | Owner-accepted Phase 6 review under Issue #52                       |
 | 7     | Testing, security, and observability hardening        | Complete      | Owner-accepted Phase 7 review merged through PR #65                 |
-| 8     | Cloud deployment and first product delivery            | Current       | Phase 8A/8B Complete; Phase 8C Batches 1/2 and Batch 3 Substeps 1/2 Complete; Substep 3 In Progress |
+| 8     | Cloud deployment and first product delivery            | Current       | Phase 8A/8B Complete; Phase 8C Batches 1/2 and Batch 3 Substeps 1–3 Complete; Substeps 4–8 unauthorized |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
 | 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
 | 11    | Advanced AI, retrieval, and event-driven capabilities | Planned       | LLM, RAG, tool calling, and LangGraph not started                   |
@@ -197,9 +197,11 @@ authorized Batch 3, and PR #82 squash-merged the credential-free Cloudflare
 repository foundation as `7526f6eab78ef685669b3246e4a4487a83d1c331`,
 completing Substep 1. Substep 2 completed the Cloudflare Free, repository-only
 GitHub App, least-privilege HCP workspace, and one-resource plan prerequisites.
-Substep 3 is In Progress: the first reviewed apply failed before project
-creation because Cloudflare requires equal production and preview `fail_open`
-values. Substeps 4–8 remain separately gated.
+Substep 3 is Complete. The first reviewed apply failed before project creation
+because Cloudflare requires equal production and preview `fail_open` values;
+PR #84 corrected that contract, and the corrected apply created exactly one
+dormant Pages project without deploying the frontend. Substeps 4–8 remain
+unauthorized.
 
 Phase 7A testing and coverage hardening, Issue #58 observability/readiness, and
 the accepted ADR-0006 security implementation are complete and merged. Issue
@@ -217,11 +219,11 @@ Neon persistence, the reviewed Render Blueprint, public immutable GHCR release,
 and protected migration/deploy/smoke orchestration. Phase 8C–8E work and
 production-readiness approval remain subject to their documented gates. The
 Phase 8C gate is Accepted, Batches 1 and 2 are Complete, and Batch 3 Substep 1
-and Substep 2 are Complete. Substep 3 is In Progress after its first apply
-failed before project creation; the HCP workspace remains at zero resources.
-No Cloudflare Pages project, real Pages origin, ZITADEL production wiring,
-human operator grant, Render production CORS wiring, backend release, or
-frontend deployment exists. Substeps 4–8 remain unauthorized.
+through Substep 3 are Complete. The dormant `opsmind-app` Cloudflare Pages
+project exists at provider origin `https://opsmind-app.pages.dev`, but no Pages
+deployment, ZITADEL production wiring, human operator grant, Render production
+CORS wiring, or related backend release exists. Substeps 4–8 remain
+unauthorized.
 Phase 9 data, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain Planned.
 
 Detailed current evidence and next-work boundaries live in

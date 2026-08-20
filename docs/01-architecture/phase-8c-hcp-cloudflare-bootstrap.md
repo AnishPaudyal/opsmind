@@ -10,11 +10,13 @@ accepted ADR-0007, and the
 
 Phase 8C Batch 3 Substep 1 prepared this credential-free repository contract.
 Substep 2 completed the separately authorized Cloudflare/GitHub/HCP bootstrap
-and credentialed plan. Substep 3 is In Progress after its first apply failed
-before project creation. The Pages project, provider origin, and deployment do
-not exist; every further plan or apply remains owner-controlled.
+and credentialed plan. Substep 3 is Complete: after the first apply failed
+safely before project creation, the corrected apply created exactly one dormant
+Pages project, captured its provider-issued origin, and a later plan verified no
+drift. No Pages deployment exists; Substeps 4–8 and every further provider
+mutation remain separately owner-controlled.
 
-## Verified bootstrap and first-apply evidence
+## Verified bootstrap and apply evidence
 
 The owner verified Cloudflare Free at `$0` and restricted its GitHub App to
 `AnishPaudyal/opsmind`. The API token has Pages Write only and exists only as a
@@ -27,9 +29,41 @@ zero changes, and zero destroys; as a plan-only run it created no resource.
 Applyable plan `run-i4t9u2G97QgeNP4k` had the same summary. The owner confirmed
 the reviewed apply, but Cloudflare rejected its create request with error
 `8000066`: production and preview `fail_open` must be equal. The failure
-occurred before Pages project creation, HCP still reports zero managed
-resources, and no authoritative `pages.dev` origin exists. A fresh plan from
-the corrected canonical configuration must be reviewed before any later apply.
+occurred on pre-correction commit
+`81b5ebd490770d89a89019571e096e050b5733bf` before successful Pages project
+creation.
+
+PR #84, `fix: align Cloudflare Pages fail-open configuration`, then merged as
+`3c150149c18edf3af780966bff95b07ecede3840`. Its final reviewed history
+contained the initial `5b4f510` Cloudflare correction, focused `00875d4`
+Debian `util-linux` security remediation required by the container gate, and
+`7b36352` container-security validation documentation. The final PR changed ten
+files, including `Dockerfile`; only the initial Cloudflare correction was
+container-neutral.
+
+Corrected standard run `run-yV7o6SRhU4MH4UVB` used branch `main`, canonical
+commit `3c150149c18edf3af780966bff95b07ecede3840`, and Terraform `1.15.8`.
+Its explicitly confirmed plan and apply each contained exactly one add, zero
+changes, zero destroys, and zero invoked actions. State version
+`sv-TQj2vumd74SpzaVx` contains only `cloudflare_pages_project.opsmind` and
+reports:
+
+- project name `opsmind-app` and provider origin
+  `https://opsmind-app.pages.dev`;
+- production branch `main` and GitHub source `AnishPaudyal/opsmind`;
+- root `frontend`, build `npm run build`, and output `dist`;
+- equal preview and production `fail_open = true`;
+- preview deployment setting `none`, production automatic deployment disabled,
+  and PR comments disabled; and
+- the five existing public production `VITE_OPSMIND_*` values populated.
+
+The project is dormant: `canonical_deployment` and `latest_deployment` are both
+`null`. The computed `source.config.deployments_enabled = true` field is not
+evidence of a deployment; the controlling preview and production settings above
+remain disabled. Later manual run `run-hTpLxJ4MaKh3sxjK`, also on canonical
+`main` at `3c150149c18edf3af780966bff95b07ecede3840` with Terraform `1.15.8`,
+reported zero adds, changes, destroys, and invoked actions: the live resource
+matches the reviewed configuration. Substep 3 is Complete.
 
 ## Authority boundary
 

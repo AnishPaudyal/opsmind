@@ -8,8 +8,8 @@ earlier states.
 - Status date: 2026-08-20
 - Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
 - Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
-  product; Batch 1, Batch 2, and Batch 3 Substeps 1 and 2 Complete; Substep 3
-  In Progress and Substeps 4–8 unauthorized
+  product; Batch 1, Batch 2, and Batch 3 Substeps 1–3 Complete; Substeps 4–8
+  unauthorized
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -25,8 +25,7 @@ earlier states.
   `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`; Batch 2 is Complete; Batch 3
   is authorized; PR #82 merged Substep 1 as
   `7526f6eab78ef685669b3246e4a4487a83d1c331`; Substep 1 is Complete;
-  Substep 2 is Complete; Substep 3 is In Progress after a failed pre-creation
-  apply; Substeps 4–8 remain unauthorized
+  Substeps 2 and 3 are Complete; Substeps 4–8 remain unauthorized
 
 ## Canonical Phase Status
 
@@ -432,10 +431,9 @@ operational workflow is represented on canonical `main`. The complete React
 workflow connects products through audit history, stored reviews can be
 rediscovered newest-first through `GET /api/v1/reorder-recommendations`, and
 backend CORS remains disabled by default and limited to strictly validated
-explicit origins. No production CORS origin is configured, and no Cloudflare
-project, ZITADEL human operator, Render or backend release, Batch 3 live wiring,
-or frontend deployment is claimed. On 2026-08-16, the repository owner
-authorized Batch 3,
+explicit origins. No production CORS origin is configured, and no ZITADEL human
+operator, Render or backend release, Batch 3 exact-origin wiring, or frontend
+deployment is claimed. On 2026-08-16, the repository owner authorized Batch 3,
 and PR #82 squash-merged the credential-free Cloudflare Terraform, CI, runbook,
 security-header, and repository foundation as
 `7526f6eab78ef685669b3246e4a4487a83d1c331`. Substep 1 is Complete.
@@ -448,15 +446,34 @@ working directory `infra/cloudflare`, VCS trigger `infra/cloudflare/**`, and
 disabled auto-apply. Credentialed speculative plan `run-APcJQx868crLvfka`
 reported one add, zero changes, and zero destroys without creating a resource.
 
-Substep 3 is authorized and In Progress. Applyable plan
+Substep 3 is Complete. Applyable plan
 `run-i4t9u2G97QgeNP4k` also reported one add, zero changes, and zero destroys.
 The owner confirmed that reviewed apply, but Cloudflare rejected the create
 request with error `8000066` because production and preview `fail_open` values
-must be equal. The failure occurred before Pages project creation; HCP remains
-at zero managed resources, no authoritative Pages origin exists, and a
-corrective repository patch is required before a fresh plan. Phase 8C is not
-Complete, Substeps 4–8 remain unauthorized, Issue #77 remains open, and Phase 8
-overall remains Current.
+must be equal. That first attempt used pre-correction commit
+`81b5ebd490770d89a89019571e096e050b5733bf` and failed before successful Pages
+project creation.
+
+PR #84 preserved that history and merged the corrected contract as
+`3c150149c18edf3af780966bff95b07ecede3840`. Its final three-commit branch also
+included the focused Debian `util-linux` security remediation and container
+validation documentation required to make the final ten-file PR pass its
+container gate; the final merge was not container-neutral. Corrected run
+`run-yV7o6SRhU4MH4UVB` on canonical `main` used Terraform `1.15.8` and was
+explicitly confirmed after planning exactly one add with no change, destroy, or
+invoked action. It applied exactly that result.
+
+State version `sv-TQj2vumd74SpzaVx` now contains only
+`cloudflare_pages_project.opsmind`, named `opsmind-app`, with provider origin
+`https://opsmind-app.pages.dev`. GitHub source, production branch, build root,
+command, output, equal `fail_open` values, disabled preview and automatic
+production deployments, disabled PR comments, and the five public production
+`VITE_OPSMIND_*` values match canonical Terraform. Both deployment pointers are
+`null`, so the project exists but remains dormant; the computed
+`deployments_enabled = true` field does not establish a deployment. Later run
+`run-hTpLxJ4MaKh3sxjK` reported no changes or invoked actions against the same
+canonical commit. Phase 8C remains not Complete, Substeps 4–8 remain
+unauthorized, Issue #77 remains open, and Phase 8 overall remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -487,12 +504,9 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-Phase 8C Batch 3 Substeps 1 and 2 are Complete. Substep 3 is In Progress. After
-the corrective repository change is merged, its next action is a fresh HCP
-plan for exactly one add, zero changes, and zero destroys; the plan must be
-reviewed before any separately authorized apply. Substeps 4–8, ZITADEL and
-human-operator changes, Render production CORS or backend releases, frontend
-deployment, and all broader live-provider mutations require separate
+Phase 8C Batch 3 Substeps 1 through 3 are Complete. Substeps 4–8, exact-origin
+ZITADEL and human-operator changes, Render production CORS or backend releases,
+frontend deployment, and all broader live-provider mutations require separate
 authorization. Future Phase 8B releases must continue using
 the protected environment, external Alembic migration, exact immutable digest,
 bounded health/readiness checks, and least-privilege authenticated smoke.

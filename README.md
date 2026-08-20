@@ -24,11 +24,13 @@ merged Batch 3 Substep 1 through PR #82 as the credential-free Cloudflare
 Terraform, CI, runbook, static security-header, and repository foundation.
 Substeps 1 and 2 are Complete. The Cloudflare Free account, repository-only
 GitHub App, least-privilege HCP credential boundary, Remote workspace, and
-one-resource plan are verified. Substep 3 is In Progress: its first apply
-failed before project creation with Cloudflare error `8000066`, so no
-Cloudflare Pages project, real Pages origin, or Cloudflare deployment exists.
-Substeps 4–8 remain separately gated. No LocalStack skills environment or
-production-readiness claim exists, and Phase 8 remains Current.
+one-resource plan are verified. Substep 3 is also Complete: after its first
+apply failed safely with Cloudflare error `8000066`, PR #84 corrected the
+configuration and a reviewed apply created the dormant `opsmind-app` Pages
+project. Its provider origin is `https://opsmind-app.pages.dev`, but no
+frontend deployment exists. Substeps 4–8 remain unauthorized. No LocalStack
+skills environment or production-readiness claim exists, and Phase 8 remains
+Current.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory

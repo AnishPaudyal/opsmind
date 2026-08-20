@@ -423,7 +423,10 @@ unexpected errors. No wildcard origin or wildcard header/method is accepted.
 
 ### Production-origin bootstrap
 
-The final Pages URL does not exist yet and must not be guessed. Sequence it as:
+At gate acceptance, the final Pages URL did not exist and could not be guessed.
+Batch 3 Substep 3 has since captured the provider-issued dormant-project origin
+`https://opsmind-app.pages.dev`; no frontend deployment exists. The governed
+sequence remains:
 
 1. merge the credential-free static application and tested configurable CORS;
 2. owner creates/connects the reviewed Free Pages project and captures its
