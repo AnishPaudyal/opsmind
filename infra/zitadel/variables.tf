@@ -44,11 +44,11 @@ variable "zitadel_jwt_profile_json" {
 }
 
 variable "spa_redirect_uris" {
-  description = "Reviewed redirect URIs for the future OpsMind User Agent application."
+  description = "Reviewed redirect URIs for the OpsMind User Agent application."
   type        = set(string)
 
   default = [
-    "http://localhost:5173/auth/callback",
+    "https://opsmind-app.pages.dev/auth/callback",
   ]
 
   validation {
@@ -58,11 +58,11 @@ variable "spa_redirect_uris" {
 }
 
 variable "spa_post_logout_redirect_uris" {
-  description = "Reviewed post-logout URIs for the future OpsMind User Agent application."
+  description = "Reviewed post-logout URIs for the OpsMind User Agent application."
   type        = set(string)
 
   default = [
-    "http://localhost:5173/",
+    "https://opsmind-app.pages.dev/",
   ]
 
   validation {
@@ -72,10 +72,10 @@ variable "spa_post_logout_redirect_uris" {
 }
 
 variable "spa_additional_origins" {
-  description = "Reviewed browser origins allowed for the future OpsMind User Agent application."
+  description = "Reviewed browser origins allowed for the OpsMind User Agent application."
   type        = set(string)
 
   default = [
-    "http://localhost:5173",
+    "https://opsmind-app.pages.dev",
   ]
 }

@@ -9,9 +9,10 @@ workspace shell to deliver the local product-to-audit workflow.
 The workspace lists and creates products, manages inventory and demand,
 calculates forecast/exposure/reorder evidence, persists actionable reviews,
 reconstructs the review queue after refresh, and supports approval/rejection
-with trusted audit history. It does not place external orders. Production
-identity redirects, a human operator grant, Cloudflare delivery, and live
-deployment remain separately gated Batch 3 work.
+with trusted audit history. It does not place external orders. The reviewed
+production origin is now represented in repository-owned ZITADEL and Render
+source, but its HCP apply, human operator grant, Render release, Cloudflare
+delivery, and live deployment remain separately gated Batch 3 work.
 
 ## Requirements
 
@@ -32,8 +33,10 @@ contain a password, token, database URL, private key, client secret, deploy
 hook, or provider credential.
 
 The local example uses the loopback API and the existing public ZITADEL issuer,
-project ID, and User Agent client ID. Production callback/logout/origin values
-are intentionally not configured in Batch 2.
+project ID, and User Agent client ID. Repository production configuration uses
+the captured `https://opsmind-app.pages.dev` origin; this local example remains
+deliberately separate and does not imply that the live ZITADEL update has been
+applied.
 
 Run the backend at `http://127.0.0.1:8000` and configure its exact local browser
 origin without enabling credentials:

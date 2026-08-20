@@ -58,6 +58,7 @@ jobs:
           test "$(grep -Fc 'fail_open = true' infra/cloudflare/main.tf)" -eq 2
           grep -Fq 'production_deployments_enabled = false' infra/cloudflare/main.tf
           grep -Fq 'preview_deployment_setting     = "none"' infra/cloudflare/main.tf
+          grep -Fq 'pr_comments_enabled            = false' infra/cloudflare/main.tf
 
           if grep -Eq '[a-z0-9-]+\.pages\.dev' \
             infra/cloudflare/*.tf frontend/public/_headers; then
@@ -80,6 +81,38 @@ jobs:
 
           if grep -Eq 'terraform (plan|apply)' .github/workflows/terraform-quality.yml; then
             echo "Credentialed Terraform execution must not run in pull-request CI."
+            exit 1
+          fi
+
+      - name: Validate Phase 8C exact-origin wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          production_origin='https://opsmind-app.pages.dev'
+          redirect_uri="${production_origin}/auth/callback"
+          post_logout_uri="${production_origin}/"
+
+          test "$(grep -Fc \"${redirect_uri}\" infra/zitadel/variables.tf)" -eq 1
+          test "$(grep -Fc \"${post_logout_uri}\" infra/zitadel/variables.tf)" -eq 1
+          test "$(grep -Fo "${production_origin}" infra/zitadel/variables.tf | wc -l)" -eq 3
+          grep -Eq '^  dev_mode = false$' infra/zitadel/main.tf
+
+          if grep -Eq 'https?://(localhost|127\.0\.0\.1|\[::1\])' \
+            infra/zitadel/*.tf; then
+            echo "ZITADEL production source contains a loopback origin."
+            exit 1
+          fi
+
+          test "$(grep -Fc 'OPSMIND_CORS_ALLOWED_ORIGINS' render.yaml)" -eq 1
+          test "$(grep -Fc \
+            "value: '[\"${production_origin}\"]'" \
+            render.yaml)" -eq 1
+
+          if grep -REq \
+            '(allow_origins|redirect_uris|additional_origins|OPSMIND_CORS_ALLOWED_ORIGINS).*[\"'\'' ]\*[\"'\'' ]' \
+            src/opsmind infra/zitadel render.yaml; then
+            echo "An unauthorized wildcard origin was found."
             exit 1
           fi
 

@@ -3,6 +3,7 @@
 import re
 from enum import StrEnum
 from functools import lru_cache
+from ipaddress import ip_address
 from urllib.parse import urlsplit
 
 from pydantic import Field, SecretStr, field_validator, model_validator
@@ -77,9 +78,8 @@ class Settings(BaseSettings):
         cls,
         value: tuple[str, ...],
     ) -> tuple[str, ...]:
-        """Require unique explicit HTTP(S) origins without wildcard semantics."""
-        if len(set(value)) != len(value):
-            raise ValueError("OPSMIND_CORS_ALLOWED_ORIGINS must not contain duplicates")
+        """Normalize unique exact origins and permit HTTP only on loopback."""
+        normalized_origins: list[str] = []
         for origin in value:
             if not origin or origin != origin.strip() or "*" in origin:
                 raise ValueError(
@@ -87,7 +87,7 @@ class Settings(BaseSettings):
                 )
             parsed = urlsplit(origin)
             try:
-                _ = parsed.port
+                port = parsed.port
             except ValueError:
                 raise ValueError(
                     "OPSMIND_CORS_ALLOWED_ORIGINS must contain exact origins"
@@ -100,12 +100,51 @@ class Settings(BaseSettings):
                 or parsed.path != ""
                 or parsed.query != ""
                 or parsed.fragment != ""
-                or not origin.startswith(f"{parsed.scheme}://")
+                or parsed.netloc.endswith(":")
+                or any(character.isspace() for character in parsed.hostname)
             ):
                 raise ValueError(
                     "OPSMIND_CORS_ALLOWED_ORIGINS must contain exact origins"
                 )
-        return value
+
+            hostname = parsed.hostname.lower()
+            try:
+                normalized_hostname = (
+                    hostname
+                    if ":" in hostname
+                    else hostname.encode("idna").decode("ascii")
+                )
+            except UnicodeError:
+                raise ValueError(
+                    "OPSMIND_CORS_ALLOWED_ORIGINS must contain exact origins"
+                ) from None
+            if parsed.scheme == "http":
+                try:
+                    loopback = ip_address(normalized_hostname).is_loopback
+                except ValueError:
+                    loopback = normalized_hostname == "localhost"
+                if not loopback:
+                    raise ValueError(
+                        "OPSMIND_CORS_ALLOWED_ORIGINS permits HTTP only for "
+                        "loopback development origins"
+                    )
+
+            canonical_host = (
+                f"[{normalized_hostname}]"
+                if ":" in normalized_hostname
+                else normalized_hostname
+            )
+            default_port = (parsed.scheme == "http" and port == 80) or (
+                parsed.scheme == "https" and port == 443
+            )
+            port_suffix = "" if port is None or default_port else f":{port}"
+            normalized_origins.append(
+                f"{parsed.scheme}://{canonical_host}{port_suffix}"
+            )
+
+        if len(set(normalized_origins)) != len(normalized_origins):
+            raise ValueError("OPSMIND_CORS_ALLOWED_ORIGINS must not contain duplicates")
+        return tuple(normalized_origins)
 
     @field_validator("build_revision")
     @classmethod

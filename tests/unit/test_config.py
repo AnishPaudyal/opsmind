@@ -166,6 +166,22 @@ def test_settings_accept_exact_cors_origins_from_environment(
     )
 
 
+def test_settings_normalize_exact_cors_origins() -> None:
+    settings = Settings(
+        cors_allowed_origins=(
+            "HTTPS://OPSMIND-APP.PAGES.DEV:443",
+            "http://127.0.0.1:80",
+            "http://[::1]:5173",
+        )
+    )
+
+    assert settings.cors_allowed_origins == (
+        "https://opsmind-app.pages.dev",
+        "http://127.0.0.1",
+        "http://[::1]:5173",
+    )
+
+
 @pytest.mark.parametrize(
     "origin",
     [
@@ -180,6 +196,8 @@ def test_settings_accept_exact_cors_origins_from_environment(
         "ftp://example.test",
         " https://example.test",
         "https://example.test:invalid",
+        "https://example.test:",
+        "https://example .test",
     ],
 )
 def test_settings_reject_non_exact_cors_origins(origin: str) -> None:
@@ -195,6 +213,28 @@ def test_settings_reject_duplicate_cors_origins() -> None:
                 "https://frontend.example.test",
             )
         )
+
+
+def test_settings_reject_duplicates_after_cors_origin_normalization() -> None:
+    with pytest.raises(ValidationError, match="must not contain duplicates"):
+        Settings(
+            cors_allowed_origins=(
+                "https://opsmind-app.pages.dev",
+                "HTTPS://OPSMIND-APP.PAGES.DEV:443",
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://frontend.example.test",
+        "http://opsmind-app.pages.dev",
+    ],
+)
+def test_settings_reject_non_loopback_http_cors_origins(origin: str) -> None:
+    with pytest.raises(ValidationError, match="HTTP only for loopback"):
+        Settings(cors_allowed_origins=(origin,))
 
 
 def test_settings_cache_is_stable_and_explicitly_resettable(

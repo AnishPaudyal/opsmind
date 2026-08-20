@@ -22,3 +22,5 @@ services:
         sync: false
       - key: OPSMIND_AUTH_ALGORITHM
         value: RS256
+      - key: OPSMIND_CORS_ALLOWED_ORIGINS
+        value: '["https://opsmind-app.pages.dev"]'

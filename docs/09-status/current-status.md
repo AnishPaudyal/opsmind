@@ -8,8 +8,8 @@ earlier states.
 - Status date: 2026-08-20
 - Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
 - Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
-  product; Batch 1, Batch 2, and Batch 3 Substeps 1–3 Complete; Substeps 4–8
-  unauthorized
+  product; Batch 1, Batch 2, and Batch 3 Substeps 1–3 Complete; Substep 4
+  repository exact-origin packet in review; Substeps 5–8 unauthorized
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -25,7 +25,8 @@ earlier states.
   `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`; Batch 2 is Complete; Batch 3
   is authorized; PR #82 merged Substep 1 as
   `7526f6eab78ef685669b3246e4a4487a83d1c331`; Substep 1 is Complete;
-  Substeps 2 and 3 are Complete; Substeps 4–8 remain unauthorized
+  Substeps 2 and 3 are Complete; Substep 4 repository exact-origin packet is in
+  review; Substeps 5–8 remain unauthorized
 
 ## Canonical Phase Status
 
@@ -431,9 +432,7 @@ operational workflow is represented on canonical `main`. The complete React
 workflow connects products through audit history, stored reviews can be
 rediscovered newest-first through `GET /api/v1/reorder-recommendations`, and
 backend CORS remains disabled by default and limited to strictly validated
-explicit origins. No production CORS origin is configured, and no ZITADEL human
-operator, Render or backend release, Batch 3 exact-origin wiring, or frontend
-deployment is claimed. On 2026-08-16, the repository owner authorized Batch 3,
+explicit origins. On 2026-08-16, the repository owner authorized Batch 3,
 and PR #82 squash-merged the credential-free Cloudflare Terraform, CI, runbook,
 security-header, and repository foundation as
 `7526f6eab78ef685669b3246e4a4487a83d1c331`. Substep 1 is Complete.
@@ -472,8 +471,14 @@ production deployments, disabled PR comments, and the five public production
 `null`, so the project exists but remains dormant; the computed
 `deployments_enabled = true` field does not establish a deployment. Later run
 `run-hTpLxJ4MaKh3sxjK` reported no changes or invoked actions against the same
-canonical commit. Phase 8C remains not Complete, Substeps 4–8 remain
-unauthorized, Issue #77 remains open, and Phase 8 overall remains Current.
+canonical commit. The Substep 4 repository packet now records the captured
+origin in ZITADEL and Render source, sets the reviewed production
+`dev_mode = false`, and hardens backend CORS validation. It has not run an HCP
+plan/apply, changed live ZITADEL, synchronized or released Render, enabled or
+deployed Cloudflare Pages, or created the human operator grant. Substep 4
+completes only through its reviewed merge; Phase 8C remains not Complete,
+Substeps 5–8 remain unauthorized, Issue #77 remains open, and Phase 8 overall
+remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -504,10 +509,12 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-Phase 8C Batch 3 Substeps 1 through 3 are Complete. Substeps 4–8, exact-origin
-ZITADEL and human-operator changes, Render production CORS or backend releases,
-frontend deployment, and all broader live-provider mutations require separate
-authorization. Future Phase 8B releases must continue using
+Phase 8C Batch 3 Substeps 1 through 3 are Complete. Substep 4 is limited to its
+repository exact-origin packet and completes only through merge. Substeps 5–8,
+the credentialed ZITADEL plan/apply and human-operator grant, Render Blueprint
+synchronization or backend release, frontend deployment, and all broader
+live-provider mutations require separate authorization. Future Phase 8B
+releases must continue using
 the protected environment, external Alembic migration, exact immutable digest,
 bounded health/readiness checks, and least-privilege authenticated smoke.
 
