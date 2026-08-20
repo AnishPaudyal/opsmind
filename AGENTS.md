@@ -74,10 +74,12 @@ security-header, and repository preparation. PR #82 squash-merged that
 foundation as `7526f6eab78ef685669b3246e4a4487a83d1c331`, so Substep 1 is
 Complete. Substep 2 completed its Cloudflare Free, repository-scoped GitHub
 App, least-privilege token, HCP workspace, and credentialed plan verification.
-Substep 3 is authorized and In Progress. Its reviewed first apply failed before
-project creation because Cloudflare error `8000066` requires equal production
-and preview `fail_open` values; HCP still reports zero managed resources and no
-Pages origin exists. Issue #77 remains open; Substeps 4–8 remain unauthorized.
+Substep 3 is Complete. Its first apply failed safely before project creation
+with Cloudflare error `8000066`; PR #84 corrected the equal `fail_open`
+contract, and the corrected apply created exactly one dormant Pages project.
+The provider origin is `https://opsmind-app.pages.dev`, but no Pages deployment
+exists, and a later HCP plan verified no drift. Issue #77 remains open;
+Substeps 4–8 remain unauthorized.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -96,10 +98,8 @@ Do not begin without separate authorization:
 
 Phase 8B and Phase 8C Batches 1 and 2 are Complete, but Phase 8 remains
 Current. The Phase 8C gate is Accepted, Phase 8C is not Complete, and Batch 3
-Substeps 1 and 2 are Complete. Substep 3 is In Progress, but a fresh HCP plan
-and any later apply remain separate owner-controlled actions after the
-repository correction. Do not begin Substeps 4–8 or any broader live-provider
-mutation until their separate owner authorizations exist.
+Substeps 1 through 3 are Complete. Do not begin Substeps 4–8 or any broader
+live-provider mutation until their separate owner authorizations exist.
 
 ## Required Context
 
