@@ -88,3 +88,15 @@ resource "zitadel_user_grant" "release_smoke_read" {
     zitadel_project_role.opsmind["opsmind.business.read"].role_key,
   ]
 }
+
+resource "zitadel_user_grant" "portfolio_operator" {
+  org_id     = var.zitadel_org_id
+  project_id = zitadel_project.opsmind.id
+  user_id    = var.portfolio_operator_user_id
+
+  role_keys = [
+    zitadel_project_role.opsmind["opsmind.business.read"].role_key,
+    zitadel_project_role.opsmind["opsmind.business.write"].role_key,
+    zitadel_project_role.opsmind["opsmind.recommendation.decide"].role_key,
+  ]
+}

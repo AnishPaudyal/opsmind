@@ -43,6 +43,16 @@ variable "zitadel_jwt_profile_json" {
   }
 }
 
+variable "portfolio_operator_user_id" {
+  description = "Public numeric ZITADEL user ID for the owner-managed, non-administrator human portfolio operator; this is not a credential."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]+$", var.portfolio_operator_user_id))
+    error_message = "portfolio_operator_user_id must be a non-empty numeric ZITADEL user ID."
+  }
+}
+
 variable "spa_redirect_uris" {
   description = "Reviewed redirect URIs for the OpsMind User Agent application."
   type        = set(string)

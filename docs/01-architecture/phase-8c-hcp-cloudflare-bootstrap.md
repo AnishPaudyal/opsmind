@@ -239,6 +239,48 @@ Committing the source does not apply ZITADEL or synchronize Render. Because the
 VCS-driven ZITADEL workspace watches `infra/zitadel/**`, merge of the Substep 4
 PR may queue a credentialed plan and therefore remains an explicit owner gate.
 
+## Substep 5 ZITADEL operator-grant handoff
+
+PR #86 merged the exact-origin source as
+`18d29c92dd0070faad8038c88d159d533ad353e8`. HCP ZITADEL run
+`run-UXDXd9rKDhe74ocK` used that canonical configuration and verified zero
+additions, one in-place `zitadel_application_oidc.spa` change, zero destroys,
+and zero replacements. It remains deliberately unapplied at Pending
+confirmation.
+
+Substep 5 repository source adds one required nonsensitive
+`portfolio_operator_user_id` input and one
+`zitadel_user_grant.portfolio_operator`. The owner must first create or select
+one dedicated, MFA-protected, non-administrator human in the existing OpsMind
+organization outside Terraform. Prefer a new dedicated identity; do not reuse
+the organization owner as the permanent product operator. Confirm that it has
+no IAM, organization, project-owner, or other administrative role and copy only
+its public numeric ZITADEL user ID. Never place password/passkey, MFA, recovery,
+session, token, private-key, or personal account material in HCP Terraform, Git,
+CI, logs, screenshots, or chat.
+
+After the operator-grant PR merges, the owner supplies only that public ID as a
+fourth nonsensitive Terraform workspace variable with HCL disabled. Verify the
+next run's exact configuration SHA and variable inventory before planning.
+Under separate authorization, discard the older origin-only run and allow
+exactly one new standard plan. With the origin change still unapplied and no
+drift, the only acceptable result is:
+
+```text
+Plan: 1 to add, 1 to change, 0 to destroy
+Replacement: 0
+Add: zitadel_user_grant.portfolio_operator
+Change: zitadel_application_oidc.spa (in place)
+```
+
+The grant uses the existing organization and `zitadel_project.opsmind.id`, and
+contains exactly `opsmind.business.read`, `opsmind.business.write`, and
+`opsmind.recommendation.decide`. Stop for any different count; any destroy or
+replacement; any project, application, client-ID, role-definition,
+release-smoke, or bootstrap-identity/key change; any Terraform-managed user;
+any administrator role; any `zitadel_project_grant` or `project_grant_id`; or
+any unrelated drift. Plan review and apply remain separate owner checkpoints.
+
 ## Later delivery sequence
 
 Each step remains separately authorized:
