@@ -116,6 +116,61 @@ jobs:
             exit 1
           fi
 
+      - name: Validate Phase 8C portfolio-operator grant
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          operator_variable="$(
+            sed -n \
+              '/^variable "portfolio_operator_user_id" {$/,/^}$/p' \
+              infra/zitadel/variables.tf
+          )"
+          test "$(grep -Fc 'variable "portfolio_operator_user_id"' \
+            infra/zitadel/variables.tf)" -eq 1
+          grep -Fq \
+            'condition     = can(regex("^[0-9]+$", var.portfolio_operator_user_id))' \
+            infra/zitadel/variables.tf
+          if grep -Eq '^[[:space:]]+(default|sensitive)[[:space:]]*=' \
+            <<<"${operator_variable}"; then
+            echo "The portfolio operator ID must remain required and nonsensitive."
+            exit 1
+          fi
+
+          operator_grant="$(
+            sed -n \
+              '/^resource "zitadel_user_grant" "portfolio_operator" {$/,/^}$/p' \
+              infra/zitadel/main.tf
+          )"
+          test "$(grep -Fc 'resource "zitadel_user_grant" "portfolio_operator"' \
+            infra/zitadel/main.tf)" -eq 1
+          test "$(grep -Fc 'resource "zitadel_user_grant"' \
+            infra/zitadel/main.tf)" -eq 2
+          grep -Fq 'org_id     = var.zitadel_org_id' <<<"${operator_grant}"
+          grep -Fq 'project_id = zitadel_project.opsmind.id' <<<"${operator_grant}"
+          grep -Fq 'user_id    = var.portfolio_operator_user_id' <<<"${operator_grant}"
+
+          for role in \
+            opsmind.business.read \
+            opsmind.business.write \
+            opsmind.recommendation.decide; do
+            test "$(grep -Fc \
+              "zitadel_project_role.opsmind[\"${role}\"].role_key" \
+              <<<"${operator_grant}")" -eq 1
+          done
+
+          test "$(grep -Fc 'zitadel_project_role.opsmind[' \
+            <<<"${operator_grant}")" -eq 3
+          test "$(grep -Fc 'resource "zitadel_machine_user"' \
+            infra/zitadel/main.tf)" -eq 1
+
+          if grep -Eq \
+            '(IAM_OWNER|ORG_OWNER|PROJECT_OWNER|project_grant_id|resource "zitadel_project_grant"|resource "zitadel_human_user")' \
+            infra/zitadel/*.tf; then
+            echo "The portfolio-operator Terraform scope contains prohibited authority."
+            exit 1
+          fi
+
       - name: Validate required files
         shell: bash
         run: |
