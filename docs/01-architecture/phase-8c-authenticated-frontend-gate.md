@@ -69,12 +69,14 @@ The baseline establishes:
   release-smoke identity. It does not grant a human user any OpsMind project
   role, so a live interactive browser user is not yet authorized for the
   product workflow;
-- the current ZITADEL Terraform inputs contain localhost callback, logout, and
-  origin placeholders and `dev_mode = true`; Phase 8C must review their final
-  production shape before live browser acceptance. Current ZITADEL guidance
-  requires production HTTPS applications to disable development mode;
-- the backend has no CORS setting or middleware, so a Pages-origin browser
-  cannot call it yet;
+- the Phase 8C repository packet replaces ZITADEL's localhost callback, logout,
+  and origin defaults with the captured Pages origin and sets
+  `dev_mode = false`; a separately authorized HCP apply is still required before
+  the live client changes. Current ZITADEL guidance requires production HTTPS
+  applications to disable development mode;
+- the backend has a tested exact-origin CORS setting and middleware, but the
+  live Render service does not receive the production origin until a separately
+  authorized Blueprint synchronization and protected release;
 - the existing review API retrieves a stored recommendation only by UUID and
   has no collection route or repository list operation;
 - the accepted Phase 8B live service, protected release, Neon schema, GHCR
@@ -439,6 +441,12 @@ sequence remains:
 5. deploy the frontend with the exact public identifiers; and
 6. perform live browser evidence.
 
+Batch 3 Substep 4 implements item 3 as a repository-only review packet using
+`https://opsmind-app.pages.dev`. It does not execute the HCP plan/apply in item
+4, synchronize or release Render, enable Cloudflare production deployment, or
+perform live browser evidence. Those actions remain Substeps 5–8 and require
+separate owner authorization.
+
 Preview deployments are disabled initially. Random preview subdomains are not
 added through a wildcard or regex to ZITADEL or CORS. A preview may use mocked
 API data in CI, or a later exact stable preview origin may be separately
@@ -684,6 +692,12 @@ Owner boundary: account/GitHub connection, HCP variables and apply approval,
 interactive ZITADEL login, exact URL handoff, deployment review, live smoke, and
 formal Phase 8C acceptance. Codex must stop at each separately authorized live
 mutation boundary.
+
+Substep 4 is the repository-only exact-origin packet. It may update reviewed
+ZITADEL source, the Render Blueprint value, backend CORS validation, tests,
+governance checks, and durable documentation. It must stop before merge if that
+merge could queue the Substep 5 credentialed ZITADEL plan. Substep 5 begins the
+owner-controlled human operator and HCP ZITADEL plan/apply boundary.
 
 ## Security, cost, and scope constraints
 

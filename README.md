@@ -28,9 +28,11 @@ one-resource plan are verified. Substep 3 is also Complete: after its first
 apply failed safely with Cloudflare error `8000066`, PR #84 corrected the
 configuration and a reviewed apply created the dormant `opsmind-app` Pages
 project. Its provider origin is `https://opsmind-app.pages.dev`, but no
-frontend deployment exists. Substeps 4–8 remain unauthorized. No LocalStack
-skills environment or production-readiness claim exists, and Phase 8 remains
-Current.
+frontend deployment exists. The repository-only Substep 4 packet records that
+exact origin in reviewed ZITADEL and Render source without changing either live
+provider; its merge is the completion boundary. Substeps 5–8 remain
+unauthorized. No LocalStack skills environment or production-readiness claim
+exists, and Phase 8 remains Current.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
@@ -104,8 +106,9 @@ forecast/exposure/reorder evidence, persisted review discovery, decisions, and
 trusted audit history through the generated API contract. Backend authorization
 remains authoritative, mutations never retry automatically, and the dashboard
 uses bounded collection reads. Cloudflare deployment, production
-ZITADEL/operator configuration, Render/backend release changes, and every live
-mutation remain separately authorized later Batch 3 work.
+ZITADEL apply/operator configuration, Render Blueprint synchronization/backend
+release changes, and every live mutation remain separately authorized later
+Batch 3 work.
 
 Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each

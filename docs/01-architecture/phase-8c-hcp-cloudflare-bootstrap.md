@@ -13,8 +13,9 @@ Substep 2 completed the separately authorized Cloudflare/GitHub/HCP bootstrap
 and credentialed plan. Substep 3 is Complete: after the first apply failed
 safely before project creation, the corrected apply created exactly one dormant
 Pages project, captured its provider-issued origin, and a later plan verified no
-drift. No Pages deployment exists; Substeps 4–8 and every further provider
-mutation remain separately owner-controlled.
+drift. No Pages deployment exists. The repository owner has since authorized
+Substep 4 only as the exact-origin source packet; Substeps 5–8 and all provider
+mutation remain unauthorized.
 
 ## Verified bootstrap and apply evidence
 
@@ -215,22 +216,28 @@ exists.
 
 Capture only the non-secret `pages_project_name` and `pages_origin` outputs.
 The origin must be the actual provider-issued HTTPS value; do not reconstruct
-or guess it. The next reviewed repository change uses that exact origin for:
+or guess it. The Substep 4 repository packet uses that exact origin for:
 
 - ZITADEL callback, post-logout, and allowed-origin configuration with
   `dev_mode = false`;
-- one owner-created human operator's exact three-role Terraform grant; and
 - Render `OPSMIND_CORS_ALLOWED_ORIGINS` as a JSON array containing only that
   origin.
+
+The owner-created human operator and its exact three-role Terraform grant begin
+Substep 5 and are intentionally absent from the Substep 4 repository packet.
 
 The future Render value has this shape only after replacing the marker with
 the verified provider output:
 
 ```text
-OPSMIND_CORS_ALLOWED_ORIGINS=["https://<verified-project>.pages.dev"]
+OPSMIND_CORS_ALLOWED_ORIGINS=["https://opsmind-app.pages.dev"]
 ```
 
 None of those changes belongs in the dormant-project bootstrap.
+
+Committing the source does not apply ZITADEL or synchronize Render. Because the
+VCS-driven ZITADEL workspace watches `infra/zitadel/**`, merge of the Substep 4
+PR may queue a credentialed plan and therefore remains an explicit owner gate.
 
 ## Later delivery sequence
 

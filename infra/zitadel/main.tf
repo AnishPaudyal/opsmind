@@ -54,9 +54,8 @@ resource "zitadel_application_oidc" "spa" {
   auth_method_type = "OIDC_AUTH_METHOD_TYPE_NONE"
   version          = "OIDC_VERSION_1_0"
 
-  # Phase 8B intentionally permits localhost placeholders. Phase 8C must
-  # replace/review these before declaring the browser integration complete.
-  dev_mode = true
+  # Phase 8C uses only the reviewed HTTPS Pages origin in production.
+  dev_mode = false
 
   # OpsMind validates JWT access tokens locally through the trusted JWKS path.
   access_token_type = "OIDC_TOKEN_TYPE_JWT"
