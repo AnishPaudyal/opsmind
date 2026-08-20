@@ -321,7 +321,11 @@ findings for CVE-2026-53612 through CVE-2026-53615. The official Python tag
 still referenced the pinned image's Debian base digest, so the narrow
 remediation upgrades only the nine affected runtime binary packages to the
 exact signed Debian security versions. The Trivy policy is not suppressed or
-weakened; its hosted zero-fixable-finding result remains the merge gate.
+weakened. Hosted validation installed the expected versions, passed the full
+and repeat-build container contracts, reported 13 High and 4 Critical
+inherited findings without available fixes, and reported zero fixable Debian
+and zero Python/application findings. CVE-2026-53612 through CVE-2026-53615 no
+longer fail the required gate.
 
 The repository owner authorized the final Phase 8A merge boundary after
 reviewing that residual. PR #69 squash-merged on 2026-08-10 as

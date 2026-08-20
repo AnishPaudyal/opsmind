@@ -224,6 +224,15 @@ Trivy policy remains unchanged and must confirm that no fixable High or
 Critical finding remains; no ignore or accepted-risk exception applies to an
 available fix.
 
+Hosted validation installed `1:2.41.5-0+deb13u1` for `bsdutils`,
+`1:4.16.0-2+really2.41.5-0+deb13u1` for `login`, and
+`2.41.5-0+deb13u1` for the other seven packages. The full Debian 13.6 scan
+then reported 13 High and 4 Critical inherited findings, all without an
+available fix, while the unchanged fixable-finding scan reported zero Debian
+and zero Python/application findings. The full and repeat-build container
+contracts also passed. CVE-2026-53612 through CVE-2026-53615 no longer appear
+in the required fixable gate.
+
 ## Compose and CI decisions
 
 `compose.postgresql.yml` remains the single PostgreSQL developer-service
