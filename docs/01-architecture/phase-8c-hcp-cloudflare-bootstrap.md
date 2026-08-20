@@ -2,16 +2,34 @@
 
 ## Purpose and current boundary
 
-This runbook defines the future owner-controlled HCP Terraform workspace for
+This runbook defines the owner-controlled HCP Terraform workspace for
 the Cloudflare Pages configuration in `infra/cloudflare`. It is an operational
 companion to the [accepted Phase 8C gate](phase-8c-authenticated-frontend-gate.md),
 accepted ADR-0007, and the
 [Cloudflare Terraform README](../../infra/cloudflare/README.md).
 
-Phase 8C Batch 3 Substep 1 prepares this credential-free repository contract.
-Creating the Cloudflare account connection, HCP workspace, token, plan, apply,
-Pages project, or deployment requires later separate owner authorization. This
-document does not claim that any of them exists.
+Phase 8C Batch 3 Substep 1 prepared this credential-free repository contract.
+Substep 2 completed the separately authorized Cloudflare/GitHub/HCP bootstrap
+and credentialed plan. Substep 3 is In Progress after its first apply failed
+before project creation. The Pages project, provider origin, and deployment do
+not exist; every further plan or apply remains owner-controlled.
+
+## Verified bootstrap and first-apply evidence
+
+The owner verified Cloudflare Free at `$0` and restricted its GitHub App to
+`AnishPaudyal/opsmind`. The API token has Pages Write only and exists only as a
+Sensitive/write-only HCP variable. Workspace `opsmind-phase-8c-cloudflare`
+uses Terraform `1.15.8`, Remote execution, `infra/cloudflare` as its working
+directory, `infra/cloudflare/**` as its VCS trigger, and disabled auto-apply.
+
+Credentialed speculative plan `run-APcJQx868crLvfka` completed with one add,
+zero changes, and zero destroys; as a plan-only run it created no resource.
+Applyable plan `run-i4t9u2G97QgeNP4k` had the same summary. The owner confirmed
+the reviewed apply, but Cloudflare rejected its create request with error
+`8000066`: production and preview `fail_open` must be equal. The failure
+occurred before Pages project creation, HCP still reports zero managed
+resources, and no authoritative `pages.dev` origin exists. A fresh plan from
+the corrected canonical configuration must be reviewed before any later apply.
 
 ## Authority boundary
 
@@ -47,8 +65,8 @@ Stop before mutation unless all of the following remain true:
    payment method, trial conversion, recurring charge, or automatic upgrade.
 2. The GitHub integration can be limited to `AnishPaudyal/opsmind` rather than
    unnecessarily broad repository access.
-3. The provider token can be limited to Pages Read and Pages Write for the
-   owner-controlled account.
+3. The provider token can be limited to Pages Write for the owner-controlled
+   account.
 4. HCP Terraform Remote execution, VCS integration, state, and reviewed manual
    apply remain within its approved free boundary.
 5. The plan contains exactly one `cloudflare_pages_project` and no other
@@ -110,7 +128,7 @@ Create exactly these Terraform variables at the later owner boundary:
 | Key | Sensitive | HCL | Source |
 | --- | --- | --- | --- |
 | `cloudflare_account_id` | No | No | Public ID shown by the owner-controlled Cloudflare account |
-| `cloudflare_api_token` | Yes | No | Owner-created token with only Pages Read/Write access |
+| `cloudflare_api_token` | Yes | No | Owner-created token with only Pages Write access |
 | `pages_project_name` | No | No | Owner-selected available public Pages project name |
 
 Enable HCP's Sensitive/write-only setting before saving
@@ -143,6 +161,7 @@ Verify the plan shows:
 - root `frontend`, build `npm run build`, and output `dist`;
 - production automatic deployment disabled;
 - preview deployment setting `none` and PR comments disabled;
+- equal explicit `preview.fail_open = true` and `production.fail_open = true`;
 - exactly five plain public `VITE_OPSMIND_*` values;
 - no secret build value;
 - no Function, Worker, KV, D1, R2, Access, domain, DNS, analytics, or other

@@ -22,13 +22,13 @@ the exact live evidence and limitations. The repository owner accepted the
 under Issue #77 on 2026-08-13. Batches 1 and 2 are Complete. The owner has
 merged Batch 3 Substep 1 through PR #82 as the credential-free Cloudflare
 Terraform, CI, runbook, static security-header, and repository foundation.
-Substep 1 is Complete. Substep 2 is conditionally authorized only after its
-documented security, free-tier, least-privilege, repository-scope, and
-reconciliation prerequisites pass; Substeps 3–8 remain separately gated. No
-Cloudflare Pages project, HCP Cloudflare workspace, real Pages origin,
-Cloudflare deployment,
-LocalStack skills environment, or production-readiness claim exists, and Phase
-8 remains Current.
+Substeps 1 and 2 are Complete. The Cloudflare Free account, repository-only
+GitHub App, least-privilege HCP credential boundary, Remote workspace, and
+one-resource plan are verified. Substep 3 is In Progress: its first apply
+failed before project creation with Cloudflare error `8000066`, so no
+Cloudflare Pages project, real Pages origin, or Cloudflare deployment exists.
+Substeps 4–8 remain separately gated. No LocalStack skills environment or
+production-readiness claim exists, and Phase 8 remains Current.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory

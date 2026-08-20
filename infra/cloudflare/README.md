@@ -1,20 +1,23 @@
 # OpsMind Cloudflare Pages Terraform
 
-This directory defines the credential-free, provider-supported foundation for
-one future OpsMind static Cloudflare Pages project. It is governed by the
+This directory defines the credential-free, provider-supported configuration
+for one OpsMind static Cloudflare Pages project. It is governed by the
 [accepted Phase 8C gate](../../docs/01-architecture/phase-8c-authenticated-frontend-gate.md)
 and accepted ADR-0007.
 
 ## Ownership
 
-Terraform through a separate HCP Terraform workspace will own exactly:
+Terraform through a separate HCP Terraform workspace is authorized to own
+exactly:
 
 - one `cloudflare_pages_project`;
 - its `AnishPaudyal/opsmind` Git source;
 - production branch `main`;
 - the `frontend` root, `npm run build` command, and `dist` output;
 - disabled production automation during the origin-capture bootstrap;
-- disabled preview deployments; and
+- disabled preview deployments;
+- equal explicit production and preview `fail_open` values required by the
+  Cloudflare API; and
 - the five public OpsMind frontend build values.
 
 It intentionally does not own Cloudflare account creation, the GitHub App
@@ -24,12 +27,12 @@ Neon, GHCR, GitHub environments, migrations, or releases.
 
 ## Inputs and credentials
 
-The future HCP workspace supplies three Terraform variables:
+The HCP workspace supplies three Terraform variables:
 
 | Variable | Sensitive | Purpose |
 | --- | --- | --- |
 | `cloudflare_account_id` | No | Public account identifier; never commit the owner's value |
-| `cloudflare_api_token` | Yes | Write-only token with only provider-supported Pages Read/Write access |
+| `cloudflare_api_token` | Yes | Write-only token with only Pages Write access |
 | `pages_project_name` | No | Owner-selected available public name, validated before the first run |
 
 Do not create a committed `.tfvars` file. Never place the token, account ID, or
@@ -48,8 +51,8 @@ connection manually and scope it only to this OpsMind repository when the UI
 permits repository selection. A GitHub personal access token is neither
 required nor accepted by this configuration.
 
-Do not perform that owner action until its later live-bootstrap substep is
-separately authorized.
+The owner completed that connection with access restricted to
+`AnishPaudyal/opsmind`; Terraform must not manage or broaden it.
 
 ## SPA routing and static headers
 
@@ -81,8 +84,10 @@ cloudflare_pages_project.opsmind
 ```
 
 The resource starts with production automatic deployment disabled and preview
-deployment set to `none`. A successful apply therefore creates a dormant
-project without deploying the frontend. Capture the provider-issued
+deployment set to `none`. Its production and preview deployment configurations
+both set `fail_open = true` to satisfy the Cloudflare API without enabling
+either deployment path. A successful apply therefore creates a dormant project
+without deploying the frontend. Capture the provider-issued
 `pages_origin` output only after apply; never guess a `pages.dev` hostname.
 
 The verified origin is consumed by a later reviewed exact-origin change for

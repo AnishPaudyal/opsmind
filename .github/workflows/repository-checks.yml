@@ -55,6 +55,7 @@ jobs:
             'resource "cloudflare_pages_project" "opsmind" {'
 
           grep -Fq 'version = "= 5.22.0"' infra/cloudflare/versions.tf
+          test "$(grep -Fc 'fail_open = true' infra/cloudflare/main.tf)" -eq 2
           grep -Fq 'production_deployments_enabled = false' infra/cloudflare/main.tf
           grep -Fq 'preview_deployment_setting     = "none"' infra/cloudflare/main.tf
 
