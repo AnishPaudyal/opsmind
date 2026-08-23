@@ -79,10 +79,14 @@ with Cloudflare error `8000066`; PR #84 corrected the equal `fail_open`
 contract, and the corrected apply created exactly one dormant Pages project.
 The provider origin is `https://opsmind-app.pages.dev`, but no Pages deployment
 exists, and a later HCP plan verified no drift. Issue #77 remains open;
-the owner has authorized the repository-only Substep 4 exact-origin packet.
-That packet records the production ZITADEL and Render source contract but does
-not authorize or establish live provider state. Substeps 5–8 remain
-unauthorized.
+PR #86 merged the repository-only Substep 4 exact-origin packet as
+`18d29c92dd0070faad8038c88d159d533ad353e8`. HCP run
+`run-UXDXd9rKDhe74ocK` verified the source as zero additions, one in-place SPA
+change, and zero destroys or replacements, but remains unapplied at Pending
+confirmation. Substep 4 is Complete. The owner has authorized only the
+repository grant preparation for Substep 5; the human operator has not been
+created or selected, its public user ID is not in HCP, and no operator grant is
+live. Substeps 6–8 remain unauthorized.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -95,16 +99,17 @@ Do not begin without separate authorization:
 - a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
-- Phase 8C Batch 3 Substeps 5–8, live frontend delivery, LocalStack, Phase 8D–8E,
-  or production-readiness work;
+- Phase 8C Batch 3 Substep 5 owner/operator, HCP variable, plan/apply, or live
+  grant work; Substeps 6–8; live frontend delivery; LocalStack; Phase 8D–8E; or
+  production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
 Phase 8B and Phase 8C Batches 1 and 2 are Complete, but Phase 8 remains
 Current. The Phase 8C gate is Accepted, Phase 8C is not Complete, and Batch 3
-Substeps 1 through 3 are Complete. Substep 4 is limited to its reviewed
-repository packet and completes only through merge; do not begin Substeps 5–8
-or any broader live-provider mutation until their separate owner authorizations
-exist.
+Substeps 1 through 4 are Complete. Substep 5 is In Progress only for its
+reviewed repository operator-grant preparation; do not begin its owner/HCP/live
+work, Substeps 6–8, or any broader live-provider mutation until their separate
+owner authorizations exist.
 
 ## Required Context
 

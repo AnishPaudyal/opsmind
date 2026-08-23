@@ -699,6 +699,42 @@ governance checks, and durable documentation. It must stop before merge if that
 merge could queue the Substep 5 credentialed ZITADEL plan. Substep 5 begins the
 owner-controlled human operator and HCP ZITADEL plan/apply boundary.
 
+Substep 4 is Complete through PR #86 and canonical commit
+`18d29c92dd0070faad8038c88d159d533ad353e8`. HCP run
+`run-UXDXd9rKDhe74ocK` verified the source as an unapplied, in-place origin-only
+proposal with zero additions, one change, zero destroys, and zero replacements.
+
+Substep 5 starts with repository preparation for exactly one
+`zitadel_user_grant` referencing the public numeric ID of an existing human in
+the OpsMind organization. The owner creates or selects that dedicated,
+MFA-protected portfolio operator outside Terraform, verifies that it is not the
+organization-owner identity and has no `IAM_OWNER`, `ORG_OWNER`,
+`PROJECT_OWNER`, or other administrative authority, and shares only its public
+user ID through the governed HCP variable boundary. Password/passkey material,
+MFA secrets or codes, recovery material, browser sessions, access/refresh
+tokens, private keys, and personal account details never enter Terraform, Git,
+CI, logs, screenshots, or chat.
+
+Terraform grants that existing same-organization user exactly
+`opsmind.business.read`, `opsmind.business.write`, and
+`opsmind.recommendation.decide`. It does not create the user, an administrator
+role, a credential, a machine identity/key, or a cross-organization
+`zitadel_project_grant`. The existing project, public SPA client and identity,
+three role definitions, `opsmind-release-smoke` identity/read-only grant, and
+external `opsmind-terraform` bootstrap identity/key remain unchanged.
+
+The origin-only run stays Pending confirmation and unapplied during repository
+preparation. After the operator-grant source merges, the owner supplies only the
+public user ID as a fourth nonsensitive HCP Terraform variable, verifies that a
+future run captures the merged configuration and four-variable set, separately
+authorizes discarding the older origin-only run, and allows exactly one combined
+plan. The only acceptable combined plan is one grant addition, one in-place SPA
+change, zero destroys, and zero replacements. Stop on any destruction,
+replacement, project/application recreation, client-ID change, role-definition
+or smoke/bootstrap identity change, user creation, administrator role,
+cross-organization grant, unrelated drift, or more than one addition/change.
+Apply remains a separate owner decision.
+
 ## Security, cost, and scope constraints
 
 - No browser secret, database access, cookie/session backend, token logging,

@@ -473,12 +473,35 @@ production deployments, disabled PR comments, and the five public production
 `run-hTpLxJ4MaKh3sxjK` reported no changes or invoked actions against the same
 canonical commit. The Substep 4 repository packet now records the captured
 origin in ZITADEL and Render source, sets the reviewed production
-`dev_mode = false`, and hardens backend CORS validation. It has not run an HCP
-plan/apply, changed live ZITADEL, synchronized or released Render, enabled or
-deployed Cloudflare Pages, or created the human operator grant. Substep 4
-completes only through its reviewed merge; Phase 8C remains not Complete,
-Substeps 5–8 remain unauthorized, Issue #77 remains open, and Phase 8 overall
-remains Current.
+`dev_mode = false`, and hardens backend CORS validation. PR #86 merged that
+packet as `18d29c92dd0070faad8038c88d159d533ad353e8`, completing Substep 4.
+Standard HCP run `run-UXDXd9rKDhe74ocK` used that canonical source and verified
+zero additions, one in-place `zitadel_application_oidc.spa` change, zero
+destroys, and zero replacements. It remains deliberately unapplied at Pending
+confirmation, so live ZITADEL still has the prior localhost/development-mode
+configuration.
+
+Substep 5 is In Progress only for repository preparation. The source defines a
+required public numeric portfolio-operator user-ID input and one
+same-organization `zitadel_user_grant` with exactly
+`opsmind.business.read`, `opsmind.business.write`, and
+`opsmind.recommendation.decide`. The owner has not created or selected the
+dedicated MFA-protected non-administrator human operator, no operator ID has
+been supplied to HCP, and no operator grant is live. The current HCP workspace
+still has exactly three variables, and the origin-only run remains untouched.
+
+After this repository packet is reviewed and merged, a separately authorized
+owner checkpoint must create or select the operator, capture only its public
+numeric ZITADEL user ID, add that nonsensitive fourth HCP variable, verify the
+future configuration and variable set, discard the older origin-only run, and
+allow exactly one combined plan. With no drift, that plan must contain one
+added `zitadel_user_grant.portfolio_operator`, one in-place
+`zitadel_application_oidc.spa` change, zero destroys, and zero replacements.
+Any other count or identity/role/smoke/bootstrap change is a stop condition;
+apply remains separately authorized. No Render synchronization/release or
+Cloudflare deployment has occurred. Phase 8C remains not Complete, Substeps
+6–8 remain unauthorized, Issue #77 remains open, and Phase 8 overall remains
+Current.
 
 ## Issue #58 Residual Limitations
 
@@ -509,10 +532,10 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-Phase 8C Batch 3 Substeps 1 through 3 are Complete. Substep 4 is limited to its
-repository exact-origin packet and completes only through merge. Substeps 5–8,
-the credentialed ZITADEL plan/apply and human-operator grant, Render Blueprint
-synchronization or backend release, frontend deployment, and all broader
+Phase 8C Batch 3 Substeps 1 through 4 are Complete. Substep 5 is In Progress
+only for its repository operator-grant preparation. Its owner/operator, HCP
+variable/run/apply, and live-grant actions; Substeps 6–8; Render Blueprint
+synchronization or backend release; frontend deployment; and all broader
 live-provider mutations require separate authorization. Future Phase 8B
 releases must continue using
 the protected environment, external Alembic migration, exact immutable digest,
