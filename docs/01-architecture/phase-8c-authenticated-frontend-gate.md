@@ -427,8 +427,8 @@ unexpected errors. No wildcard origin or wildcard header/method is accepted.
 
 At gate acceptance, the final Pages URL did not exist and could not be guessed.
 Batch 3 Substep 3 has since captured the provider-issued dormant-project origin
-`https://opsmind-app.pages.dev`; no frontend deployment exists. The governed
-sequence remains:
+`https://opsmind-app.pages.dev`; no frontend deployment existed at that
+checkpoint. The governed sequence remains:
 
 1. merge the credential-free static application and tested configurable CORS;
 2. owner creates/connects the reviewed Free Pages project and captures its
@@ -749,10 +749,15 @@ Protected run `32741569348` subsequently deployed canonical revision
 `sha256:bb3d6987bce4af839a39baf5c666ccf2120a465a61d96a4513a68e178cade9b5`
 through Render deploy `dep-da65narm8hqs73elqej0`. Health, readiness,
 authentication, and exact-origin CORS checks passed. Substep 7 is In Progress
-only for the repository change that permits future canonical `main` commits to
-trigger production Pages deployments. Its HCP plan/apply and the first
-production deployment remain separate owner-controlled gates; Substep 8 is not
-authorized.
+only in this historical checkpoint for the repository change that permits
+future canonical `main` commits to trigger production Pages deployments. PR
+#90 later merged that source, and the reviewed HCP/apply and canonical Pages
+deployment completed, so Substep 7 is technically Complete. The first Substep
+8 interactive login succeeded, but protected reads returned `403` because the
+SPA access token omitted the project-specific role claim. The root cause is
+`zitadel_application_oidc.spa.access_token_role_assertion = false`. A
+repository-only correction is authorized; provider apply and live re-login
+acceptance remain separate owner gates, and Substep 8 remains incomplete.
 
 ## Security, cost, and scope constraints
 

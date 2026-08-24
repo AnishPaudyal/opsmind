@@ -77,8 +77,9 @@ App, least-privilege token, HCP workspace, and credentialed plan verification.
 Substep 3 is Complete. Its first apply failed safely before project creation
 with Cloudflare error `8000066`; PR #84 corrected the equal `fail_open`
 contract, and the corrected apply created exactly one dormant Pages project.
-The provider origin is `https://opsmind-app.pages.dev`, but no Pages deployment
-exists, and a later HCP plan verified no drift. Issue #77 remains open;
+The provider origin is `https://opsmind-app.pages.dev`; no Pages deployment
+existed at that checkpoint, and a later HCP plan verified no drift. Issue #77
+remains open;
 PR #86 merged the repository-only Substep 4 exact-origin packet as
 `18d29c92dd0070faad8038c88d159d533ad353e8`. HCP run
 `run-UXDXd9rKDhe74ocK` verified the source as zero additions, one in-place SPA
@@ -98,9 +99,14 @@ deployment. Protected release run `32741569348` then deployed canonical revision
 `sha256:bb3d6987bce4af839a39baf5c666ccf2120a465a61d96a4513a68e178cade9b5`
 through Render deploy `dep-da65narm8hqs73elqej0`; health, readiness,
 authentication, and exact-origin CORS checks passed. Substep 6 is technically
-Complete. Substep 7 is In Progress only for its repository production-enable
-packet; its HCP plan/apply and production deployment remain separately
-unauthorized, as does Substep 8.
+Complete. PR #90 merged the Substep 7 production-enable source, and the
+reviewed HCP/apply and canonical Pages deployment completed afterward.
+Substep 7 is technically Complete. The first Substep 8 interactive login
+succeeded, but protected reads returned `403`: the SPA's JWT access token did
+not carry the project-specific role claim because
+`zitadel_application_oidc.spa.access_token_role_assertion` remained `false`.
+The root cause is proven and a repository-only correction is authorized;
+provider apply and live re-login acceptance remain separate owner gates.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -113,16 +119,17 @@ Do not begin without separate authorization:
 - a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
-- the Substep 7 HCP plan/apply or frontend deployment; Substep 8; live frontend
-  authentication; LocalStack; Phase 8D–8E; or production-readiness work;
+- the Substep 8 ZITADEL HCP plan/apply or live re-login acceptance after the
+  repository correction; LocalStack; Phase 8D–8E; or production-readiness
+  work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
 Phase 8B and Phase 8C Batches 1 and 2 are Complete, but Phase 8 remains
 Current. The Phase 8C gate is Accepted, Phase 8C is not Complete, and Batch 3
-Substeps 1 through 6 are technically Complete. Substep 7 is In Progress only
-for its reviewed repository production-enable packet; no Cloudflare setting or
-deployment has changed. Its HCP plan/apply and production deployment, plus all
-Substep 8 work, remain separately unauthorized.
+Substeps 1 through 7 are technically Complete. Substep 8 login succeeded, but
+authorization acceptance is blocked by the proven SPA access-token role-
+assertion defect. Only its repository correction is authorized; the HCP
+plan/apply and live re-login acceptance remain separate owner-controlled work.
 
 ## Required Context
 

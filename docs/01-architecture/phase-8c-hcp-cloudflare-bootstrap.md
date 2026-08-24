@@ -13,10 +13,13 @@ Substep 2 completed the separately authorized Cloudflare/GitHub/HCP bootstrap
 and credentialed plan. Substep 3 is Complete: after the first apply failed
 safely before project creation, the corrected apply created exactly one dormant
 Pages project, captured its provider-issued origin, and a later plan verified no
-drift. No Pages deployment exists. Substeps 4 through 6 are technically
-Complete. Substep 7 is authorized only for its repository production-enable
-packet; its HCP plan/apply and production deployment remain separately
-unauthorized, as does Substep 8.
+drift. No Pages deployment existed at that checkpoint. Substeps 4 through 6 are
+Complete. PR #90 merged the Substep 7 production-enable source, and the
+reviewed HCP/apply and canonical Pages deployment completed afterward, making
+Substep 7 technically Complete. The first Substep 8 interactive login
+succeeded, but authorization acceptance is blocked by the proven SPA access-
+token role-assertion defect. Its repository-only correction is authorized;
+provider apply and live re-login acceptance remain separate owner gates.
 
 ## Verified bootstrap and apply evidence
 

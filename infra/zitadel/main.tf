@@ -60,9 +60,9 @@ resource "zitadel_application_oidc" "spa" {
   # OpsMind validates JWT access tokens locally through the trusted JWKS path.
   access_token_type = "OIDC_TOKEN_TYPE_JWT"
 
-  # Authorization data is requested deliberately through scopes instead of
-  # being inserted into every token automatically.
-  access_token_role_assertion = false
+  # The SPA requests project roles deliberately through the reviewed scope;
+  # ZITADEL must assert them in the JWT access token consumed by OpsMind.
+  access_token_role_assertion = true
   id_token_role_assertion     = false
   id_token_userinfo_assertion = false
 
