@@ -37,13 +37,15 @@ Substep 5 source as `b4be2a140b98fc661ba1452ed2cef7facc982741`.
 `run-FU4enYWrPWDffWTe` then applied the production SPA update and exact
 three-role grant for dedicated non-administrator operator
 `387560808021797348`, and `run-uMRmTGN2RoDUBRJa` immediately verified no drift.
-Substep 5 is technically Complete. Substep 6 is In Progress. Render Blueprint
-Auto Sync is disabled, and PR #88 merged repository guardrails that keep the
-image-backed service off automatic deployment; no Blueprint sync or deployment
-accompanied that control correction. The configured production CORS value is
-already present, but the current live image still predates the canonical CORS
-implementation. The protected backend release and Substeps 7–8 remain
-separately unauthorized.
+Substep 5 is technically Complete. PR #88 merged Substep 6 deployment-control
+guardrails, and protected release run `32741569348` deployed canonical revision
+`0fb809ca278e250c22e3c3d6c36cf2cadff70bcd` as immutable digest
+`sha256:bb3d6987bce4af839a39baf5c666ccf2120a465a61d96a4513a68e178cade9b5`
+through Render deploy `dep-da65narm8hqs73elqej0`. Health, readiness,
+authentication, and exact-origin CORS checks passed, so Substep 6 is technically
+Complete. Substep 7 is In Progress only for its repository production-enable
+packet; no HCP plan/apply or Cloudflare deployment has occurred. Substep 8 also
+remains separately unauthorized.
 No LocalStack skills environment or production-readiness claim exists, and
 Phase 8 remains Current.
 
@@ -118,14 +120,15 @@ The workspace supplies product creation, inventory and demand operations,
 forecast/exposure/reorder evidence, persisted review discovery, decisions, and
 trusted audit history through the generated API contract. Backend authorization
 remains authoritative, mutations never retry automatically, and the dashboard
-uses bounded collection reads. Cloudflare deployment, production
-Render backend release, and every remaining live mutation remain separately
-authorized later Batch 3 work. Substep 5 is technically Complete: the owner
+uses bounded collection reads. Cloudflare deployment and every remaining live
+mutation remain separately authorized later Batch 3 work. Substep 5 is
+technically Complete: the owner
 created the dedicated human account outside Terraform, while Terraform manages
 only its exact application-role grant and does not create or authenticate the
-human. The Substep 6 repository packet makes Render deployment intent explicit;
-actual backend releases remain owner-controlled through the protected
-`cloud-release.yml` workflow.
+human. The Substep 6 release preserved the owner-controlled protected
+`cloud-release.yml` workflow. Substep 7 prepares only the reviewed Cloudflare
+production-enable source; applying that setting and creating the first frontend
+deployment remain separate owner-controlled gates.
 
 Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each

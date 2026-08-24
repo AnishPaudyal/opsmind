@@ -13,9 +13,10 @@ Substep 2 completed the separately authorized Cloudflare/GitHub/HCP bootstrap
 and credentialed plan. Substep 3 is Complete: after the first apply failed
 safely before project creation, the corrected apply created exactly one dormant
 Pages project, captured its provider-issued origin, and a later plan verified no
-drift. No Pages deployment exists. The repository owner has since authorized
-Substep 4 only as the exact-origin source packet; Substeps 5–8 and all provider
-mutation remain unauthorized.
+drift. No Pages deployment exists. Substeps 4 through 6 are technically
+Complete. Substep 7 is authorized only for its repository production-enable
+packet; its HCP plan/apply and production deployment remain separately
+unauthorized, as does Substep 8.
 
 ## Verified bootstrap and apply evidence
 
@@ -299,9 +300,16 @@ Each step remains separately authorized:
 9. perform live authenticated browser acceptance; and
 10. prepare the Phase 8C review for explicit owner acceptance.
 
-Steps 1 through 6 are Complete. Step 7 is the current separately authorized
-boundary; no protected backend release or later step is authorized by this
-runbook update.
+Steps 1 through 7 are Complete. Step 8 is current only for the repository
+production-enable packet. Cloudflare documents
+`production_deployments_enabled` as controlling whether commits to the
+production branch trigger deployments. Applying `false -> true` updates that
+control but does not submit a commit or request a deployment. The later HCP
+plan must therefore contain only one in-place change to
+`cloudflare_pages_project.opsmind`, and post-apply verification must confirm the
+flag is enabled while `canonical_deployment` and `latest_deployment` remain
+unchanged. Triggering and verifying the first canonical production deployment
+is a separate owner-controlled gate. Step 9 and later work remain unauthorized.
 
 No wildcard CORS, wildcard preview origin, broad redirect, temporary client
 secret, or insecure production bypass is permitted.

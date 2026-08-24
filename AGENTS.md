@@ -91,10 +91,16 @@ email-verified, passkey-configured human operator with public user ID
 `run-FU4enYWrPWDffWTe` applied one in-place SPA change and one exact three-role
 Terraform grant with zero destroys or actions, producing state version
 `sv-G1nWZwhMs8e5o9iV`; immediate run `run-uMRmTGN2RoDUBRJa` verified no drift.
-Substep 5 is technically Complete. Substep 6 is In Progress: PR #88 merged
-deployment-control guardrails after Render Blueprint Auto Sync was disabled
-without a sync or deployment. Its protected backend release and Substeps 7–8
-remain separately unauthorized.
+Substep 5 is technically Complete. PR #88 merged Substep 6 deployment-control
+guardrails after Render Blueprint Auto Sync was disabled without a sync or
+deployment. Protected release run `32741569348` then deployed canonical revision
+`0fb809ca278e250c22e3c3d6c36cf2cadff70bcd` as immutable digest
+`sha256:bb3d6987bce4af839a39baf5c666ccf2120a465a61d96a4513a68e178cade9b5`
+through Render deploy `dep-da65narm8hqs73elqej0`; health, readiness,
+authentication, and exact-origin CORS checks passed. Substep 6 is technically
+Complete. Substep 7 is In Progress only for its repository production-enable
+packet; its HCP plan/apply and production deployment remain separately
+unauthorized, as does Substep 8.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -107,16 +113,16 @@ Do not begin without separate authorization:
 - a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
-- the Substep 6 protected backend release; Substeps 7–8; live frontend
-  delivery; LocalStack; Phase 8D–8E; or production-readiness work;
+- the Substep 7 HCP plan/apply or frontend deployment; Substep 8; live frontend
+  authentication; LocalStack; Phase 8D–8E; or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
 Phase 8B and Phase 8C Batches 1 and 2 are Complete, but Phase 8 remains
 Current. The Phase 8C gate is Accepted, Phase 8C is not Complete, and Batch 3
-Substeps 1 through 5 are Complete. Substep 6 is In Progress after PR #88 merged
-repository deployment-control reconciliation and the owner disabled Render
-Blueprint Auto Sync; no Blueprint sync or deployment occurred. Its protected
-backend release and all Substeps 7–8 work remain separately unauthorized.
+Substeps 1 through 6 are technically Complete. Substep 7 is In Progress only
+for its reviewed repository production-enable packet; no Cloudflare setting or
+deployment has changed. Its HCP plan/apply and production deployment, plus all
+Substep 8 work, remain separately unauthorized.
 
 ## Required Context
 
