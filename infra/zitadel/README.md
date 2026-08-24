@@ -59,6 +59,11 @@ operator's exact three-role grant. Local frontend tests use deterministic
 fixtures rather than weakening the live client with localhost production
 values.
 
+The SPA uses JWT access tokens and requests the reviewed project-role scope.
+ZITADEL must assert the granted application roles in that access token so the
+backend can consume the project-ID-qualified roles claim. ID-token role
+assertion remains disabled because an ID token is not API authorization.
+
 ## Phase 8C portfolio-operator boundary
 
 The required `portfolio_operator_user_id` input is the public numeric ZITADEL

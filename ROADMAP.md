@@ -26,7 +26,7 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
 | 6     | Decision approval, rejection, and audit history       | Complete      | Owner-accepted Phase 6 review under Issue #52                       |
 | 7     | Testing, security, and observability hardening        | Complete      | Owner-accepted Phase 7 review merged through PR #65                 |
-| 8     | Cloud deployment and first product delivery            | Current       | Phase 8A/8B Complete; Phase 8C Batches 1/2 and Batch 3 Substeps 1–6 Complete; Substep 7 repository production-enable packet current; provider plan/apply and Substep 8 unauthorized |
+| 8     | Cloud deployment and first product delivery            | Current       | Phase 8A/8B Complete; Phase 8C Batches 1/2 and Batch 3 Substeps 1–7 Complete; Substep 8 role-assertion correction current |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
 | 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
 | 11    | Advanced AI, retrieval, and event-driven capabilities | Planned       | LLM, RAG, tool calling, and LangGraph not started                   |
@@ -217,9 +217,14 @@ protected release run `32741569348` then deployed canonical revision
 `dep-da65narm8hqs73elqej0` at immutable digest
 `sha256:bb3d6987bce4af839a39baf5c666ccf2120a465a61d96a4513a68e178cade9b5`.
 Health, readiness, authentication, and exact-origin CORS checks passed, so
-Substep 6 is technically Complete. Substep 7 is In Progress only for its
-repository production-enable packet; its provider plan/apply and deployment,
-plus Substep 8, remain separately unauthorized.
+Substep 6 is technically Complete. PR #90 merged the Substep 7 production-
+enable source, and the reviewed HCP/apply and canonical Pages deployment
+completed afterward, so Substep 7 is technically Complete. The first Substep 8
+interactive login succeeded, but protected reads returned `403` because the
+SPA access token lacked the project-specific role claim. The root cause is
+proven as `access_token_role_assertion = false`; a repository-only correction
+is current, while its HCP plan/apply and live re-login acceptance remain
+separate owner-controlled gates.
 
 Phase 7A testing and coverage hardening, Issue #58 observability/readiness, and
 the accepted ADR-0006 security implementation are complete and merged. Issue
@@ -237,14 +242,15 @@ Neon persistence, the reviewed Render Blueprint, public immutable GHCR release,
 and protected migration/deploy/smoke orchestration. Phase 8C–8E work and
 production-readiness approval remain subject to their documented gates. The
 Phase 8C gate is Accepted, Batches 1 and 2 are Complete, and Batch 3 Substeps 1
-through 6 are Complete. The dormant `opsmind-app` Cloudflare Pages
-project exists at provider origin `https://opsmind-app.pages.dev`, but no Pages
-deployment exists. The ZITADEL production SPA update and dedicated human
+through 7 are Complete. The `opsmind-app` Cloudflare Pages project serves the
+canonical production frontend at `https://opsmind-app.pages.dev`. The ZITADEL
+production SPA update and dedicated human
 operator's exact three-role grant are applied and no-drift verified. The
 protected backend release now serves the exact production CORS contract.
-Substep 7 is current only for its repository production-enable packet; the HCP
-plan/apply, first production deployment, and Substep 8 remain separately
-unauthorized.
+Substep 8 login succeeds, but its authorization acceptance is blocked by the
+proven access-token role-assertion defect. Only the repository correction is
+authorized; the provider plan/apply and live re-login acceptance remain
+separate owner-controlled work.
 Phase 9 data, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain Planned.
 
 Detailed current evidence and next-work boundaries live in

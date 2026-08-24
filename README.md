@@ -27,8 +27,9 @@ GitHub App, least-privilege HCP credential boundary, Remote workspace, and
 one-resource plan are verified. Substep 3 is also Complete: after its first
 apply failed safely with Cloudflare error `8000066`, PR #84 corrected the
 configuration and a reviewed apply created the dormant `opsmind-app` Pages
-project. Its provider origin is `https://opsmind-app.pages.dev`, but no
-frontend deployment exists. PR #86 merged the repository-only Substep 4 packet
+project. Its provider origin is `https://opsmind-app.pages.dev`; no frontend
+deployment existed at that checkpoint. PR #86 merged the repository-only
+Substep 4 packet
 as `18d29c92dd0070faad8038c88d159d533ad353e8`, recording that exact origin in
 ZITADEL and Render source without changing either live provider. HCP run
 `run-UXDXd9rKDhe74ocK` verified the origin-only ZITADEL proposal; it was never
@@ -43,9 +44,14 @@ guardrails, and protected release run `32741569348` deployed canonical revision
 `sha256:bb3d6987bce4af839a39baf5c666ccf2120a465a61d96a4513a68e178cade9b5`
 through Render deploy `dep-da65narm8hqs73elqej0`. Health, readiness,
 authentication, and exact-origin CORS checks passed, so Substep 6 is technically
-Complete. Substep 7 is In Progress only for its repository production-enable
-packet; no HCP plan/apply or Cloudflare deployment has occurred. Substep 8 also
-remains separately unauthorized.
+Complete. PR #90 merged the Substep 7 production-enable source, and its
+reviewed HCP/apply and canonical Pages deployment completed afterward, making
+Substep 7 technically Complete. The first Substep 8 interactive login
+succeeded, but protected reads returned `403` because the SPA access token did
+not contain the project-specific role claim. The root cause is the live/source
+`access_token_role_assertion = false` drift from accepted ADR-0007. A
+repository-only correction is in progress; provider apply and live re-login
+acceptance remain separate owner-controlled gates.
 No LocalStack skills environment or production-readiness claim exists, and
 Phase 8 remains Current.
 
@@ -126,9 +132,11 @@ technically Complete: the owner
 created the dedicated human account outside Terraform, while Terraform manages
 only its exact application-role grant and does not create or authenticate the
 human. The Substep 6 release preserved the owner-controlled protected
-`cloud-release.yml` workflow. Substep 7 prepares only the reviewed Cloudflare
-production-enable source; applying that setting and creating the first frontend
-deployment remain separate owner-controlled gates.
+`cloud-release.yml` workflow. Substep 7 subsequently enabled and completed the
+first canonical production frontend deployment. Substep 8 login works, but
+authorization acceptance remains blocked until the reviewed access-token role-
+assertion correction is merged, separately applied, and verified by live
+re-login.
 
 Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each

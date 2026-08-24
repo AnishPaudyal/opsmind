@@ -119,6 +119,8 @@ jobs:
           test "$(grep -Fc \"${post_logout_uri}\" infra/zitadel/variables.tf)" -eq 1
           test "$(grep -Fo "${production_origin}" infra/zitadel/variables.tf | wc -l)" -eq 3
           grep -Eq '^  dev_mode = false$' infra/zitadel/main.tf
+          test "$(grep -Ec '^  access_token_role_assertion = true$' \
+            infra/zitadel/main.tf)" -eq 1
 
           if grep -Eq 'https?://(localhost|127\.0\.0\.1|\[::1\])' \
             infra/zitadel/*.tf; then

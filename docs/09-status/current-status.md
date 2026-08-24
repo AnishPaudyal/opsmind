@@ -8,9 +8,9 @@ earlier states.
 - Status date: 2026-08-24
 - Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
 - Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
-  product; Batch 1, Batch 2, and Batch 3 Substeps 1–6 Complete; Substep 7
-  repository production-enable packet current; its HCP plan/apply and frontend
-  deployment, plus Substep 8, remain unauthorized
+  product; Batch 1, Batch 2, and Batch 3 Substeps 1–7 Complete; Substep 8 login
+  succeeded, but authorization acceptance is blocked by the proven SPA access-
+  token role-assertion defect; the repository correction is current
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -26,9 +26,11 @@ earlier states.
   `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`; Batch 2 is Complete; Batch 3
   is authorized; PR #82 merged Substep 1 as
   `7526f6eab78ef685669b3246e4a4487a83d1c331`; Substeps 1–6 are technically
-  Complete; protected run `32741569348` completed Substep 6; Substep 7 is
-  current only for its repository production-enable packet; its provider
-  plan/apply and deployment, plus Substep 8, remain unauthorized
+  Complete; protected run `32741569348` completed Substep 6; PR #90 merged the
+  Substep 7 production-enable source and the reviewed HCP/apply plus canonical
+  Pages deployment completed afterward; Substep 7 is technically Complete;
+  Substep 8 remains incomplete pending the repository fix, separate provider
+  apply, and live re-login acceptance
 
 ## Canonical Phase Status
 
@@ -521,16 +523,22 @@ through Render deploy `dep-da65narm8hqs73elqej0`. `/health`, `/ready`,
 PostgreSQL readiness, unauthenticated rejection, bounded authenticated smoke,
 exact-origin CORS, and rejected-origin denial all passed.
 
-Substep 7 is In Progress only for the repository change from
-`production_deployments_enabled = false` to `true`. The existing Pages project
-remains dormant with previews and PR comments disabled. The expected future HCP
-plan is zero additions, one in-place change to
-`cloudflare_pages_project.opsmind`, zero destroys, replacements, or actions.
-The setting permits future commits to production branch `main` to trigger
-deployments; applying it does not itself submit a commit or request a
-deployment. Post-apply verification and the first canonical production
-deployment therefore remain separate owner-controlled gates. Issue #77 remains
-open, Phase 8C remains not Complete, and Phase 8 overall remains Current.
+PR #90 merged the Substep 7 source change from
+`production_deployments_enabled = false` to `true`. The reviewed HCP/apply and
+canonical production Pages deployment completed afterward, while previews and
+PR comments remain disabled. Substep 7 is technically Complete.
+
+The first Substep 8 interactive ZITADEL login succeeded. Protected product and
+recommendation reads nevertheless returned `403`: authentication succeeded,
+but the JWT access token lacked the project-ID-qualified role claim consumed by
+the backend. The human operator's exact three-role grant remains correct. The
+diagnostic proved the configuration root cause as
+`zitadel_application_oidc.spa.access_token_role_assertion = false`, contrary
+to accepted ADR-0007. This repository correction changes that field to `true`;
+the authorization defect is not resolved until a separately authorized HCP
+plan/apply and live re-login acceptance pass. No production write was
+performed. Issue #77 remains open, Substep 8 and Phase 8C remain not Complete,
+and Phase 8 overall remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -561,10 +569,12 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-Phase 8C Batch 3 Substeps 1 through 6 are technically Complete. Substep 7 is In
-Progress only for its repository production-enable packet. Its HCP plan/apply,
-first frontend deployment, Substep 8, and all broader live-provider mutations
-require separate authorization. Future Phase 8B releases must continue using
+Phase 8C Batch 3 Substeps 1 through 7 are technically Complete. Substep 8 is
+incomplete: its login succeeded, but authorization acceptance is blocked by
+the proven SPA access-token role-assertion defect. Only the repository
+correction is authorized; its HCP plan/apply, live re-login acceptance, and all
+broader live-provider mutations require separate authorization. Future Phase
+8B releases must continue using
 the protected environment, external Alembic migration, exact immutable digest,
 bounded health/readiness checks, and least-privilege authenticated smoke.
 
