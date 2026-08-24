@@ -82,14 +82,19 @@ exists, and a later HCP plan verified no drift. Issue #77 remains open;
 PR #86 merged the repository-only Substep 4 exact-origin packet as
 `18d29c92dd0070faad8038c88d159d533ad353e8`. HCP run
 `run-UXDXd9rKDhe74ocK` verified the source as zero additions, one in-place SPA
-change, and zero destroys or replacements, but remains unapplied at Pending
-confirmation. Substep 4 is Complete. The owner has authorized only the
-repository grant preparation for Substep 5; the human operator has not been
-created or selected, its public user ID is not in HCP, and no operator grant is
-live. Substep 6 is In Progress only for repository deployment-control
-reconciliation after Render Blueprint Auto Sync was disabled without a sync or
-deployment. Its protected backend release and Substeps 7–8 remain separately
-unauthorized.
+change, and zero destroys or replacements. That origin-only proposal was never
+applied and was later deliberately discarded after its successor was verified.
+Substep 4 is Complete. PR #87 merged the Substep 5 operator-grant source as
+`b4be2a140b98fc661ba1452ed2cef7facc982741`. A dedicated, active,
+email-verified, passkey-configured human operator with public user ID
+`387560808021797348` has no administrator role. HCP run
+`run-FU4enYWrPWDffWTe` applied one in-place SPA change and one exact three-role
+Terraform grant with zero destroys or actions, producing state version
+`sv-G1nWZwhMs8e5o9iV`; immediate run `run-uMRmTGN2RoDUBRJa` verified no drift.
+Substep 5 is technically Complete. Substep 6 is In Progress: PR #88 merged
+deployment-control guardrails after Render Blueprint Auto Sync was disabled
+without a sync or deployment. Its protected backend release and Substeps 7–8
+remain separately unauthorized.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -102,20 +107,16 @@ Do not begin without separate authorization:
 - a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
-- Phase 8C Batch 3 Substep 5 owner/operator, HCP variable, plan/apply, or live
-  grant work; the Substep 6 protected backend release; Substeps 7–8; live
-  frontend delivery; LocalStack; Phase 8D–8E; or production-readiness work;
+- the Substep 6 protected backend release; Substeps 7–8; live frontend
+  delivery; LocalStack; Phase 8D–8E; or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
 Phase 8B and Phase 8C Batches 1 and 2 are Complete, but Phase 8 remains
 Current. The Phase 8C gate is Accepted, Phase 8C is not Complete, and Batch 3
-Substeps 1 through 4 are Complete. Substep 5 is In Progress only for its
-reviewed repository operator-grant preparation; do not begin its owner/HCP/live
-work or any broader live-provider mutation until separate owner authorization
-exists. Substep 6 is In Progress only for repository deployment-control
-reconciliation after the owner disabled Render Blueprint Auto Sync; no
-Blueprint sync or deployment occurred. Its protected backend release and all
-Substeps 7–8 work remain separately unauthorized.
+Substeps 1 through 5 are Complete. Substep 6 is In Progress after PR #88 merged
+repository deployment-control reconciliation and the owner disabled Render
+Blueprint Auto Sync; no Blueprint sync or deployment occurred. Its protected
+backend release and all Substeps 7–8 work remain separately unauthorized.
 
 ## Required Context
 
