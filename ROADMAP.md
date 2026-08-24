@@ -26,7 +26,7 @@ The accepted phase mapping and historical reconciliation are recorded in
 | 5     | Stockout risk and reorder recommendations             | Complete      | Owner-accepted Phase 5 review under Issue #50                       |
 | 6     | Decision approval, rejection, and audit history       | Complete      | Owner-accepted Phase 6 review under Issue #52                       |
 | 7     | Testing, security, and observability hardening        | Complete      | Owner-accepted Phase 7 review merged through PR #65                 |
-| 8     | Cloud deployment and first product delivery            | Current       | Phase 8A/8B Complete; Phase 8C Batches 1/2 and Batch 3 Substeps 1–4 Complete; Substeps 5–6 repository preparation in progress; Substeps 7–8 unauthorized |
+| 8     | Cloud deployment and first product delivery            | Current       | Phase 8A/8B Complete; Phase 8C Batches 1/2 and Batch 3 Substeps 1–5 Complete; Substep 6 protected release pending; Substeps 7–8 unauthorized |
 | 9     | Data engineering and analytical pipelines             | Planned       | Not started                                                         |
 | 10    | MLOps and model lifecycle                             | Planned       | Not started                                                         |
 | 11    | Advanced AI, retrieval, and event-driven capabilities | Planned       | LLM, RAG, tool calling, and LangGraph not started                   |
@@ -204,13 +204,17 @@ dormant Pages project without deploying the frontend. The repository-only
 Substep 4 packet merged through PR #86 as
 `18d29c92dd0070faad8038c88d159d533ad353e8` and records its exact origin in
 ZITADEL and Render source. HCP run `run-UXDXd9rKDhe74ocK` verified zero
-additions, one in-place SPA change, and zero destroys, but remains unapplied.
-Substep 5 is In Progress only for repository preparation of one human-operator
-project grant; the operator has not been created or selected and the grant is
-not live. Substep 6 is In Progress only for repository deployment-control
-reconciliation after Render Blueprint Auto Sync was disabled without a sync or
-deployment. The protected backend release and Substeps 7–8 remain separately
-unauthorized.
+additions, one in-place SPA change, and zero destroys; it was never applied and
+was later deliberately discarded. PR #87 merged the combined Substep 5 source
+as `b4be2a140b98fc661ba1452ed2cef7facc982741`. HCP run
+`run-FU4enYWrPWDffWTe` applied the production SPA update and one exact
+three-role grant for dedicated non-administrator human operator
+`387560808021797348`, producing state version `sv-G1nWZwhMs8e5o9iV`.
+Immediate run `run-uMRmTGN2RoDUBRJa` verified zero drift, so Substep 5 is
+technically Complete. Substep 6 is In Progress after PR #88 merged repository
+deployment-control reconciliation and Render Blueprint Auto Sync was disabled
+without a sync or deployment. The protected backend release and Substeps 7–8
+remain separately unauthorized.
 
 Phase 7A testing and coverage hardening, Issue #58 observability/readiness, and
 the accepted ADR-0006 security implementation are complete and merged. Issue
@@ -228,13 +232,13 @@ Neon persistence, the reviewed Render Blueprint, public immutable GHCR release,
 and protected migration/deploy/smoke orchestration. Phase 8C–8E work and
 production-readiness approval remain subject to their documented gates. The
 Phase 8C gate is Accepted, Batches 1 and 2 are Complete, and Batch 3 Substeps 1
-through 4 are Complete. The dormant `opsmind-app` Cloudflare Pages
+through 5 are Complete. The dormant `opsmind-app` Cloudflare Pages
 project exists at provider origin `https://opsmind-app.pages.dev`, but no Pages
-deployment, live ZITADEL production update, human operator grant, Render
-Blueprint synchronization, production CORS release, or related backend release
-exists. Substep 5 repository grant preparation and Substep 6 repository
-deployment-control reconciliation are in progress; their live-provider actions
-and Substeps 7–8 remain unauthorized.
+deployment, production CORS application release, or related backend release
+exists. The ZITADEL production SPA update and dedicated human operator's exact
+three-role grant are applied and no-drift verified. Substep 6 remains in
+progress until its protected backend release and verification pass; that
+release and Substeps 7–8 remain separately unauthorized.
 Phase 9 data, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain Planned.
 
 Detailed current evidence and next-work boundaries live in

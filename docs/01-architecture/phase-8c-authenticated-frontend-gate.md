@@ -703,6 +703,8 @@ Substep 4 is Complete through PR #86 and canonical commit
 `18d29c92dd0070faad8038c88d159d533ad353e8`. HCP run
 `run-UXDXd9rKDhe74ocK` verified the source as an unapplied, in-place origin-only
 proposal with zero additions, one change, zero destroys, and zero replacements.
+It was never applied and was deliberately discarded after its successor was
+verified.
 
 Substep 5 starts with repository preparation for exactly one
 `zitadel_user_grant` referencing the public numeric ID of an existing human in
@@ -723,17 +725,17 @@ role, a credential, a machine identity/key, or a cross-organization
 three role definitions, `opsmind-release-smoke` identity/read-only grant, and
 external `opsmind-terraform` bootstrap identity/key remain unchanged.
 
-The origin-only run stays Pending confirmation and unapplied during repository
-preparation. After the operator-grant source merges, the owner supplies only the
-public user ID as a fourth nonsensitive HCP Terraform variable, verifies that a
-future run captures the merged configuration and four-variable set, separately
-authorizes discarding the older origin-only run, and allows exactly one combined
-plan. The only acceptable combined plan is one grant addition, one in-place SPA
-change, zero destroys, and zero replacements. Stop on any destruction,
-replacement, project/application recreation, client-ID change, role-definition
-or smoke/bootstrap identity change, user creation, administrator role,
-cross-organization grant, unrelated drift, or more than one addition/change.
-Apply remains a separate owner decision.
+PR #87 merged the operator-grant source as
+`b4be2a140b98fc661ba1452ed2cef7facc982741`. The owner created the dedicated,
+active, email-verified, passkey-configured non-administrator human operator
+outside Terraform and supplied only public user ID `387560808021797348` as the
+fourth nonsensitive HCP variable. Combined run `run-FU4enYWrPWDffWTe` applied
+one grant addition and one in-place SPA change with zero destroys or actions,
+producing state version `sv-G1nWZwhMs8e5o9iV`. Terraform manages grant
+`387565635665692557` with exactly the three roles above; it does not create or
+authenticate the human. Immediate run `run-uMRmTGN2RoDUBRJa` verified zero
+additions, changes, destroys, replacements, or actions. Substep 5 is technically
+Complete.
 
 Substep 6 is In Progress only for deployment-control reconciliation. PR #86
 unexpectedly auto-synchronized the exact-origin source while Render Blueprint
@@ -795,7 +797,7 @@ Phase 8C implementation is complete only when all of the following are proven:
       PostgreSQL and reconstructs the pending queue after refresh.
 - [ ] Authorization Code + PKCE S256 works with the exact public ZITADEL client,
       audience, scopes, callback, logout, and no offline access.
-- [ ] One dedicated owner-controlled human portfolio operator has exactly the
+- [x] One dedicated owner-controlled human portfolio operator has exactly the
       three application roles through a reviewed Terraform project grant and no
       administrator role or generated credential.
 - [ ] Exact non-hierarchical roles shape UI convenience while FastAPI remains

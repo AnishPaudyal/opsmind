@@ -245,8 +245,8 @@ PR #86 merged the exact-origin source as
 `18d29c92dd0070faad8038c88d159d533ad353e8`. HCP ZITADEL run
 `run-UXDXd9rKDhe74ocK` used that canonical configuration and verified zero
 additions, one in-place `zitadel_application_oidc.spa` change, zero destroys,
-and zero replacements. It remains deliberately unapplied at Pending
-confirmation.
+and zero replacements. That origin-only proposal was never applied and was
+deliberately discarded after its successor was verified.
 
 Substep 5 repository source adds one required nonsensitive
 `portfolio_operator_user_id` input and one
@@ -259,12 +259,12 @@ its public numeric ZITADEL user ID. Never place password/passkey, MFA, recovery,
 session, token, private-key, or personal account material in HCP Terraform, Git,
 CI, logs, screenshots, or chat.
 
-After the operator-grant PR merges, the owner supplies only that public ID as a
-fourth nonsensitive Terraform workspace variable with HCL disabled. Verify the
-next run's exact configuration SHA and variable inventory before planning.
-Under separate authorization, discard the older origin-only run and allow
-exactly one new standard plan. With the origin change still unapplied and no
-drift, the only acceptable result is:
+PR #87 merged the operator-grant source as
+`b4be2a140b98fc661ba1452ed2cef7facc982741`. The owner created the dedicated,
+active, email-verified, passkey-configured human operator outside Terraform,
+verified that it has no administrator or manual application-role assignment,
+and supplied only public user ID `387560808021797348` as the fourth
+nonsensitive HCP variable with HCL disabled. The reviewed combined plan was:
 
 ```text
 Plan: 1 to add, 1 to change, 0 to destroy
@@ -273,13 +273,15 @@ Add: zitadel_user_grant.portfolio_operator
 Change: zitadel_application_oidc.spa (in place)
 ```
 
-The grant uses the existing organization and `zitadel_project.opsmind.id`, and
-contains exactly `opsmind.business.read`, `opsmind.business.write`, and
-`opsmind.recommendation.decide`. Stop for any different count; any destroy or
-replacement; any project, application, client-ID, role-definition,
-release-smoke, or bootstrap-identity/key change; any Terraform-managed user;
-any administrator role; any `zitadel_project_grant` or `project_grant_id`; or
-any unrelated drift. Plan review and apply remain separate owner checkpoints.
+HCP run `run-FU4enYWrPWDffWTe` applied that plan with zero actions and produced
+state version `sv-G1nWZwhMs8e5o9iV`. The grant uses the existing organization
+and `zitadel_project.opsmind.id`, has ID `387565635665692557`, and contains
+exactly `opsmind.business.read`, `opsmind.business.write`, and
+`opsmind.recommendation.decide`. Terraform did not create the human or add an
+administrator role, credential, cross-organization grant, project, application,
+role definition, release-smoke resource, or bootstrap identity/key. Immediate
+run `run-uMRmTGN2RoDUBRJa` verified zero additions, changes, destroys,
+replacements, or actions. Substep 5 is technically Complete.
 
 ## Later delivery sequence
 
@@ -296,6 +298,10 @@ Each step remains separately authorized:
 8. enable and verify the Pages production deployment from canonical `main`;
 9. perform live authenticated browser acceptance; and
 10. prepare the Phase 8C review for explicit owner acceptance.
+
+Steps 1 through 6 are Complete. Step 7 is the current separately authorized
+boundary; no protected backend release or later step is authorized by this
+runbook update.
 
 No wildcard CORS, wildcard preview origin, broad redirect, temporary client
 secret, or insecure production bypass is permitted.

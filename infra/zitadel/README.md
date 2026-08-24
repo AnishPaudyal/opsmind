@@ -53,11 +53,11 @@ production values:
 - additional origin `https://opsmind-app.pages.dev`; and
 - `dev_mode = false`.
 
-Committing this source does not change live ZITADEL state. The HCP Terraform
-plan and apply, owner-controlled human operator, and exact three-role operator
-grant remain separately authorized later Phase 8C actions. Local frontend tests
-use deterministic fixtures rather than weakening the live client with localhost
-production values.
+Committing this source did not itself change live ZITADEL state. The later
+reviewed HCP apply updated the production SPA and created the dedicated human
+operator's exact three-role grant. Local frontend tests use deterministic
+fixtures rather than weakening the live client with localhost production
+values.
 
 ## Phase 8C portfolio-operator boundary
 
@@ -84,12 +84,13 @@ existing project, role definitions, public SPA client, `opsmind-release-smoke`
 identity and read-only grant, and external `opsmind-terraform` bootstrap
 identity remain unchanged.
 
-HCP run `run-UXDXd9rKDhe74ocK` verified only the production-origin update as
-zero additions, one in-place change, and zero destroys. It remains deliberately
-unapplied at Pending confirmation. After this source is reviewed and merged,
-the owner supplies only the public operator ID as a fourth nonsensitive HCP
-Terraform variable, separately authorizes discarding that older run, and allows
-exactly one new plan. With no drift, the combined plan must contain one added
-`zitadel_user_grant.portfolio_operator`, one in-place change to
-`zitadel_application_oidc.spa`, zero destroys, and zero replacements. Any other
-resource or count is a stop condition, and apply requires separate approval.
+HCP run `run-UXDXd9rKDhe74ocK` verified only the production-origin proposal as
+zero additions, one in-place change, and zero destroys. It was never applied
+and was deliberately discarded. The owner supplied public operator ID
+`387560808021797348` as the fourth nonsensitive HCP variable. Combined run
+`run-FU4enYWrPWDffWTe` applied one
+`zitadel_user_grant.portfolio_operator` addition and one in-place
+`zitadel_application_oidc.spa` change with zero destroys or actions, producing
+state version `sv-G1nWZwhMs8e5o9iV`. Immediate run
+`run-uMRmTGN2RoDUBRJa` verified zero additions, changes, destroys,
+replacements, or actions. Substep 5 is technically Complete.

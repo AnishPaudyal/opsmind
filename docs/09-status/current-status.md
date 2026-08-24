@@ -5,11 +5,12 @@ This document is the detailed authority for the current project state. The
 phase-review documents preserve the decisions and evidence that established
 earlier states.
 
-- Status date: 2026-08-20
+- Status date: 2026-08-24
 - Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
 - Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
-  product; Batch 1, Batch 2, and Batch 3 Substeps 1–3 Complete; Substep 4
-  repository exact-origin packet in review; Substeps 5–8 unauthorized
+  product; Batch 1, Batch 2, and Batch 3 Substeps 1–5 Complete; Substep 6
+  protected canonical backend release pending separate authorization;
+  Substeps 7–8 unauthorized
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -24,9 +25,9 @@ earlier states.
   2026-08-13; Batch 1 is Complete; PR #80 merged Batch 2 as
   `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`; Batch 2 is Complete; Batch 3
   is authorized; PR #82 merged Substep 1 as
-  `7526f6eab78ef685669b3246e4a4487a83d1c331`; Substep 1 is Complete;
-  Substeps 2 and 3 are Complete; Substep 4 repository exact-origin packet is in
-  review; Substeps 5–8 remain unauthorized
+  `7526f6eab78ef685669b3246e4a4487a83d1c331`; Substeps 1–5 are Complete; PR
+  #88 merged Substep 6 deployment-control guardrails, but the protected backend
+  release remains separately authorized; Substeps 7–8 remain unauthorized
 
 ## Canonical Phase Status
 
@@ -477,29 +478,29 @@ origin in ZITADEL and Render source, sets the reviewed production
 packet as `18d29c92dd0070faad8038c88d159d533ad353e8`, completing Substep 4.
 Standard HCP run `run-UXDXd9rKDhe74ocK` used that canonical source and verified
 zero additions, one in-place `zitadel_application_oidc.spa` change, zero
-destroys, and zero replacements. It remains deliberately unapplied at Pending
-confirmation, so live ZITADEL still has the prior localhost/development-mode
-configuration.
+destroys, and zero replacements. It was never applied and was deliberately
+discarded after the successor combined run was verified.
 
-Substep 5 is In Progress only for repository preparation. The source defines a
-required public numeric portfolio-operator user-ID input and one
-same-organization `zitadel_user_grant` with exactly
-`opsmind.business.read`, `opsmind.business.write`, and
-`opsmind.recommendation.decide`. The owner has not created or selected the
-dedicated MFA-protected non-administrator human operator, no operator ID has
-been supplied to HCP, and no operator grant is live. The current HCP workspace
-still has exactly three variables, and the origin-only run remains untouched.
+Substep 5 is technically Complete. PR #87 merged the operator-grant source as
+`b4be2a140b98fc661ba1452ed2cef7facc982741`. The owner created a dedicated
+human portfolio operator with public user ID `387560808021797348`; it is
+active, email verified, passkey configured, and has no administrator role or
+manual application-role assignment. The public ID exists as the fourth,
+nonsensitive HCP workspace variable. Terraform manages only
+`zitadel_user_grant.portfolio_operator`, grant ID `387565635665692557`, with
+exactly `opsmind.business.read`, `opsmind.business.write`, and
+`opsmind.recommendation.decide`.
 
-After this repository packet is reviewed and merged, a separately authorized
-owner checkpoint must create or select the operator, capture only its public
-numeric ZITADEL user ID, add that nonsensitive fourth HCP variable, verify the
-future configuration and variable set, discard the older origin-only run, and
-allow exactly one combined plan. With no drift, that plan must contain one
-added `zitadel_user_grant.portfolio_operator`, one in-place
-`zitadel_application_oidc.spa` change, zero destroys, and zero replacements.
-Any other count or identity/role/smoke/bootstrap change is a stop condition;
-apply remains separately authorized. No Render synchronization/release or
-Cloudflare deployment has occurred.
+HCP run `run-FU4enYWrPWDffWTe` applied configuration
+`b4be2a140b98fc661ba1452ed2cef7facc982741` with one addition, one in-place
+change, zero destroys, and zero actions. State version
+`sv-G1nWZwhMs8e5o9iV` preserves project `386124341898709869`, SPA resource
+`386124342100018364`, and public client `386124342116795580`; the SPA now uses
+the exact production callback, post-logout URI, and additional origin at
+`https://opsmind-app.pages.dev` with `dev_mode=false`. Immediate run
+`run-uMRmTGN2RoDUBRJa` verified zero additions, changes, destroys,
+replacements, or actions. No Render release or Cloudflare deployment occurred
+as part of that completion.
 
 Substep 6 is In Progress only for repository deployment-control reconciliation.
 PR #86 unexpectedly auto-synchronized the exact-origin source while Render
@@ -549,13 +550,11 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-Phase 8C Batch 3 Substeps 1 through 4 are Complete. Substep 5 is In Progress
-only for its repository operator-grant preparation, and Substep 6 is In
-Progress only for repository deployment-control reconciliation. Substep 5
-owner/operator, HCP variable/run/apply, and live-grant actions; the Substep 6
-protected backend release; Substeps 7–8; frontend deployment; and all broader
-live-provider mutations require separate authorization. Future Phase 8B
-releases must continue using
+Phase 8C Batch 3 Substeps 1 through 5 are Complete. Substep 6 is In Progress:
+its repository deployment-control reconciliation is merged, while the
+protected backend release remains separately authorized. Substeps 7–8,
+frontend deployment, and all broader live-provider mutations also require
+separate authorization. Future Phase 8B releases must continue using
 the protected environment, external Alembic migration, exact immutable digest,
 bounded health/readiness checks, and least-privilege authenticated smoke.
 

@@ -11,7 +11,8 @@ calculates forecast/exposure/reorder evidence, persists actionable reviews,
 reconstructs the review queue after refresh, and supports approval/rejection
 with trusted audit history. It does not place external orders. The reviewed
 production origin is now represented in repository-owned ZITADEL and Render
-source, but its HCP apply, human operator grant, Render release, Cloudflare
+source. The HCP ZITADEL apply and dedicated human operator's exact three-role
+grant are complete and no-drift verified. The Render release, Cloudflare
 delivery, and live deployment remain separately gated Batch 3 work.
 
 ## Requirements

@@ -31,16 +31,19 @@ project. Its provider origin is `https://opsmind-app.pages.dev`, but no
 frontend deployment exists. PR #86 merged the repository-only Substep 4 packet
 as `18d29c92dd0070faad8038c88d159d533ad353e8`, recording that exact origin in
 ZITADEL and Render source without changing either live provider. HCP run
-`run-UXDXd9rKDhe74ocK` verified the origin-only ZITADEL change and remains
-unapplied at Pending confirmation. Substep 5 is In Progress only for repository
-preparation of one exact three-role grant for an owner-managed human operator;
-the account is not yet selected and no grant is live. Substep 6 is In Progress
-only for repository deployment-control reconciliation. Render Blueprint Auto
-Sync is disabled, and repository intent now keeps the image-backed service off
-automatic deployment; no Blueprint sync or deployment accompanied that live
-control correction. The configured production CORS value is already present,
-but the current live image still predates the canonical CORS implementation.
-The protected backend release and Substeps 7–8 remain separately unauthorized.
+`run-UXDXd9rKDhe74ocK` verified the origin-only ZITADEL proposal; it was never
+applied and was later deliberately discarded. PR #87 merged the combined
+Substep 5 source as `b4be2a140b98fc661ba1452ed2cef7facc982741`.
+`run-FU4enYWrPWDffWTe` then applied the production SPA update and exact
+three-role grant for dedicated non-administrator operator
+`387560808021797348`, and `run-uMRmTGN2RoDUBRJa` immediately verified no drift.
+Substep 5 is technically Complete. Substep 6 is In Progress. Render Blueprint
+Auto Sync is disabled, and PR #88 merged repository guardrails that keep the
+image-backed service off automatic deployment; no Blueprint sync or deployment
+accompanied that control correction. The configured production CORS value is
+already present, but the current live image still predates the canonical CORS
+implementation. The protected backend release and Substeps 7–8 remain
+separately unauthorized.
 No LocalStack skills environment or production-readiness claim exists, and
 Phase 8 remains Current.
 
@@ -116,13 +119,13 @@ forecast/exposure/reorder evidence, persisted review discovery, decisions, and
 trusted audit history through the generated API contract. Backend authorization
 remains authoritative, mutations never retry automatically, and the dashboard
 uses bounded collection reads. Cloudflare deployment, production
-ZITADEL apply/operator activation, Render Blueprint synchronization/backend
-release changes, and every live mutation remain separately authorized later
-Batch 3 work. The Substep 5 repository packet defines only the required public
-operator-ID input and exact application-role grant; Terraform does not create
-or authenticate the human account. The Substep 6 repository packet makes
-Render deployment intent explicit; actual backend releases remain
-owner-controlled through the protected `cloud-release.yml` workflow.
+Render backend release, and every remaining live mutation remain separately
+authorized later Batch 3 work. Substep 5 is technically Complete: the owner
+created the dedicated human account outside Terraform, while Terraform manages
+only its exact application-role grant and does not create or authenticate the
+human. The Substep 6 repository packet makes Render deployment intent explicit;
+actual backend releases remain owner-controlled through the protected
+`cloud-release.yml` workflow.
 
 Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each
