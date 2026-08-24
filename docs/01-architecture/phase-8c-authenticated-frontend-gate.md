@@ -735,6 +735,24 @@ or smoke/bootstrap identity change, user creation, administrator role,
 cross-organization grant, unrelated drift, or more than one addition/change.
 Apply remains a separate owner decision.
 
+Substep 6 is In Progress only for deployment-control reconciliation. PR #86
+unexpectedly auto-synchronized the exact-origin source while Render Blueprint
+Auto Sync was enabled. That sync placed the exact production CORS value on the
+live service, but it did not replace the current immutable image, whose
+application revision still predates the canonical CORS implementation. The
+owner has since disabled Blueprint Auto Sync without triggering another sync or
+deployment.
+
+The repository service declaration now makes the intended control explicit
+with `autoDeployTrigger: off`, and repository CI guards that contract. Actual
+backend releases remain owner-controlled through the protected
+`.github/workflows/cloud-release.yml` migration, immutable-digest deployment,
+and smoke sequence. No additional Blueprint synchronization is required for
+CORS at this point. The next provider mutation is the separately authorized
+protected canonical backend release; this repository packet does not authorize
+that release, a live service-setting edit, or frontend deployment. Substep 6 is
+not Complete, and Substeps 7–8 remain unauthorized.
+
 ## Security, cost, and scope constraints
 
 - No browser secret, database access, cookie/session backend, token logging,

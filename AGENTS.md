@@ -86,7 +86,10 @@ change, and zero destroys or replacements, but remains unapplied at Pending
 confirmation. Substep 4 is Complete. The owner has authorized only the
 repository grant preparation for Substep 5; the human operator has not been
 created or selected, its public user ID is not in HCP, and no operator grant is
-live. Substeps 6–8 remain unauthorized.
+live. Substep 6 is In Progress only for repository deployment-control
+reconciliation after Render Blueprint Auto Sync was disabled without a sync or
+deployment. Its protected backend release and Substeps 7–8 remain separately
+unauthorized.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -100,16 +103,19 @@ Do not begin without separate authorization:
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
 - Phase 8C Batch 3 Substep 5 owner/operator, HCP variable, plan/apply, or live
-  grant work; Substeps 6–8; live frontend delivery; LocalStack; Phase 8D–8E; or
-  production-readiness work;
+  grant work; the Substep 6 protected backend release; Substeps 7–8; live
+  frontend delivery; LocalStack; Phase 8D–8E; or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
 Phase 8B and Phase 8C Batches 1 and 2 are Complete, but Phase 8 remains
 Current. The Phase 8C gate is Accepted, Phase 8C is not Complete, and Batch 3
 Substeps 1 through 4 are Complete. Substep 5 is In Progress only for its
 reviewed repository operator-grant preparation; do not begin its owner/HCP/live
-work, Substeps 6–8, or any broader live-provider mutation until their separate
-owner authorizations exist.
+work or any broader live-provider mutation until separate owner authorization
+exists. Substep 6 is In Progress only for repository deployment-control
+reconciliation after the owner disabled Render Blueprint Auto Sync; no
+Blueprint sync or deployment occurred. Its protected backend release and all
+Substeps 7–8 work remain separately unauthorized.
 
 ## Required Context
 

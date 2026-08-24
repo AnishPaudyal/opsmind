@@ -335,9 +335,12 @@ The root `render.yaml` owns only stable service configuration:
 
 Image-backed services do not support Git auto-deploy. The Blueprint must not run
 Alembic as `preDeployCommand`; migration belongs to the protected release job.
-GitHub Actions alone selects each release digest and calls the Render deploy
-hook with `imgURL` set to that exact identity. Manual “latest” deployment is
-not an authority. The Blueprint may bootstrap the service with one reviewed
+The Blueprint still declares `autoDeployTrigger: off` so repository deployment
+intent is explicit, and Blueprint Auto Sync remains owner-disabled. Merging
+repository source must neither synchronize the Blueprint nor deploy the
+service. GitHub Actions alone selects each release digest and calls the Render
+deploy hook with `imgURL` set to that exact identity. Manual “latest” deployment
+is not an authority. The Blueprint may bootstrap the service with one reviewed
 digest, while subsequent release identity and rollback are recorded deployment
 events.
 
