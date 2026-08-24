@@ -8,9 +8,9 @@ earlier states.
 - Status date: 2026-08-24
 - Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
 - Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
-  product; Batch 1, Batch 2, and Batch 3 Substeps 1–5 Complete; Substep 6
-  protected canonical backend release pending separate authorization;
-  Substeps 7–8 unauthorized
+  product; Batch 1, Batch 2, and Batch 3 Substeps 1–6 Complete; Substep 7
+  repository production-enable packet current; its HCP plan/apply and frontend
+  deployment, plus Substep 8, remain unauthorized
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -25,9 +25,10 @@ earlier states.
   2026-08-13; Batch 1 is Complete; PR #80 merged Batch 2 as
   `a3fc7b2c6ae19d07acb8e63baf1b87784dd1a47d`; Batch 2 is Complete; Batch 3
   is authorized; PR #82 merged Substep 1 as
-  `7526f6eab78ef685669b3246e4a4487a83d1c331`; Substeps 1–5 are Complete; PR
-  #88 merged Substep 6 deployment-control guardrails, but the protected backend
-  release remains separately authorized; Substeps 7–8 remain unauthorized
+  `7526f6eab78ef685669b3246e4a4487a83d1c331`; Substeps 1–6 are technically
+  Complete; protected run `32741569348` completed Substep 6; Substep 7 is
+  current only for its repository production-enable packet; its provider
+  plan/apply and deployment, plus Substep 8, remain unauthorized
 
 ## Canonical Phase Status
 
@@ -502,24 +503,34 @@ the exact production callback, post-logout URI, and additional origin at
 replacements, or actions. No Render release or Cloudflare deployment occurred
 as part of that completion.
 
-Substep 6 is In Progress only for repository deployment-control reconciliation.
-PR #86 unexpectedly auto-synchronized the exact-origin source while Render
+Substep 6 is technically Complete. Its repository deployment-control
+reconciliation began after PR #86 unexpectedly auto-synchronized the
+exact-origin source while Render
 Blueprint Auto Sync was enabled, so the live service already contains
-`OPSMIND_CORS_ALLOWED_ORIGINS=["https://opsmind-app.pages.dev"]`. The current
-deploy remains `dep-da3nqojbc2fs73afas4g` on immutable application revision
-`1f7de97e593182bd79ff767de220532b8301acff`, which predates the canonical CORS
-implementation. The owner disabled Blueprint Auto Sync without triggering a
-new sync or deployment; the live service-level trigger still displays its
-prior `commit` value and was not changed.
+`OPSMIND_CORS_ALLOWED_ORIGINS=["https://opsmind-app.pages.dev"]`. The owner
+disabled Blueprint Auto Sync without triggering a new sync or deployment; PR
+#88 then merged the repository guardrails.
 
 Repository source now declares `autoDeployTrigger: off`, guarded by repository
 CI, while protected `.github/workflows/cloud-release.yml` remains the sole
-backend migration and exact-digest release path. No additional Blueprint sync
-is required for CORS at this point. The next provider mutation is the protected
-canonical backend release, subject to separate authorization. This repository
-packet does not make Substep 6 Complete, authorize that release, or deploy the
-frontend. Substeps 7–8 remain unauthorized, Issue #77 remains open, Phase 8C
-remains not Complete, and Phase 8 overall remains Current.
+backend migration and exact-digest release path. Protected run `32741569348`
+released canonical revision `0fb809ca278e250c22e3c3d6c36cf2cadff70bcd`
+as immutable digest
+`sha256:bb3d6987bce4af839a39baf5c666ccf2120a465a61d96a4513a68e178cade9b5`
+through Render deploy `dep-da65narm8hqs73elqej0`. `/health`, `/ready`,
+PostgreSQL readiness, unauthenticated rejection, bounded authenticated smoke,
+exact-origin CORS, and rejected-origin denial all passed.
+
+Substep 7 is In Progress only for the repository change from
+`production_deployments_enabled = false` to `true`. The existing Pages project
+remains dormant with previews and PR comments disabled. The expected future HCP
+plan is zero additions, one in-place change to
+`cloudflare_pages_project.opsmind`, zero destroys, replacements, or actions.
+The setting permits future commits to production branch `main` to trigger
+deployments; applying it does not itself submit a commit or request a
+deployment. Post-apply verification and the first canonical production
+deployment therefore remain separate owner-controlled gates. Issue #77 remains
+open, Phase 8C remains not Complete, and Phase 8 overall remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -550,11 +561,10 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-Phase 8C Batch 3 Substeps 1 through 5 are Complete. Substep 6 is In Progress:
-its repository deployment-control reconciliation is merged, while the
-protected backend release remains separately authorized. Substeps 7–8,
-frontend deployment, and all broader live-provider mutations also require
-separate authorization. Future Phase 8B releases must continue using
+Phase 8C Batch 3 Substeps 1 through 6 are technically Complete. Substep 7 is In
+Progress only for its repository production-enable packet. Its HCP plan/apply,
+first frontend deployment, Substep 8, and all broader live-provider mutations
+require separate authorization. Future Phase 8B releases must continue using
 the protected environment, external Alembic migration, exact immutable digest,
 bounded health/readiness checks, and least-privilege authenticated smoke.
 

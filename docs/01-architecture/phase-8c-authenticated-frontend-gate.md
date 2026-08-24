@@ -737,23 +737,22 @@ authenticate the human. Immediate run `run-uMRmTGN2RoDUBRJa` verified zero
 additions, changes, destroys, replacements, or actions. Substep 5 is technically
 Complete.
 
-Substep 6 is In Progress only for deployment-control reconciliation. PR #86
-unexpectedly auto-synchronized the exact-origin source while Render Blueprint
-Auto Sync was enabled. That sync placed the exact production CORS value on the
-live service, but it did not replace the current immutable image, whose
-application revision still predates the canonical CORS implementation. The
-owner has since disabled Blueprint Auto Sync without triggering another sync or
-deployment.
+Substep 6 is technically Complete. PR #86 unexpectedly auto-synchronized the
+exact-origin source while Render Blueprint Auto Sync was enabled, placing the
+production CORS value on the live service without replacing its immutable
+image. The owner disabled Blueprint Auto Sync without triggering another sync
+or deployment, and PR #88 merged repository guardrails that preserve that
+control.
 
-The repository service declaration now makes the intended control explicit
-with `autoDeployTrigger: off`, and repository CI guards that contract. Actual
-backend releases remain owner-controlled through the protected
-`.github/workflows/cloud-release.yml` migration, immutable-digest deployment,
-and smoke sequence. No additional Blueprint synchronization is required for
-CORS at this point. The next provider mutation is the separately authorized
-protected canonical backend release; this repository packet does not authorize
-that release, a live service-setting edit, or frontend deployment. Substep 6 is
-not Complete, and Substeps 7–8 remain unauthorized.
+Protected run `32741569348` subsequently deployed canonical revision
+`0fb809ca278e250c22e3c3d6c36cf2cadff70bcd` as immutable digest
+`sha256:bb3d6987bce4af839a39baf5c666ccf2120a465a61d96a4513a68e178cade9b5`
+through Render deploy `dep-da65narm8hqs73elqej0`. Health, readiness,
+authentication, and exact-origin CORS checks passed. Substep 7 is In Progress
+only for the repository change that permits future canonical `main` commits to
+trigger production Pages deployments. Its HCP plan/apply and the first
+production deployment remain separate owner-controlled gates; Substep 8 is not
+authorized.
 
 ## Security, cost, and scope constraints
 

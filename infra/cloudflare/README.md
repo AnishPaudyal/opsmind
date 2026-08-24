@@ -14,7 +14,7 @@ exactly:
 - its `AnishPaudyal/opsmind` Git source;
 - production branch `main`;
 - the `frontend` root, `npm run build` command, and `dist` output;
-- disabled production automation during the origin-capture bootstrap;
+- production automation for future commits to canonical `main`;
 - disabled preview deployments;
 - equal explicit production and preview `fail_open` values required by the
   Cloudflare API; and
@@ -83,20 +83,27 @@ The only address is:
 cloudflare_pages_project.opsmind
 ```
 
-The resource starts with production automatic deployment disabled and preview
-deployment set to `none`. Its production and preview deployment configurations
-both set `fail_open = true` to satisfy the Cloudflare API without enabling
-either deployment path. A successful apply therefore creates a dormant project
-without deploying the frontend. Capture the provider-issued
-`pages_origin` output only after apply; never guess a `pages.dev` hostname.
+The verified resource was created with production automatic deployment disabled
+and preview deployment set to `none`. Its production and preview deployment
+configurations both set `fail_open = true` to satisfy the Cloudflare API; these
+values do not enable either deployment path. The provider-issued origin is
+`https://opsmind-app.pages.dev`; it was captured from applied state rather than
+guessed.
 
-The verified origin is consumed by a later reviewed exact-origin change for
-ZITADEL redirects, Render CORS, and final delivery. That later work is outside
-this foundation.
+Substep 7 changes only `production_deployments_enabled` from `false` to `true`.
+The expected later HCP plan is one in-place change to
+`cloudflare_pages_project.opsmind`, with no additions, destroys, replacements,
+or actions. Cloudflare defines this setting as permission for commits to the
+production branch to trigger deployments. Applying the setting does not itself
+submit a commit or request a deployment, so post-apply verification must confirm
+the setting is enabled while `canonical_deployment` and `latest_deployment`
+remain unchanged. The first canonical production deployment remains a separate
+owner-authorized gate. Preview deployments and PR comments remain disabled.
 
-Stop without applying if the plan contains another resource, any change or
-destroy action, a paid feature, a Function or Worker, a domain or DNS change,
-broader token requirements, or an automatically enabled deployment.
+Stop without applying if the plan contains another resource, an addition,
+destroy, replacement, invoked action, a paid feature, a Function or Worker, a
+domain or DNS change, broader token requirements, or any change beyond the
+single reviewed production-deployment flag.
 
 ## Execution boundary
 
