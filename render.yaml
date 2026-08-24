@@ -4,6 +4,7 @@ services:
     runtime: image
     plan: free
     region: ohio
+    autoDeployTrigger: off
     image:
       url: ghcr.io/anishpaudyal/opsmind@sha256:1b3470e14704640e21f2ccf8bc93d779f732ec888950b9a19ddd0478b9f1be5d
     healthCheckPath: /health

@@ -499,9 +499,26 @@ added `zitadel_user_grant.portfolio_operator`, one in-place
 `zitadel_application_oidc.spa` change, zero destroys, and zero replacements.
 Any other count or identity/role/smoke/bootstrap change is a stop condition;
 apply remains separately authorized. No Render synchronization/release or
-Cloudflare deployment has occurred. Phase 8C remains not Complete, Substeps
-6–8 remain unauthorized, Issue #77 remains open, and Phase 8 overall remains
-Current.
+Cloudflare deployment has occurred.
+
+Substep 6 is In Progress only for repository deployment-control reconciliation.
+PR #86 unexpectedly auto-synchronized the exact-origin source while Render
+Blueprint Auto Sync was enabled, so the live service already contains
+`OPSMIND_CORS_ALLOWED_ORIGINS=["https://opsmind-app.pages.dev"]`. The current
+deploy remains `dep-da3nqojbc2fs73afas4g` on immutable application revision
+`1f7de97e593182bd79ff767de220532b8301acff`, which predates the canonical CORS
+implementation. The owner disabled Blueprint Auto Sync without triggering a
+new sync or deployment; the live service-level trigger still displays its
+prior `commit` value and was not changed.
+
+Repository source now declares `autoDeployTrigger: off`, guarded by repository
+CI, while protected `.github/workflows/cloud-release.yml` remains the sole
+backend migration and exact-digest release path. No additional Blueprint sync
+is required for CORS at this point. The next provider mutation is the protected
+canonical backend release, subject to separate authorization. This repository
+packet does not make Substep 6 Complete, authorize that release, or deploy the
+frontend. Substeps 7–8 remain unauthorized, Issue #77 remains open, Phase 8C
+remains not Complete, and Phase 8 overall remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -533,9 +550,10 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 ## Next Permitted Work
 
 Phase 8C Batch 3 Substeps 1 through 4 are Complete. Substep 5 is In Progress
-only for its repository operator-grant preparation. Its owner/operator, HCP
-variable/run/apply, and live-grant actions; Substeps 6–8; Render Blueprint
-synchronization or backend release; frontend deployment; and all broader
+only for its repository operator-grant preparation, and Substep 6 is In
+Progress only for repository deployment-control reconciliation. Substep 5
+owner/operator, HCP variable/run/apply, and live-grant actions; the Substep 6
+protected backend release; Substeps 7–8; frontend deployment; and all broader
 live-provider mutations require separate authorization. Future Phase 8B
 releases must continue using
 the protected environment, external Alembic migration, exact immutable digest,

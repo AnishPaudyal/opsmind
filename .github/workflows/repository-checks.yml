@@ -29,6 +29,28 @@ jobs:
           --schemafile https://render.com/schema/render.yaml.json
           render.yaml
 
+      - name: Validate protected Render delivery contract
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test "$(grep -Ec '^services:$' render.yaml)" -eq 1
+          test "$(grep -Ec '^  - type:' render.yaml)" -eq 1
+          test "$(grep -Ec '^  - type: web$' render.yaml)" -eq 1
+          test "$(grep -Ec '^    name: opsmind-api$' render.yaml)" -eq 1
+          test "$(grep -Ec '^    runtime: image$' render.yaml)" -eq 1
+          test "$(grep -Ec '^    plan: free$' render.yaml)" -eq 1
+          test "$(grep -Ec '^    autoDeployTrigger: off$' render.yaml)" -eq 1
+          test "$(grep -Ec '^    image:$' render.yaml)" -eq 1
+          test "$(grep -Ec \
+            '^      url: ghcr.io/anishpaudyal/opsmind@sha256:[0-9a-f]{64}$' \
+            render.yaml)" -eq 1
+
+          if grep -Eq '^databases:' render.yaml; then
+            echo "The Render Blueprint contains an unauthorized database."
+            exit 1
+          fi
+
       - name: Validate credential-free Cloudflare delivery foundation
         shell: bash
         run: |

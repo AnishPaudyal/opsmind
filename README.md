@@ -34,9 +34,15 @@ ZITADEL and Render source without changing either live provider. HCP run
 `run-UXDXd9rKDhe74ocK` verified the origin-only ZITADEL change and remains
 unapplied at Pending confirmation. Substep 5 is In Progress only for repository
 preparation of one exact three-role grant for an owner-managed human operator;
-the account is not yet selected and no grant is live. Substeps 6–8 remain
-unauthorized. No LocalStack skills environment or production-readiness claim
-exists, and Phase 8 remains Current.
+the account is not yet selected and no grant is live. Substep 6 is In Progress
+only for repository deployment-control reconciliation. Render Blueprint Auto
+Sync is disabled, and repository intent now keeps the image-backed service off
+automatic deployment; no Blueprint sync or deployment accompanied that live
+control correction. The configured production CORS value is already present,
+but the current live image still predates the canonical CORS implementation.
+The protected backend release and Substeps 7–8 remain separately unauthorized.
+No LocalStack skills environment or production-readiness claim exists, and
+Phase 8 remains Current.
 
 The current backend can create and retrieve products, store current inventory,
 and ingest and retrieve daily demand history through either an isolated memory
@@ -114,7 +120,9 @@ ZITADEL apply/operator activation, Render Blueprint synchronization/backend
 release changes, and every live mutation remain separately authorized later
 Batch 3 work. The Substep 5 repository packet defines only the required public
 operator-ID input and exact application-role grant; Terraform does not create
-or authenticate the human account.
+or authenticate the human account. The Substep 6 repository packet makes
+Render deployment intent explicit; actual backend releases remain
+owner-controlled through the protected `cloud-release.yml` workflow.
 
 Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each
