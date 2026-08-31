@@ -43,7 +43,7 @@ resource "cloudflare_pages_project" "opsmind" {
       owner                          = "AnishPaudyal"
       repo_name                      = "opsmind"
       production_branch              = "main"
-      production_deployments_enabled = true
+      production_deployments_enabled = false
       preview_deployment_setting     = "none"
       pr_comments_enabled            = false
     }

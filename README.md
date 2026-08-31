@@ -46,12 +46,16 @@ through Render deploy `dep-da65narm8hqs73elqej0`. Health, readiness,
 authentication, and exact-origin CORS checks passed, so Substep 6 is technically
 Complete. PR #90 merged the Substep 7 production-enable source, and its
 reviewed HCP/apply and canonical Pages deployment completed afterward, making
-Substep 7 technically Complete. The first Substep 8 interactive login
-succeeded, but protected reads returned `403` because the SPA access token did
-not contain the project-specific role claim. The root cause is the live/source
-`access_token_role_assertion = false` drift from accepted ADR-0007. A
-repository-only correction is in progress; provider apply and live re-login
-acceptance remain separate owner-controlled gates.
+Substep 7 technically Complete. PR #91 merged the Substep 8 role-assertion
+correction as `415cb81f496a843b01682a0ec96a0f3694c50089`; the reviewed provider
+apply and fresh human login now produce `200` protected product and
+recommendation reads. Write and decision acceptance remain pending because
+production has no safe target. The PR #91 merge also triggered a harmless
+automatic Pages deployment. The owner disabled automatic production delivery,
+and the repository is reconciling Terraform to permanent `false` plus a
+protected manual exact-SHA release workflow. That workflow remains
+non-operational until its environment and credentials are separately reviewed
+and provisioned.
 No LocalStack skills environment or production-readiness claim exists, and
 Phase 8 remains Current.
 
@@ -76,7 +80,6 @@ This repository does not yet contain:
 - Application-managed users, sessions, organizations, or tenant isolation
 - Calibrated stockout probability or a trained stockout model
 - Purchase-order creation or external ordering integration
-- A deployed frontend user interface
 - A production-grade database posture, production data, or
   production-readiness approval
 
@@ -111,8 +114,9 @@ image and its isolated validation harness do not reuse or destroy that service
 or its named data volume. Accepted ADR-0007 selects a static
 React/TypeScript/Vite SPA rather than Next.js because no SSR requirement exists.
 The Phase 8C gate is Accepted. Batch 1 established the static frontend
-foundation, and Batch 2 connects its local operational workflow. It is not
-deployed and does not make Phase 8C Complete.
+foundation, Batch 2 connects its operational workflow, and Batch 3 serves the
+canonical frontend at `https://opsmind-app.pages.dev`. That deployment does not
+make Phase 8C Complete.
 
 ## Frontend operational workspace
 
@@ -133,10 +137,13 @@ created the dedicated human account outside Terraform, while Terraform manages
 only its exact application-role grant and does not create or authenticate the
 human. The Substep 6 release preserved the owner-controlled protected
 `cloud-release.yml` workflow. Substep 7 subsequently enabled and completed the
-first canonical production frontend deployment. Substep 8 login works, but
-authorization acceptance remains blocked until the reviewed access-token role-
-assertion correction is merged, separately applied, and verified by live
-re-login.
+first canonical production frontend deployment. Substep 8 authentication and
+protected reads now work after the reviewed access-token role-assertion change;
+write and decision acceptance remain pending. Automatic Pages delivery is
+disabled, and the prepared manual release path is documented in the
+[frontend release-control runbook](docs/01-architecture/phase-8c-frontend-release-control.md).
+It is not operational until its protected environment and credentials are
+separately provisioned.
 
 Later phases may introduce cloud services, infrastructure as code, event
 streaming, analytical pipelines, MLOps, and retrieval-augmented AI. Each

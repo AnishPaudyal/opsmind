@@ -14,7 +14,7 @@ exactly:
 - its `AnishPaudyal/opsmind` Git source;
 - production branch `main`;
 - the `frontend` root, `npm run build` command, and `dist` output;
-- production automation for future commits to canonical `main`;
+- permanently disabled automatic production deployments;
 - disabled preview deployments;
 - equal explicit production and preview `fail_open` values required by the
   Cloudflare API; and
@@ -90,20 +90,26 @@ values do not enable either deployment path. The provider-issued origin is
 `https://opsmind-app.pages.dev`; it was captured from applied state rather than
 guessed.
 
-Substep 7 changes only `production_deployments_enabled` from `false` to `true`.
-The expected later HCP plan is one in-place change to
-`cloudflare_pages_project.opsmind`, with no additions, destroys, replacements,
-or actions. Cloudflare defines this setting as permission for commits to the
-production branch to trigger deployments. Applying the setting does not itself
-submit a commit or request a deployment, so post-apply verification must confirm
-the setting is enabled while `canonical_deployment` and `latest_deployment`
-remain unchanged. The first canonical production deployment remains a separate
-owner-authorized gate. Preview deployments and PR comments remain disabled.
+Substep 7 temporarily enabled `production_deployments_enabled` so the first
+canonical production deployment could be completed. PR #91 then demonstrated
+that a later merge to `main` could also deploy automatically. That deployment
+was harmless, but the delivery path did not preserve an explicit production
+authorization boundary. The owner therefore disabled automatic production
+deployments through Cloudflare Branch control. This source now records the
+steady-state value `false`, matching live containment.
 
-Stop without applying if the plan contains another resource, an addition,
-destroy, replacement, invoked action, a paid feature, a Function or Worker, a
-domain or DNS change, broader token requirements, or any change beyond the
-single reviewed production-deployment flag.
+Because the manual containment already changed the provider, the expected HCP
+run after this source reaches `main` is zero additions, changes, and destroys.
+External-drift or refresh messaging that records the earlier manual change is
+acceptable. Any plan proposing `false` to `true`, a project replacement, or an
+unrelated change is not acceptable.
+
+GitHub remains connected to `AnishPaudyal/opsmind`, but repository pushes and
+merges are not production-release authorization. Future production releases
+use the separately protected, manually dispatched workflow described in the
+[frontend release-control runbook](../../docs/01-architecture/phase-8c-frontend-release-control.md).
+That workflow is not operational until its GitHub environment and credential
+boundary are separately reviewed and provisioned.
 
 ## Execution boundary
 
@@ -125,8 +131,9 @@ cache content.
 
 ## Rollback and destruction
 
-Later frontend delivery rollback selects a previously successful Cloudflare
-Pages deployment; it is not a Terraform destroy. Destroying the Pages project
-also destroys its provider hostname and deployment history and therefore
-requires explicit owner review. Terraform destruction does not imply any
-ZITADEL, Render, or Neon rollback.
+Automatic production deployments must not be re-enabled for rollback. A future
+owner-authorized rollback rebuilds and redeploys a known-good commit SHA through
+the same protected manual workflow when policy permits. It is not a Terraform
+destroy. Destroying the Pages project also destroys its provider hostname and
+deployment history and therefore requires explicit owner review. Terraform
+destruction does not imply any ZITADEL, Render, or Neon rollback.

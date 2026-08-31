@@ -101,12 +101,19 @@ through Render deploy `dep-da65narm8hqs73elqej0`; health, readiness,
 authentication, and exact-origin CORS checks passed. Substep 6 is technically
 Complete. PR #90 merged the Substep 7 production-enable source, and the
 reviewed HCP/apply and canonical Pages deployment completed afterward.
-Substep 7 is technically Complete. The first Substep 8 interactive login
-succeeded, but protected reads returned `403`: the SPA's JWT access token did
-not carry the project-specific role claim because
-`zitadel_application_oidc.spa.access_token_role_assertion` remained `false`.
-The root cause is proven and a repository-only correction is authorized;
-provider apply and live re-login acceptance remain separate owner gates.
+Substep 7 is technically Complete. PR #91 merged the Substep 8 role-assertion
+correction as `415cb81f496a843b01682a0ec96a0f3694c50089`; the reviewed provider
+apply now sets `access_token_role_assertion = true`, and a fresh human login
+returned `200` for protected product and recommendation reads. Production has
+no safe write/decision target, so `business.write` and
+`recommendation.decide` acceptance remain pending. The PR #91 merge also
+triggered an automatic production Pages deployment because Git delivery was
+still enabled. The deployment was harmless, and the owner contained the
+control by disabling automatic production deployments without creating a new
+deployment. Repository reconciliation to permanent `false` and a protected
+manual exact-SHA frontend release workflow is current; that workflow is not
+operational until its GitHub environment and credentials are separately
+reviewed and provisioned.
 Continuing an established Phase 8B release still requires the documented
 owner-controlled environment approval and secret boundaries.
 
@@ -119,17 +126,18 @@ Do not begin without separate authorization:
 - a cloud-release dispatch, HCP Terraform apply, migration, deployment, or
   `render.yaml` addition;
 - application-managed users, sessions, organizations, or tenants;
-- the Substep 8 ZITADEL HCP plan/apply or live re-login acceptance after the
-  repository correction; LocalStack; Phase 8D–8E; or production-readiness
-  work;
+- the `phase-8c-frontend` GitHub environment or credential provisioning, a
+  frontend-release dispatch, the remaining Substep 8 write/decision
+  acceptance, LocalStack, Phase 8D–8E, or production-readiness work;
 - Phase 9 data pipelines, Phase 10 MLOps, or Phase 11 LLM/RAG/LangGraph work.
 
 Phase 8B and Phase 8C Batches 1 and 2 are Complete, but Phase 8 remains
 Current. The Phase 8C gate is Accepted, Phase 8C is not Complete, and Batch 3
-Substeps 1 through 7 are technically Complete. Substep 8 login succeeded, but
-authorization acceptance is blocked by the proven SPA access-token role-
-assertion defect. Only its repository correction is authorized; the HCP
-plan/apply and live re-login acceptance remain separate owner-controlled work.
+Substeps 1 through 7 are technically Complete. Substep 8 authentication and
+protected-read acceptance pass after the role-assertion correction; write and
+decision acceptance remain pending because production has no safe target. The
+current repository-only deployment-control reconciliation does not authorize a
+frontend release or any provider mutation.
 
 ## Required Context
 

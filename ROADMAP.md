@@ -219,12 +219,16 @@ protected release run `32741569348` then deployed canonical revision
 Health, readiness, authentication, and exact-origin CORS checks passed, so
 Substep 6 is technically Complete. PR #90 merged the Substep 7 production-
 enable source, and the reviewed HCP/apply and canonical Pages deployment
-completed afterward, so Substep 7 is technically Complete. The first Substep 8
-interactive login succeeded, but protected reads returned `403` because the
-SPA access token lacked the project-specific role claim. The root cause is
-proven as `access_token_role_assertion = false`; a repository-only correction
-is current, while its HCP plan/apply and live re-login acceptance remain
-separate owner-controlled gates.
+completed afterward, so Substep 7 is technically Complete. PR #91 merged the
+Substep 8 role-assertion correction as
+`415cb81f496a843b01682a0ec96a0f3694c50089`; the reviewed provider apply and
+fresh human login now return `200` for protected product and recommendation
+reads. Write and decision acceptance remain pending because production has no
+safe target. The PR #91 merge also exposed automatic Pages delivery as a
+production-control defect. Its deployment was harmless, live containment
+disabled automatic production deployments, and the repository-only
+reconciliation to permanent `false` plus a protected manual exact-SHA release
+workflow is current.
 
 Phase 7A testing and coverage hardening, Issue #58 observability/readiness, and
 the accepted ADR-0006 security implementation are complete and merged. Issue
@@ -247,10 +251,11 @@ canonical production frontend at `https://opsmind-app.pages.dev`. The ZITADEL
 production SPA update and dedicated human
 operator's exact three-role grant are applied and no-drift verified. The
 protected backend release now serves the exact production CORS contract.
-Substep 8 login succeeds, but its authorization acceptance is blocked by the
-proven access-token role-assertion defect. Only the repository correction is
-authorized; the provider plan/apply and live re-login acceptance remain
-separate owner-controlled work.
+Substep 8 authentication and protected-read acceptance now pass after the
+role-assertion correction. Write and decision acceptance remain pending, and
+the protected frontend release workflow remains non-operational until its
+environment and credential boundary are separately provisioned. Issue #77
+remains open and Phase 8C remains incomplete.
 Phase 9 data, Phase 10 MLOps, and Phase 11 LLM/RAG/LangGraph remain Planned.
 
 Detailed current evidence and next-work boundaries live in
