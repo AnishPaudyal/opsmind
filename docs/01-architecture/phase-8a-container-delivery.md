@@ -233,6 +233,18 @@ and zero Python/application findings. The full and repeat-build container
 contracts also passed. CVE-2026-53612 through CVE-2026-53615 no longer appear
 in the required fixable gate.
 
+On 2026-09-01, refreshed Trivy and Debian security metadata identified
+CVE-2026-14456 as a fixable High finding in inherited `openssl`, `libssl3t64`,
+and `openssl-provider-legacy`. The pinned Python base contained
+`3.5.6-1~deb13u2`, while Debian Trixie security provided fixed version
+`3.5.7-1~deb13u2`. The runtime's existing focused `--only-upgrade` layer now
+upgrades exactly those three packages to the fixed version alongside the
+previous util-linux remediation. The base digest, Python and application
+dependencies, runtime identity, command, healthcheck, port, filesystem layout,
+and migration boundary remain unchanged. The unchanged Trivy policy must
+continue to fail on any fixable High or Critical finding; no suppression or
+accepted-risk exception applies to CVE-2026-14456.
+
 ## Compose and CI decisions
 
 `compose.postgresql.yml` remains the single PostgreSQL developer-service
