@@ -1,0 +1,457 @@
+name: Frontend release
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_sha:
+        description: Exact 40-character commit SHA reachable from canonical main
+        required: true
+        type: string
+
+concurrency:
+  group: phase-8c-frontend-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  WRANGLER_VERSION: "4.127.1"
+  PAGES_PROJECT_NAME: opsmind-app
+  PAGES_PRODUCTION_BRANCH: main
+  FRONTEND_URL: https://opsmind-app.pages.dev
+  BACKEND_URL: https://opsmind-api-ru63.onrender.com
+
+jobs:
+  build:
+    name: Validate and build exact revision
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      requested_sha: ${{ steps.identity.outputs.requested_sha }}
+      checked_out_sha: ${{ steps.identity.outputs.checked_out_sha }}
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Validate dispatch identity
+        shell: bash
+        working-directory: .
+        env:
+          REQUESTED_SHA: ${{ inputs.git_sha }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "${REQUESTED_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "git_sha must be one exact lowercase 40-character Git SHA." >&2
+            exit 1
+          fi
+
+          test "${GITHUB_REF}" = "refs/heads/main"
+
+      - name: Check out exact requested revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.git_sha }}
+
+      - name: Attest revision and canonical-main ancestry
+        id: identity
+        shell: bash
+        working-directory: .
+        env:
+          REQUESTED_SHA: ${{ inputs.git_sha }}
+        run: |
+          set -euo pipefail
+
+          checked_out_sha="$(git rev-parse HEAD)"
+          test "${checked_out_sha}" = "${REQUESTED_SHA}"
+
+          git fetch \
+            --no-tags \
+            origin \
+            +refs/heads/main:refs/remotes/origin/main
+          canonical_main_sha="$(git rev-parse origin/main)"
+          git merge-base --is-ancestor "${REQUESTED_SHA}" "${canonical_main_sha}"
+
+          echo "requested_sha=${REQUESTED_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "checked_out_sha=${checked_out_sha}" >> "${GITHUB_OUTPUT}"
+          echo "checked_out_sha=${checked_out_sha}"
+          echo "canonical_main_sha=${canonical_main_sha}"
+
+      - name: Validate credential-free production target contract
+        shell: bash
+        working-directory: .
+        run: |
+          set -euo pipefail
+
+          test "$(grep -Fc 'resource "cloudflare_pages_project" "opsmind" {' \
+            infra/cloudflare/main.tf)" -eq 1
+          grep -Fq 'production_branch = "main"' infra/cloudflare/main.tf
+          grep -Fq 'owner                          = "AnishPaudyal"' \
+            infra/cloudflare/main.tf
+          grep -Fq 'repo_name                      = "opsmind"' \
+            infra/cloudflare/main.tf
+          grep -Fq 'production_deployments_enabled = false' \
+            infra/cloudflare/main.tf
+          grep -Fq 'preview_deployment_setting     = "none"' \
+            infra/cloudflare/main.tf
+
+      - name: Install Node.js from the governed LTS pin
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install uv for deterministic OpenAPI validation
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.11.28"
+          enable-cache: true
+          cache-dependency-glob: |
+            .python-version
+            pyproject.toml
+            uv.lock
+          cache-python: false
+
+      - name: Install project Python
+        run: uv python install --project ..
+
+      - name: Install locked frontend dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run complete frontend quality and production-build gate
+        run: npm run check
+
+      - name: Audit locked frontend dependencies
+        run: npm audit --audit-level=high
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run protected browser workflow tests
+        run: npm run test:e2e
+
+      - name: Verify deployable static output
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -s dist/index.html
+          test -s dist/_headers
+          test ! -e dist/_worker.js
+          test ! -d dist/functions
+
+      - name: Upload exact-revision frontend artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: frontend-dist-${{ inputs.git_sha }}
+          path: frontend/dist
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    name: Deploy protected exact revision
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: phase-8c-frontend
+
+    env:
+      REQUESTED_SHA: ${{ needs.build.outputs.requested_sha }}
+      CHECKED_OUT_SHA: ${{ needs.build.outputs.checked_out_sha }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Download validated exact-revision artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: frontend-dist-${{ needs.build.outputs.requested_sha }}
+          path: frontend/dist
+
+      - name: Install Node.js for pinned Wrangler
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with:
+          node-version: "24"
+
+      - name: Verify protected provider and project identity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! "${REQUESTED_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "The validated release SHA is missing or malformed." >&2
+            exit 1
+          fi
+          test "${CHECKED_OUT_SHA}" = "${REQUESTED_SHA}"
+
+          if [[ -z "${CLOUDFLARE_API_TOKEN}" ]]; then
+            echo "The protected Cloudflare API token is missing." >&2
+            exit 1
+          fi
+
+          if [[ ! "${CLOUDFLARE_ACCOUNT_ID}" =~ ^[0-9a-f]{32}$ ]]; then
+            echo "The protected Cloudflare account ID is missing or malformed." >&2
+            exit 1
+          fi
+
+          npx --yes "wrangler@${WRANGLER_VERSION}" \
+            whoami \
+            --account "${CLOUDFLARE_ACCOUNT_ID}" \
+            --json > "${RUNNER_TEMP}/cloudflare-identity.json"
+
+          npx --yes "wrangler@${WRANGLER_VERSION}" \
+            pages project list \
+            --json > "${RUNNER_TEMP}/cloudflare-pages-projects.json"
+
+          matching_projects="$(
+            jq \
+              --arg project "${PAGES_PROJECT_NAME}" \
+              --arg branch "${PAGES_PRODUCTION_BRANCH}" \
+              '[
+                .[]
+                | select(
+                    .name == $project
+                    and .production_branch == $branch
+                  )
+              ]
+              | length' \
+              "${RUNNER_TEMP}/cloudflare-pages-projects.json"
+          )"
+
+          if [[ "${matching_projects}" != "1" ]]; then
+            echo "The intended existing Pages project identity was not unique." >&2
+            exit 1
+          fi
+
+          test -s frontend/dist/index.html
+          test -s frontend/dist/_headers
+          test ! -e frontend/dist/_worker.js
+          test ! -d frontend/dist/functions
+
+      - name: Capture pre-deployment production inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          npx --yes "wrangler@${WRANGLER_VERSION}" \
+            pages deployment list \
+            --project-name "${PAGES_PROJECT_NAME}" \
+            --environment production \
+            --json > "${RUNNER_TEMP}/before-production-deployments.json"
+
+      - name: Deploy exact SHA to the existing production project
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          npx --yes "wrangler@${WRANGLER_VERSION}" \
+            pages deploy frontend/dist \
+            --project-name "${PAGES_PROJECT_NAME}" \
+            --branch "${PAGES_PRODUCTION_BRANCH}" \
+            --commit-hash "${REQUESTED_SHA}" \
+            --commit-message "Protected frontend release ${REQUESTED_SHA}" \
+            --commit-dirty=false \
+            < /dev/null
+
+      - name: Attest the unique new production deployment
+        id: deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          npx --yes "wrangler@${WRANGLER_VERSION}" \
+            pages deployment list \
+            --project-name "${PAGES_PROJECT_NAME}" \
+            --environment production \
+            --json > "${RUNNER_TEMP}/after-production-deployments.json"
+
+          deployment="$(
+            jq \
+              --compact-output \
+              --slurpfile before \
+                "${RUNNER_TEMP}/before-production-deployments.json" \
+              --arg sha "${REQUESTED_SHA}" \
+              --arg branch "${PAGES_PRODUCTION_BRANCH}" \
+              '[
+                .[]
+                | select(.environment == "production")
+                | select(.deployment_trigger.metadata.commit_hash == $sha)
+                | select(.deployment_trigger.metadata.branch == $branch)
+                | select(
+                    .id as $id
+                    | ($before[0] | map(.id) | index($id) | not)
+                  )
+              ]
+              | if length == 1 then .[0] else empty end' \
+              "${RUNNER_TEMP}/after-production-deployments.json"
+          )"
+
+          if [[ -z "${deployment}" ]]; then
+            echo "Exactly one new production deployment was not attested." >&2
+            exit 1
+          fi
+
+          deployment_id="$(jq -r '.id // empty' <<<"${deployment}")"
+          deployment_url="$(jq -r '.url // empty' <<<"${deployment}")"
+          attached_sha="$(
+            jq -r '.deployment_trigger.metadata.commit_hash // empty' \
+              <<<"${deployment}"
+          )"
+          attached_branch="$(
+            jq -r '.deployment_trigger.metadata.branch // empty' \
+              <<<"${deployment}"
+          )"
+
+          [[ "${deployment_id}" =~ ^[0-9a-f-]{36}$ ]]
+          [[ "${deployment_url}" =~ ^https://[a-z0-9]+\.opsmind-app\.pages\.dev$ ]]
+          test "${attached_sha}" = "${REQUESTED_SHA}"
+          test "${attached_branch}" = "${PAGES_PRODUCTION_BRANCH}"
+
+          echo "deployment_id=${deployment_id}" >> "${GITHUB_OUTPUT}"
+          echo "deployment_url=${deployment_url}" >> "${GITHUB_OUTPUT}"
+          echo "attached_sha=${attached_sha}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify deployed frontend, backend, headers, and CORS
+        id: smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          frontend_root_status="$(curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            --dump-header "${RUNNER_TEMP}/frontend-headers.txt" \
+            --output "${RUNNER_TEMP}/frontend-root.html" \
+            --write-out '%{http_code}' \
+            "${FRONTEND_URL}/")"
+          test "${frontend_root_status}" = "200"
+
+          frontend_callback_status="$(curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            --output "${RUNNER_TEMP}/frontend-callback.html" \
+            --write-out '%{http_code}' \
+            "${FRONTEND_URL}/auth/callback")"
+          test "${frontend_callback_status}" = "200"
+
+          grep -Fq '<div id="root"></div>' \
+            "${RUNNER_TEMP}/frontend-root.html"
+          grep -Fq '<div id="root"></div>' \
+            "${RUNNER_TEMP}/frontend-callback.html"
+
+          mapfile -t asset_paths < <(
+            grep -oE '(src|href)="/assets/[^"]+"' frontend/dist/index.html |
+              cut -d '"' -f 2 |
+              sort -u
+          )
+          test "${#asset_paths[@]}" -ge 2
+
+          for asset_path in "${asset_paths[@]}"; do
+            asset_status="$(curl \
+              --fail \
+              --silent \
+              --show-error \
+              --location \
+              --output /dev/null \
+              --write-out '%{http_code}' \
+              "${FRONTEND_URL}${asset_path}")"
+            test "${asset_status}" = "200"
+          done
+
+          grep -Eqi '^content-security-policy:' \
+            "${RUNNER_TEMP}/frontend-headers.txt"
+          grep -Eqi '^x-frame-options:[[:space:]]*DENY' \
+            "${RUNNER_TEMP}/frontend-headers.txt"
+          grep -Eqi '^x-content-type-options:[[:space:]]*nosniff' \
+            "${RUNNER_TEMP}/frontend-headers.txt"
+          grep -Eqi '^referrer-policy:[[:space:]]*no-referrer' \
+            "${RUNNER_TEMP}/frontend-headers.txt"
+          grep -Eqi '^permissions-policy:' \
+            "${RUNNER_TEMP}/frontend-headers.txt"
+
+          backend_health_status="$(curl \
+            --fail \
+            --silent \
+            --show-error \
+            --dump-header "${RUNNER_TEMP}/backend-health-headers.txt" \
+            --output "${RUNNER_TEMP}/backend-health.json" \
+            --write-out '%{http_code}' \
+            "${BACKEND_URL}/health")"
+          test "${backend_health_status}" = "200"
+
+          backend_ready_status="$(curl \
+            --fail \
+            --silent \
+            --show-error \
+            --output "${RUNNER_TEMP}/backend-ready.json" \
+            --write-out '%{http_code}' \
+            "${BACKEND_URL}/ready")"
+          test "${backend_ready_status}" = "200"
+
+          jq -e '.status == "ok"' "${RUNNER_TEMP}/backend-health.json" >/dev/null
+          jq -e \
+            '.status == "ready" and .checks.persistence == "ready"' \
+            "${RUNNER_TEMP}/backend-ready.json" >/dev/null
+
+          backend_revision="$(
+            awk '
+              tolower($1) == "x-opsmind-revision:" {
+                gsub("\\r", "", $2)
+                print $2
+              }
+            ' "${RUNNER_TEMP}/backend-health-headers.txt"
+          )"
+          [[ "${backend_revision}" =~ ^[0-9a-f]{40}$ ]]
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --request OPTIONS \
+            --header "Origin: ${FRONTEND_URL}" \
+            --header 'Access-Control-Request-Method: GET' \
+            --header 'Access-Control-Request-Headers: Authorization' \
+            --dump-header "${RUNNER_TEMP}/cors-headers.txt" \
+            --output /dev/null \
+            "${BACKEND_URL}/api/v1/products"
+
+          grep -Fqi "access-control-allow-origin: ${FRONTEND_URL}" \
+            "${RUNNER_TEMP}/cors-headers.txt"
+
+          echo "backend_revision=${backend_revision}" >> "${GITHUB_OUTPUT}"
+
+      - name: Record protected frontend release evidence
+        shell: bash
+        env:
+          DEPLOYMENT_ID: ${{ steps.deployment.outputs.deployment_id }}
+          DEPLOYMENT_URL: ${{ steps.deployment.outputs.deployment_url }}
+          ATTACHED_SHA: ${{ steps.deployment.outputs.attached_sha }}
+          BACKEND_REVISION: ${{ steps.smoke.outputs.backend_revision }}
+        run: |
+          set -euo pipefail
+
+          test "${ATTACHED_SHA}" = "${REQUESTED_SHA}"
+
+          {
+            echo "### Protected Phase 8C frontend release"
+            echo
+            echo "- Requested SHA: \`${REQUESTED_SHA}\`"
+            echo "- Checked-out SHA: \`${CHECKED_OUT_SHA}\`"
+            echo "- Pages deployment ID: \`${DEPLOYMENT_ID}\`"
+            echo "- Deployment URL: \`${DEPLOYMENT_URL}\`"
+            echo "- Canonical URL: \`${FRONTEND_URL}\`"
+            echo "- Environment: \`production\`"
+            echo "- Attached commit SHA: \`${ATTACHED_SHA}\`"
+            echo "- Backend revision: \`${BACKEND_REVISION}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

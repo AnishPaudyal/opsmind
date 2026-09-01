@@ -5,12 +5,12 @@ This document is the detailed authority for the current project state. The
 phase-review documents preserve the decisions and evidence that established
 earlier states.
 
-- Status date: 2026-08-24
+- Status date: 2026-08-31
 - Current formal gate: Phase 8 — Phase 8B Complete; Phase 8C gate Accepted
 - Active workstream: Issue #77 Phase 8C authenticated frontend and full-stack
-  product; Batch 1, Batch 2, and Batch 3 Substeps 1–7 Complete; Substep 8 login
-  succeeded, but authorization acceptance is blocked by the proven SPA access-
-  token role-assertion defect; the repository correction is current
+  product; Batch 1, Batch 2, and Batch 3 Substeps 1–7 Complete; Substep 8
+  authentication and protected reads pass, while safe write/decision acceptance
+  and protected manual frontend-release operations remain pending
 - Issue #64 result: complete; PR #65 merged and Issue #64 closed
 - Issue #58 result: complete; PR #59 merged and Issue #58 closed
 - ADR-0006 result: accepted and merged through PR #61; Issue #60 closed
@@ -29,8 +29,9 @@ earlier states.
   Complete; protected run `32741569348` completed Substep 6; PR #90 merged the
   Substep 7 production-enable source and the reviewed HCP/apply plus canonical
   Pages deployment completed afterward; Substep 7 is technically Complete;
-  Substep 8 remains incomplete pending the repository fix, separate provider
-  apply, and live re-login acceptance
+  PR #91 merged the role-assertion correction as
+  `415cb81f496a843b01682a0ec96a0f3694c50089`; protected reads now return `200`;
+  Substep 8 remains incomplete pending safe write and decision acceptance
 
 ## Canonical Phase Status
 
@@ -528,17 +529,36 @@ PR #90 merged the Substep 7 source change from
 canonical production Pages deployment completed afterward, while previews and
 PR comments remain disabled. Substep 7 is technically Complete.
 
-The first Substep 8 interactive ZITADEL login succeeded. Protected product and
-recommendation reads nevertheless returned `403`: authentication succeeded,
-but the JWT access token lacked the project-ID-qualified role claim consumed by
-the backend. The human operator's exact three-role grant remains correct. The
-diagnostic proved the configuration root cause as
-`zitadel_application_oidc.spa.access_token_role_assertion = false`, contrary
-to accepted ADR-0007. This repository correction changes that field to `true`;
-the authorization defect is not resolved until a separately authorized HCP
-plan/apply and live re-login acceptance pass. No production write was
-performed. Issue #77 remains open, Substep 8 and Phase 8C remain not Complete,
-and Phase 8 overall remains Current.
+The first Substep 8 interactive ZITADEL login authenticated successfully but
+protected reads returned `403`. The diagnostic proved the root cause as
+`zitadel_application_oidc.spa.access_token_role_assertion = false`, while the
+human operator's exact three-role grant remained correct. PR #91 merged the
+repository correction as `415cb81f496a843b01682a0ec96a0f3694c50089`. The
+reviewed provider apply now sets role assertion to `true`, and a fresh human
+login returned `200` for protected product and recommendation reads.
+`business.write` and `recommendation.decide` acceptance remain pending because
+the production dataset contains no safe target. No production business write
+was performed.
+
+Merging PR #91 also triggered an automatic production Pages deployment because
+the Git connection still allowed production builds from every `main` update.
+The resulting deployment `87aab951-3b84-4126-907f-4572d1da5a05` serves the
+same canonical commit and was verified harmless. The owner immediately
+contained the control through Cloudflare Branch control by changing automatic
+production deployments from enabled to disabled. No new deployment, retry,
+rollback, preview, variable, build-setting, custom-domain, Worker, or Function
+change resulted.
+
+This repository reconciliation permanently restores
+`production_deployments_enabled = false` and introduces a manually dispatched,
+exact-SHA `Frontend release` workflow. The workflow separates credential-free
+build/validation from the `phase-8c-frontend` deployment environment, pins
+Wrangler `4.127.1`, verifies the intended existing Pages project, and attests
+the new deployment and post-release runtime. It is prepared but not operational:
+the protected environment, reviewer controls, API token, account variable,
+first dispatch, and acceptance evidence require separate authorization. Issue
+#77 remains open, Substep 8 and Phase 8C remain not Complete, and Phase 8
+overall remains Current.
 
 ## Issue #58 Residual Limitations
 
@@ -569,11 +589,12 @@ is stored under [`docs/05-evaluation`](../05-evaluation).
 
 ## Next Permitted Work
 
-Phase 8C Batch 3 Substeps 1 through 7 are technically Complete. Substep 8 is
-incomplete: its login succeeded, but authorization acceptance is blocked by
-the proven SPA access-token role-assertion defect. Only the repository
-correction is authorized; its HCP plan/apply, live re-login acceptance, and all
-broader live-provider mutations require separate authorization. Future Phase
+Phase 8C Batch 3 Substeps 1 through 7 are technically Complete. Substep 8
+authentication and protected-read acceptance pass after the applied role-
+assertion correction. Safe write and decision acceptance remain pending. The
+manual frontend release mechanism is not operational until the separately
+authorized `phase-8c-frontend` environment, reviewer protection, credential,
+variable, first dispatch, and acceptance evidence are complete. Future Phase
 8B releases must continue using
 the protected environment, external Alembic migration, exact immutable digest,
 bounded health/readiness checks, and least-privilege authenticated smoke.

@@ -12,8 +12,9 @@ reconstructs the review queue after refresh, and supports approval/rejection
 with trusted audit history. It does not place external orders. The reviewed
 production origin is now represented in repository-owned ZITADEL and Render
 source. The HCP ZITADEL apply and dedicated human operator's exact three-role
-grant are complete and no-drift verified. The Render release, Cloudflare
-delivery, and live deployment remain separately gated Batch 3 work.
+grant are complete and no-drift verified. The Render release and canonical
+Cloudflare Pages deployment are live. Human protected reads now pass after the
+role-assertion correction; safe write and decision acceptance remain pending.
 
 ## Requirements
 
@@ -36,8 +37,7 @@ hook, or provider credential.
 The local example uses the loopback API and the existing public ZITADEL issuer,
 project ID, and User Agent client ID. Repository production configuration uses
 the captured `https://opsmind-app.pages.dev` origin; this local example remains
-deliberately separate and does not imply that the live ZITADEL update has been
-applied.
+deliberately separate from the applied production ZITADEL configuration.
 
 Run the backend at `http://127.0.0.1:8000` and configure its exact local browser
 origin without enabling credentials:
@@ -87,6 +87,18 @@ npm run test:e2e
 `openapi-typescript`. Commit both generated files when a reviewed backend
 contract changes. `npm run openapi:check` generates into a temporary directory
 and fails when either checked-in artifact is stale.
+
+## Production release control
+
+Cloudflare Git integration remains connected, but automatic production and
+preview deployments are disabled. A merge or push is not a production release.
+The prepared `.github/workflows/frontend-release.yml` workflow requires a
+manually supplied exact SHA reachable from canonical `main`, rebuilds and
+validates that revision, and places only the deployment job behind the planned
+`phase-8c-frontend` environment. It must not be dispatched until the owner
+separately provisions and reviews that environment, its least-privilege token,
+and its account variable. See the
+[frontend release-control runbook](../docs/01-architecture/phase-8c-frontend-release-control.md).
 
 ## Security and state boundaries
 
